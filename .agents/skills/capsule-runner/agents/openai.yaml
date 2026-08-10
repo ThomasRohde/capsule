@@ -1,0 +1,4 @@
+interface:
+  display_name: SQLite Capsule Runner
+  short_description: Safely inspect, verify, and run self-describing SQLite applications.
+  default_prompt: Read the target capsule's embedded START_HERE runbook, verify it, make the repository-authorised trust decision, run it, and report the healthy local URL.

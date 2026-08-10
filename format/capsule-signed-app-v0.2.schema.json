@@ -1,0 +1,46 @@
+
+{
+  "description_format": "org.sqlite-capsule.extension-conformance/0.2",
+  "extension_id": "org.sqlite-capsule.signed-app/0.2",
+  "title": "SQLite Capsule signed application extension v0.2",
+  "purpose": "Independent structural description of optional publisher metadata and Ed25519 signature envelopes for compatible capsule v0.2 files.",
+  "compatible_capsule_formats": ["0.2"],
+  "required_objects": {
+    "tables": {
+      "capsule_publisher": {
+        "cardinality": 1,
+        "primary_key": ["id"],
+        "columns": {
+          "id": {"type": "INTEGER", "notnull": false, "pk": 1, "const": 1},
+          "profile": {"type": "TEXT", "notnull": true, "const": "org.sqlite-capsule.signed-app/0.2"},
+          "publisher_id": {"type": "TEXT", "notnull": true, "min_length": 1, "max_length": 512},
+          "publisher_name": {"type": "TEXT", "notnull": true, "min_length": 1, "max_length": 512}
+        }
+      },
+      "capsule_signature": {
+        "primary_key": ["key_id"],
+        "columns": {
+          "key_id": {"type": "TEXT", "notnull": true, "pk": 1, "pattern": "^ed25519:sha256:[0-9a-f]{64}$"},
+          "algorithm": {"type": "TEXT", "notnull": true, "const": "ed25519"},
+          "public_key": {"type": "BLOB", "notnull": true, "length": 32},
+          "application_digest": {"type": "BLOB", "notnull": true, "length": 32},
+          "signature": {"type": "BLOB", "notnull": true, "length": 64},
+          "signed_at": {"type": "TEXT", "notnull": true, "format": "utc-rfc3339-seconds"}
+        }
+      }
+    }
+  },
+  "algorithms": {
+    "digest": "sha-256",
+    "signature": "ed25519",
+    "key_id": "ed25519:sha256:<lowercase hex SHA-256 of 32 public-key bytes>"
+  },
+  "security_semantics": {
+    "publisher_row_is_signed": true,
+    "signature_rows_are_excluded_from_compartment": true,
+    "valid_signature_does_not_imply_trust": true,
+    "signed_at_is_publisher_asserted_not_trusted_time": true,
+    "multiple_keys_are_independently_evaluated": true
+  }
+}
+

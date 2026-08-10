@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.capsule/
+*.log
+.DS_Store
+.capsule-cache/
+.tmp/
+node_modules/
+/output/
+/native/.tools/
+*.sqlite-wal
+*.sqlite-shm
+/capsules/sqlite-capsule-host-setup.exe
+/capsules/sqlite-capsule-host.msi

@@ -1,0 +1,29 @@
+[package]
+name = "sqlite-capsule-policy"
+version = "0.2.0"
+description = "Host-local publisher trust and capability policy for SQLite Capsules"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlite-capsule-distribution = { path = "../capsule-distribution" }
+thiserror.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Security_Authorization",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+ed25519-dalek.workspace = true
+serde_json_canonicalizer.workspace = true

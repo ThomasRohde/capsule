@@ -1,0 +1,49 @@
+{
+  "id": 1,
+  "format_id": "org.sqlite-capsule",
+  "format_version": "0.2",
+  "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+  "title": "Diagram Studio — SQLite Capsule",
+  "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "app_version": "0.3.0",
+  "entry_asset": "app/index.html",
+  "runtime_protocol": "capsule-http/0.2",
+  "permissions_json": {
+    "database.read": {
+      "required": true,
+      "reason": "Render diagram objects and presentation scenes."
+    },
+    "database.write": {
+      "required": true,
+      "reason": "Persist user edits into this capsule file."
+    },
+    "network": {
+      "required": false,
+      "value": "none",
+      "reason": "The application is fully offline."
+    },
+    "fullscreen": {
+      "required": false,
+      "reason": "Optional presentation mode."
+    },
+    "clipboard.read": {
+      "required": false,
+      "reason": "Paste a user-initiated bounded Diagram Studio interchange document."
+    },
+    "clipboard.write": {
+      "required": false,
+      "reason": "Copy selected semantic objects as bounded Diagram Studio JSON."
+    },
+    "file.read.user-selected": {
+      "required": false,
+      "reason": "Import only a JSON file explicitly chosen by the user."
+    },
+    "download": {
+      "required": false,
+      "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads."
+    }
+  },
+  "created_at": "2026-08-07T19:00:00Z",
+  "updated_at": "2026-08-08T12:00:00Z"
+}

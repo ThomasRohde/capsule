@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLDIR">
+      <Directory Id="SQLiteCapsuleInstallerCacheDirectory" Name="installer-cache">
+        <Component
+          Id="SQLiteCapsuleInstallerCache"
+          Guid="{4D60D31C-745D-4A16-BE48-7D8BC03D5E32}"
+          Win64="yes">
+          <CreateFolder />
+          <CopyFile
+            Id="CopySQLiteCapsuleInstaller"
+            SourceProperty="OriginalDatabase"
+            DestinationDirectory="SQLiteCapsuleInstallerCacheDirectory"
+            DestinationName="sqlite-capsule-host-current.msi" />
+          <RemoveFile
+            Id="RemoveSQLiteCapsuleInstaller"
+            Name="sqlite-capsule-host-current.msi"
+            On="uninstall" />
+          <RegistryValue
+            Root="HKLM"
+            Key="Software\SQLite Capsule\Host"
+            Name="InstallerCache"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+</Wix>

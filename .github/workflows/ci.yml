@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Clean-checkout quality gate
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned Rust toolchain and target
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
+          rustup target add x86_64-pc-windows-msvc
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "25"
+
+      - name: Verify capsule sources and generated distributions
+        run: |
+          python tools/build_example.py --check
+          python tools/build_exports.py --check
+          python tools/capsule.py verify capsules/diagram-studio.capsule.sqlite
+          python tools/capsule.py conformance capsules/diagram-studio.capsule.sqlite
+          python -m unittest discover -s tests -v
+
+      - name: Verify native source and dependency inventories
+        working-directory: native
+        run: |
+          cargo fmt --all -- --check
+          cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
+          cargo test --workspace --all-targets --target x86_64-pc-windows-msvc
+          cargo clippy --workspace --all-targets --target x86_64-pc-windows-msvc -- -D warnings
+          python tools/generate_sbom.py --check
+          python tools/generate_license_report.py --check

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SQLite Capsule Host — trust review</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#trust-review">Skip to trust review</a>
+    <header class="host-bar" aria-label="Trusted host identity">
+      <div class="host-mark" aria-hidden="true">SC</div>
+      <div class="host-title">
+        <p class="eyebrow">Trusted desktop host</p>
+        <h1>SQLite Capsule Host</h1>
+      </div>
+      <div class="host-controls">
+        <button type="button" id="open-button">Open capsule…</button>
+        <span class="host-state" id="host-state" role="status" aria-live="polite">Verifying before open</span>
+      </div>
+    </header>
+
+    <main id="trust-review" tabindex="-1">
+      <div class="workspace">
+        <section class="panel identity-panel" aria-labelledby="identity-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">File and publisher</p>
+              <h2 id="identity-title">What is asking to run?</h2>
+            </div>
+            <span class="badge" id="trust-badge">Checking</span>
+          </div>
+          <div class="verdict" id="verdict" aria-live="polite" tabindex="-1">
+            <span class="verdict-mark" aria-hidden="true">?</span>
+            <div><strong>Verification in progress</strong><p>No executable assets have been released.</p></div>
+          </div>
+          <dl id="identity-details">
+            <div><dt>Status</dt><dd>Waiting for the trusted host…</dd></div>
+          </dl>
+          <details class="technical" id="technical-details">
+            <summary>Technical identity and signature details</summary>
+            <dl id="crypto-details"></dl>
+            <div class="lifecycle-tools" aria-labelledby="lifecycle-title">
+              <strong id="lifecycle-title">Data protection</strong>
+              <p id="lifecycle-status" role="status" aria-live="polite">Runtime locked. No source write is possible.</p>
+              <div class="lifecycle-actions">
+                <button type="button" id="reopen-button" disabled>Reopen and re-verify</button>
+                <button type="button" id="read-only-button" disabled>Continue read-only</button>
+                <button type="button" id="restore-button" disabled>Restore verified copy…</button>
+              </div>
+              <p id="lifecycle-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="lifecycle-tools update-tools" aria-labelledby="update-title">
+              <strong id="update-title">Host update health</strong>
+              <p id="update-status" role="status" aria-live="polite">Reading protected host-update state…</p>
+              <div class="lifecycle-actions">
+                <button type="button" id="update-check-button" disabled>Check for host update</button>
+              </div>
+              <div id="update-download-controls" class="update-consent" hidden>
+                <label>
+                  <input type="checkbox" id="update-download-consent">
+                  Download the reviewed host package and Sigstore evidence from the compiled update origin. This does not install or close the current capsule.
+                </label>
+                <div class="lifecycle-actions">
+                  <button type="button" id="update-download-button" disabled>Download reviewed update</button>
+                </div>
+              </div>
+              <div id="update-stage-controls" class="update-consent" hidden>
+                <label>
+                  <input type="checkbox" id="update-stage-consent">
+                  I want to prepare this verified host update for installation. Any active capsule session will close, and writable capsule state must have a verified recovery point first.
+                </label>
+                <div class="lifecycle-actions">
+                  <button type="button" id="update-stage-button" disabled>Authorize and stage verified update</button>
+                </div>
+                <p>Staging copies the exact verified package and Sigstore evidence into protected host storage. It does not run the installer.</p>
+              </div>
+              <p id="update-validation-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="admin-tools" aria-labelledby="admin-title">
+              <strong id="admin-title">Local trust controls</strong>
+              <div class="admin-actions">
+                <button type="button" data-admin-action="audit">View audit</button>
+                <button type="button" data-admin-action="export">Redacted export</button>
+                <button type="button" id="support-button">Export support bundle…</button>
+                <button type="button" class="danger" data-admin-action="forget_current_decision" id="forget-decision-button" disabled>Forget current decision</button>
+                <button type="button" class="danger" data-admin-action="revoke_current_key" id="revoke-button">Revoke current key</button>
+                <button type="button" class="danger" data-admin-action="reset">Backup and reset</button>
+              </div>
+              <p>Host-local record. Capsule-controlled labels remain untrusted text.</p>
+              <pre id="admin-output" tabindex="0" aria-live="polite" aria-label="Local trust and support output"></pre>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel prompt-panel" aria-labelledby="prompt-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Capability decision</p>
+              <h2 id="prompt-title" tabindex="-1">Choose what this release may do</h2>
+            </div>
+            <span class="badge">Host-owned prompt</span>
+          </div>
+          <p class="prompt-copy" id="prompt-copy">
+            Capabilities come from the verified manifest. Missing or unsupported authority is never inferred.
+          </p>
+          <fieldset id="capability-list" aria-describedby="choice-note">
+            <legend class="sr-only">Requested capabilities</legend>
+          </fieldset>
+          <p class="choice-note" id="choice-note">
+            Allow once is memory-only. Always is scoped to this signed application digest and capsule. Deny is saved. Cancel changes nothing.
+          </p>
+          <div class="actions" id="actions">
+            <button type="button" class="primary" data-action="allow_once">Allow once</button>
+            <button type="button" data-action="always" id="always-button">Always for this release</button>
+            <button type="button" class="danger" data-action="deny">Deny this release</button>
+            <button type="button" class="quiet" data-action="cancel">Cancel</button>
+          </div>
+          <p class="action-status" id="action-status" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <section class="app-boundary" aria-labelledby="boundary-title">
+        <div class="boundary-label">
+          <span>Separate application window · hidden until authorised</span>
+          <strong id="boundary-title">Application window · executable assets locked</strong>
+        </div>
+        <p class="application-window-copy">
+          Once allowed, the verified capsule opens maximized in its own native window. Re-locking it hides that window and returns here.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

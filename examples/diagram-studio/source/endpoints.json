@@ -1,0 +1,1240 @@
+[
+  {
+    "name": "diagram.get",
+    "operation": "read",
+    "sql_text": "SELECT id, slug, title, description, canvas_width, canvas_height, background, created_at, updated_at FROM diagram_document WHERE id = :diagram_id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "row",
+    "description": "Read one diagram document.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.nodes",
+    "operation": "read",
+    "sql_text": "SELECT id, diagram_id, layer_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at FROM diagram_node WHERE diagram_id = :diagram_id ORDER BY z_index, id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "rows",
+    "description": "Read all nodes in z-order.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.edges",
+    "operation": "read",
+    "sql_text": "SELECT id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at FROM diagram_edge WHERE diagram_id = :diagram_id ORDER BY id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "rows",
+    "description": "Read all diagram connectors.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.layers",
+    "operation": "read",
+    "sql_text": "SELECT l.id, l.diagram_id, l.name, l.position, l.visible, l.locked, l.created_at, l.updated_at, (SELECT count(*) FROM diagram_node n WHERE n.layer_id = l.id) AS node_count, (SELECT count(*) FROM diagram_edge e WHERE e.layer_id = l.id) AS edge_count FROM diagram_layer l WHERE l.diagram_id = :diagram_id ORDER BY l.position, l.id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "rows",
+    "description": "Read semantic layers with stable IDs and explicit order.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.groups",
+    "operation": "read",
+    "sql_text": "SELECT g.id, g.diagram_id, g.layer_id, g.name, g.z_index, g.locked, g.created_at, g.updated_at, coalesce((SELECT json_group_array(node_id) FROM diagram_group_member m WHERE m.group_id = g.id ORDER BY m.position), '[]') AS member_ids_json FROM diagram_group g WHERE g.diagram_id = :diagram_id ORDER BY g.z_index, g.id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "rows",
+    "description": "Read semantic groups and their ordered stable node memberships.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.scenes",
+    "operation": "read",
+    "sql_text": "SELECT s.id, s.diagram_id, s.position, s.title, s.narrative, s.viewport_json, s.focus_json, s.created_at, s.updated_at, coalesce((SELECT json_group_array(json_object('node_id', o.node_id, 'x', o.x, 'y', o.y, 'width', o.width, 'height', o.height, 'visible', o.visible, 'style_json', CASE WHEN o.style_json IS NULL THEN NULL ELSE json(o.style_json) END)) FROM diagram_scene_override o WHERE o.scene_id = s.id ORDER BY o.node_id), '[]') AS overrides_json FROM diagram_scene s WHERE s.diagram_id = :diagram_id ORDER BY s.position, s.id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "rows",
+    "description": "Read the presentation path for a diagram.",
+    "enabled": 1
+  },
+  {
+    "name": "scenes.apply",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "summary": {"type": "string", "required": true},
+      "before_json": {"type": "json", "required": true},
+      "after_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically replace a bounded authored scene sequence, including stable-node overrides.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_array_length(:before_json) BETWEEN 1 AND 128 AND json_array_length(:after_json) BETWEEN 1 AND 128 AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:before_json)) = json_array_length(:before_json) AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:after_json)) = json_array_length(:after_json) AND (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) = json_array_length(:before_json) AND NOT EXISTS (SELECT 1 FROM json_each(:before_json) j LEFT JOIN diagram_scene s ON s.id = json_extract(j.value, '$.id') AND s.diagram_id = :diagram_id WHERE s.id IS NULL OR s.position != json_extract(j.value, '$.position') OR s.title != json_extract(j.value, '$.title') OR s.narrative != json_extract(j.value, '$.narrative') OR json(s.viewport_json) != json(json_extract(j.value, '$.viewport_json')) OR json(s.focus_json) != json(json_extract(j.value, '$.focus_json')))", "required_changes": 1},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_scene (id, diagram_id, position, title, narrative, viewport_json, focus_json, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, json_extract(value, '$.position'), json_extract(value, '$.title'), json_extract(value, '$.narrative'), json_extract(value, '$.viewport_json'), json_extract(value, '$.focus_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(:after_json)", "required_changes": null},
+      {"sequence": 5, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(s.value, '$.id'), json_extract(o.value, '$.node_id'), json_extract(o.value, '$.x'), json_extract(o.value, '$.y'), json_extract(o.value, '$.width'), json_extract(o.value, '$.height'), json_extract(o.value, '$.visible'), CASE WHEN json_type(o.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(o.value, '$.style_json') END FROM json_each(:after_json) s, json_each(json_extract(s.value, '$.overrides_json')) o", "required_changes": null},
+      {"sequence": 6, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) = json_array_length(:after_json) AND (SELECT min(position) FROM diagram_scene WHERE diagram_id = :diagram_id) = 1 AND (SELECT max(position) FROM diagram_scene WHERE diagram_id = :diagram_id) = json_array_length(:after_json)", "required_changes": 1},
+      {"sequence": 7, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'scenes.apply', :summary, 'scenes.apply.undo', 'scenes.apply.redo', json_object('scenes', json(:after_json)), json_object('scenes', json(:before_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "scenes.apply.undo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'scenes.apply')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Undo one authored scene sequence change.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'scenes.apply')", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_scene (id, diagram_id, position, title, narrative, viewport_json, focus_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.position'), json_extract(j.value, '$.title'), json_extract(j.value, '$.narrative'), json_extract(j.value, '$.viewport_json'), json_extract(j.value, '$.focus_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.scenes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'scenes.apply'", "required_changes": null},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(s.value, '$.id'), json_extract(v.value, '$.node_id'), json_extract(v.value, '$.x'), json_extract(v.value, '$.y'), json_extract(v.value, '$.width'), json_extract(v.value, '$.height'), json_extract(v.value, '$.visible'), CASE WHEN json_type(v.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(v.value, '$.style_json') END FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.scenes')) s, json_each(json_extract(s.value, '$.overrides_json')) v WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'scenes.apply' AND (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) = json_array_length(json_extract(inverse_json, '$.scenes'))", "required_changes": 1},
+      {"sequence": 5, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "scenes.apply.redo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'scenes.apply')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Redo one authored scene sequence change.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'scenes.apply')", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_scene (id, diagram_id, position, title, narrative, viewport_json, focus_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.position'), json_extract(j.value, '$.title'), json_extract(j.value, '$.narrative'), json_extract(j.value, '$.viewport_json'), json_extract(j.value, '$.focus_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.scenes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'scenes.apply'", "required_changes": null},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(s.value, '$.id'), json_extract(v.value, '$.node_id'), json_extract(v.value, '$.x'), json_extract(v.value, '$.y'), json_extract(v.value, '$.width'), json_extract(v.value, '$.height'), json_extract(v.value, '$.visible'), CASE WHEN json_type(v.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(v.value, '$.style_json') END FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.scenes')) s, json_each(json_extract(s.value, '$.overrides_json')) v WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'scenes.apply' AND (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) = json_array_length(json_extract(forward_json, '$.scenes'))", "required_changes": 1},
+      {"sequence": 5, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "diagram.history",
+    "operation": "read",
+    "sql_text": "SELECT h.diagram_id, h.cursor, h.tip, h.updated_at, (SELECT id FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor AND state = 'applied') AS undo_operation_id, (SELECT undo_endpoint FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor AND state = 'applied') AS undo_endpoint, (SELECT summary FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor AND state = 'applied') AS undo_summary, (SELECT id FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor + 1 AND state = 'undone') AS redo_operation_id, (SELECT redo_endpoint FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor + 1 AND state = 'undone') AS redo_endpoint, (SELECT summary FROM diagram_operation WHERE diagram_id = h.diagram_id AND sequence = h.cursor + 1 AND state = 'undone') AS redo_summary FROM diagram_history h WHERE h.diagram_id = :diagram_id",
+    "parameters_json": {
+      "diagram_id": {"type": "string", "required": true}
+    },
+    "result_mode": "row",
+    "description": "Read the durable undo and redo cursor for one diagram.",
+    "enabled": 1
+  },
+  {
+    "name": "diagram.rename",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "from_title": {"type": "string", "required": true},
+      "to_title": {"type": "string", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically rename a diagram and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_document SET title = :to_title, updated_at = CURRENT_TIMESTAMP WHERE id = :diagram_id AND title = :from_title",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'diagram.rename', 'Rename diagram', 'diagram.rename.undo', 'diagram.rename.redo', json_object('title', :to_title), json_object('title', :from_title), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "diagram.rename.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_document SET title = (SELECT json_extract(inverse_json, '$.title') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'diagram.rename')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo one durable diagram rename operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_document SET title = (SELECT json_extract(inverse_json, '$.title') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'diagram.rename')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'diagram.rename'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "diagram.rename.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_document SET title = (SELECT json_extract(forward_json, '$.title') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'diagram.rename')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo one durable diagram rename operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_document SET title = (SELECT json_extract(forward_json, '$.title') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'diagram.rename')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'diagram.rename'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "layer.update",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "layer_id": {"type": "string", "required": true},
+      "from_visible": {"type": "integer", "required": true},
+      "from_locked": {"type": "integer", "required": true},
+      "to_visible": {"type": "integer", "required": true},
+      "to_locked": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically update semantic layer visibility and lock state.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_layer SET visible = :to_visible, locked = :to_locked, updated_at = CURRENT_TIMESTAMP WHERE id = :layer_id AND diagram_id = :diagram_id AND visible = :from_visible AND locked = :from_locked AND :to_visible IN (0, 1) AND :to_locked IN (0, 1)", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'layer.update', 'Update layer', 'layer.update.undo', 'layer.update.redo', json_object('id', :layer_id, 'visible', :to_visible, 'locked', :to_locked), json_object('id', :layer_id, 'visible', :from_visible, 'locked', :from_locked), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "layer.update.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_layer SET visible = (SELECT json_extract(inverse_json, '$.visible') FROM diagram_operation WHERE id = :operation_id), locked = (SELECT json_extract(inverse_json, '$.locked') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layer.update')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes",
+    "description": "Undo one semantic layer state change.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_layer SET visible = (SELECT json_extract(inverse_json, '$.visible') FROM diagram_operation WHERE id = :operation_id), locked = (SELECT json_extract(inverse_json, '$.locked') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layer.update')", "required_changes": 1},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layer.update'", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "layer.update.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_layer SET visible = (SELECT json_extract(forward_json, '$.visible') FROM diagram_operation WHERE id = :operation_id), locked = (SELECT json_extract(forward_json, '$.locked') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layer.update')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes",
+    "description": "Redo one semantic layer state change.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_layer SET visible = (SELECT json_extract(forward_json, '$.visible') FROM diagram_operation WHERE id = :operation_id), locked = (SELECT json_extract(forward_json, '$.locked') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layer.update')", "required_changes": 1},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layer.update'", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "layers.reorder",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "before_json": {"type": "json", "required": true},
+      "after_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically reorder all semantic layers with one durable inverse.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_array_length(:before_json) BETWEEN 1 AND 16 AND json_array_length(:after_json) = json_array_length(:before_json) AND (SELECT count(*) FROM diagram_layer WHERE diagram_id = :diagram_id) = json_array_length(:before_json) AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:before_json)) = json_array_length(:before_json) AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:after_json)) = json_array_length(:after_json) AND (SELECT count(DISTINCT json_extract(value, '$.position')) FROM json_each(:after_json)) = json_array_length(:after_json) AND (SELECT min(json_extract(value, '$.position')) FROM json_each(:after_json)) = 1 AND (SELECT max(json_extract(value, '$.position')) FROM json_each(:after_json)) = json_array_length(:after_json) AND NOT EXISTS (SELECT 1 FROM json_each(:before_json) j LEFT JOIN diagram_layer l ON l.id = json_extract(j.value, '$.id') AND l.diagram_id = :diagram_id WHERE l.id IS NULL OR l.position != json_extract(j.value, '$.position')) AND NOT EXISTS (SELECT 1 FROM json_each(:after_json) a LEFT JOIN json_each(:before_json) b ON json_extract(b.value, '$.id') = json_extract(a.value, '$.id') WHERE b.value IS NULL)", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_layer SET position = position + 1000, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_layer SET position = (SELECT json_extract(j.value, '$.position') FROM json_each(:after_json) j WHERE json_extract(j.value, '$.id') = diagram_layer.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id", "required_changes": null},
+      {"sequence": 5, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND NOT EXISTS (SELECT 1 FROM json_each(:after_json) j LEFT JOIN diagram_layer l ON l.id = json_extract(j.value, '$.id') AND l.diagram_id = :diagram_id WHERE l.id IS NULL OR l.position != json_extract(j.value, '$.position'))", "required_changes": 1},
+      {"sequence": 6, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'layers.reorder', 'Reorder layers', 'layers.reorder.undo', 'layers.reorder.redo', json_object('layers', json(:after_json)), json_object('layers', json(:before_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "layers.reorder.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_layer SET position = position + 1000, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layers.reorder')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Undo one semantic layer reorder.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_layer SET position = position + 1000, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layers.reorder')", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_layer SET position = (SELECT json_extract(j.value, '$.position') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.layers')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_layer.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id", "required_changes": null},
+      {"sequence": 3, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'layers.reorder' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(inverse_json, '$.layers')) j LEFT JOIN diagram_layer l ON l.id = json_extract(j.value, '$.id') WHERE l.position != json_extract(j.value, '$.position'))", "required_changes": 1},
+      {"sequence": 4, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "layers.reorder.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_layer SET position = position + 1000, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layers.reorder')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Redo one semantic layer reorder.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_layer SET position = position + 1000, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layers.reorder')", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_layer SET position = (SELECT json_extract(j.value, '$.position') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.layers')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_layer.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id", "required_changes": null},
+      {"sequence": 3, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'layers.reorder' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(forward_json, '$.layers')) j LEFT JOIN diagram_layer l ON l.id = json_extract(j.value, '$.id') WHERE l.position != json_extract(j.value, '$.position'))", "required_changes": 1},
+      {"sequence": 4, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "nodes.structure",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}, "summary": {"type": "string", "required": true}, "changes_json": {"type": "json", "required": true}},
+    "result_mode": "changes", "description": "Atomically move bounded nodes between semantic layers or z-order positions.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_array_length(:changes_json) BETWEEN 1 AND 64 AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:changes_json)) = json_array_length(:changes_json) AND (SELECT count(*) FROM json_each(:changes_json) j JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') AND n.diagram_id = :diagram_id JOIN diagram_layer f ON f.id = n.layer_id AND f.diagram_id = :diagram_id JOIN diagram_layer t ON t.id = json_extract(j.value, '$.to.layer_id') AND t.diagram_id = :diagram_id WHERE n.layer_id = json_extract(j.value, '$.from.layer_id') AND n.z_index = json_extract(j.value, '$.from.z_index') AND coalesce(json_extract(n.data_json, '$.locked'), 0) = 0 AND f.locked = 0 AND t.locked = 0 AND json_extract(j.value, '$.to.z_index') BETWEEN -100000 AND 100000 AND NOT EXISTS (SELECT 1 FROM diagram_group_member m JOIN diagram_group g ON g.id = m.group_id WHERE m.node_id = n.id AND g.layer_id != json_extract(j.value, '$.to.layer_id'))) = json_array_length(:changes_json)", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_node SET layer_id = (SELECT json_extract(j.value, '$.to.layer_id') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), z_index = (SELECT json_extract(j.value, '$.to.z_index') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM json_each(:changes_json))", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND NOT EXISTS (SELECT 1 FROM json_each(:changes_json) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') AND n.diagram_id = :diagram_id WHERE n.id IS NULL OR n.layer_id != json_extract(j.value, '$.to.layer_id') OR n.z_index != json_extract(j.value, '$.to.z_index'))", "required_changes": 1},
+      {"sequence": 5, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'nodes.structure', :summary, 'nodes.structure.undo', 'nodes.structure.redo', json_object('changes', json(:changes_json)), json_object('changes', json(:changes_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "nodes.structure.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET layer_id = (SELECT json_extract(j.value, '$.from.layer_id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), z_index = (SELECT json_extract(j.value, '$.from.z_index') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.structure' AND json_extract(j.value, '$.id') = diagram_node.id)",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Undo one semantic layer or z-order change.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_node SET layer_id = (SELECT json_extract(j.value, '$.from.layer_id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), z_index = (SELECT json_extract(j.value, '$.from.z_index') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.structure' AND json_extract(j.value, '$.id') = diagram_node.id)", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'nodes.structure' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(inverse_json, '$.changes')) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') WHERE n.layer_id != json_extract(j.value, '$.from.layer_id') OR n.z_index != json_extract(j.value, '$.from.z_index'))", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "nodes.structure.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET layer_id = (SELECT json_extract(j.value, '$.to.layer_id') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), z_index = (SELECT json_extract(j.value, '$.to.z_index') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'nodes.structure' AND json_extract(j.value, '$.id') = diagram_node.id)",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Redo one semantic layer or z-order change.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_node SET layer_id = (SELECT json_extract(j.value, '$.to.layer_id') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), z_index = (SELECT json_extract(j.value, '$.to.z_index') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'nodes.structure' AND json_extract(j.value, '$.id') = diagram_node.id)", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'nodes.structure' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(forward_json, '$.changes')) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') WHERE n.layer_id != json_extract(j.value, '$.to.layer_id') OR n.z_index != json_extract(j.value, '$.to.z_index'))", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "group.toggle",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "action": {"type": "string", "required": true},
+      "group_id": {"type": "string", "required": true},
+      "layer_id": {"type": "string", "required": true},
+      "name": {"type": "string", "required": true},
+      "node_ids_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically group or ungroup a bounded ordered node set without nested groups.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND :action IN ('group', 'ungroup') AND json_array_length(:node_ids_json) BETWEEN 1 AND 256 AND (SELECT count(DISTINCT value) FROM json_each(:node_ids_json)) = json_array_length(:node_ids_json) AND EXISTS (SELECT 1 FROM diagram_layer WHERE id = :layer_id AND diagram_id = :diagram_id) AND ((:action = 'group' AND NOT EXISTS (SELECT 1 FROM diagram_group WHERE id = :group_id) AND (SELECT count(*) FROM diagram_node n LEFT JOIN diagram_group_member m ON m.node_id = n.id WHERE n.diagram_id = :diagram_id AND n.layer_id = :layer_id AND n.id IN (SELECT value FROM json_each(:node_ids_json)) AND m.node_id IS NULL) = json_array_length(:node_ids_json)) OR (:action = 'ungroup' AND EXISTS (SELECT 1 FROM diagram_group WHERE id = :group_id AND diagram_id = :diagram_id AND layer_id = :layer_id AND name = :name) AND (SELECT count(*) FROM diagram_group_member WHERE group_id = :group_id AND node_id IN (SELECT value FROM json_each(:node_ids_json))) = json_array_length(:node_ids_json) AND (SELECT count(*) FROM diagram_group_member WHERE group_id = :group_id) = json_array_length(:node_ids_json)))", "required_changes": 1},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT :group_id, :diagram_id, :layer_id, :name, coalesce((SELECT max(z_index) + 1 FROM diagram_group WHERE diagram_id = :diagram_id), 1), 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP WHERE :action = 'group'", "required_changes": null},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT :group_id, value, CAST(key AS INTEGER) + 1 FROM json_each(:node_ids_json) WHERE :action = 'group'", "required_changes": null},
+      {"sequence": 5, "sql_text": "DELETE FROM diagram_group WHERE id = :group_id AND diagram_id = :diagram_id AND :action = 'ungroup'", "required_changes": null},
+      {"sequence": 6, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND ((:action = 'group' AND EXISTS (SELECT 1 FROM diagram_group WHERE id = :group_id AND diagram_id = :diagram_id) AND (SELECT count(*) FROM diagram_group_member WHERE group_id = :group_id) = json_array_length(:node_ids_json)) OR (:action = 'ungroup' AND NOT EXISTS (SELECT 1 FROM diagram_group WHERE id = :group_id)))", "required_changes": 1},
+      {"sequence": 7, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'group.toggle', CASE :action WHEN 'group' THEN 'Group nodes' ELSE 'Ungroup nodes' END, 'group.toggle.undo', 'group.toggle.redo', json_object('action', :action, 'group_id', :group_id, 'layer_id', :layer_id, 'name', :name, 'node_ids', json(:node_ids_json)), json_object('action', :action, 'group_id', :group_id, 'layer_id', :layer_id, 'name', :name, 'node_ids', json(:node_ids_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "group.toggle.undo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(inverse_json, '$.group_id'), :diagram_id, json_extract(inverse_json, '$.layer_id'), json_extract(inverse_json, '$.name'), coalesce((SELECT max(z_index) + 1 FROM diagram_group WHERE diagram_id = :diagram_id), 1), 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'group.toggle' AND json_extract(inverse_json, '$.action') = 'ungroup'",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes",
+    "description": "Undo one durable group or ungroup command.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(inverse_json, '$.group_id'), :diagram_id, json_extract(inverse_json, '$.layer_id'), json_extract(inverse_json, '$.name'), coalesce((SELECT max(z_index) + 1 FROM diagram_group WHERE diagram_id = :diagram_id), 1), 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'group.toggle' AND json_extract(inverse_json, '$.action') = 'ungroup'", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT json_extract(o.inverse_json, '$.group_id'), j.value, CAST(j.key AS INTEGER) + 1 FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.node_ids')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'group.toggle' AND json_extract(o.inverse_json, '$.action') = 'ungroup'", "required_changes": null},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_group WHERE id = (SELECT json_extract(inverse_json, '$.group_id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'group.toggle' AND json_extract(inverse_json, '$.action') = 'group')", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'group.toggle' AND ((json_extract(inverse_json, '$.action') = 'group' AND NOT EXISTS (SELECT 1 FROM diagram_group WHERE id = json_extract(inverse_json, '$.group_id'))) OR (json_extract(inverse_json, '$.action') = 'ungroup' AND EXISTS (SELECT 1 FROM diagram_group WHERE id = json_extract(inverse_json, '$.group_id'))))", "required_changes": 1},
+      {"sequence": 5, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "group.toggle.redo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(forward_json, '$.group_id'), :diagram_id, json_extract(forward_json, '$.layer_id'), json_extract(forward_json, '$.name'), coalesce((SELECT max(z_index) + 1 FROM diagram_group WHERE diagram_id = :diagram_id), 1), 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'group.toggle' AND json_extract(forward_json, '$.action') = 'group'",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes",
+    "description": "Redo one durable group or ungroup command.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(forward_json, '$.group_id'), :diagram_id, json_extract(forward_json, '$.layer_id'), json_extract(forward_json, '$.name'), coalesce((SELECT max(z_index) + 1 FROM diagram_group WHERE diagram_id = :diagram_id), 1), 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'group.toggle' AND json_extract(forward_json, '$.action') = 'group'", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT json_extract(o.forward_json, '$.group_id'), j.value, CAST(j.key AS INTEGER) + 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.node_ids')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'group.toggle' AND json_extract(o.forward_json, '$.action') = 'group'", "required_changes": null},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_group WHERE id = (SELECT json_extract(forward_json, '$.group_id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'group.toggle' AND json_extract(forward_json, '$.action') = 'ungroup')", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'group.toggle' AND ((json_extract(forward_json, '$.action') = 'group' AND EXISTS (SELECT 1 FROM diagram_group WHERE id = json_extract(forward_json, '$.group_id'))) OR (json_extract(forward_json, '$.action') = 'ungroup' AND NOT EXISTS (SELECT 1 FROM diagram_group WHERE id = json_extract(forward_json, '$.group_id'))))", "required_changes": 1},
+      {"sequence": 5, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "diagram.import",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "document_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically import one validated bounded semantic interchange document.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_extract(:document_json, '$.format') = 'org.sqlite-capsule.diagram-studio/1' AND json_array_length(json_extract(:document_json, '$.layers')) <= 16 AND json_array_length(json_extract(:document_json, '$.nodes')) BETWEEN 1 AND 64 AND json_array_length(json_extract(:document_json, '$.edges')) <= 128 AND json_array_length(json_extract(:document_json, '$.groups')) <= 32 AND json_array_length(json_extract(:document_json, '$.scenes')) <= 32 AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE EXISTS (SELECT 1 FROM diagram_node WHERE id = json_extract(n.value, '$.id')) OR json_extract(n.value, '$.width') < 60 OR json_extract(n.value, '$.height') < 40) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.edges')) e WHERE EXISTS (SELECT 1 FROM diagram_edge WHERE id = json_extract(e.value, '$.id')) OR json_extract(e.value, '$.source_id') = json_extract(e.value, '$.target_id') OR NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE json_extract(n.value, '$.id') = json_extract(e.value, '$.source_id')) OR NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE json_extract(n.value, '$.id') = json_extract(e.value, '$.target_id'))) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.layers')) l WHERE EXISTS (SELECT 1 FROM diagram_layer WHERE id = json_extract(l.value, '$.id'))) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.groups')) g WHERE EXISTS (SELECT 1 FROM diagram_group WHERE id = json_extract(g.value, '$.id'))) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.groups')) g, json_each(json_extract(g.value, '$.member_ids')) m WHERE NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE json_extract(n.value, '$.id') = m.value AND coalesce(json_extract(n.value, '$.layer_id'), 'layer-content') = coalesce(json_extract(g.value, '$.layer_id'), 'layer-content'))) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.scenes')) s WHERE EXISTS (SELECT 1 FROM diagram_scene WHERE id = json_extract(s.value, '$.id'))) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.scenes')) s, json_each(coalesce(json_extract(s.value, '$.focus_json'), '[]')) f WHERE NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE json_extract(n.value, '$.id') = f.value)) AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.scenes')) s, json_each(coalesce(json_extract(s.value, '$.overrides_json'), '[]')) o WHERE NOT EXISTS (SELECT 1 FROM json_each(json_extract(:document_json, '$.nodes')) n WHERE json_extract(n.value, '$.id') = json_extract(o.value, '$.node_id')))", "required_changes": 1},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_layer (id, diagram_id, name, position, visible, locked, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, json_extract(value, '$.name'), (SELECT count(*) FROM diagram_layer WHERE diagram_id = :diagram_id) + CAST(key AS INTEGER) + 1, coalesce(json_extract(value, '$.visible'), 1), coalesce(json_extract(value, '$.locked'), 0), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(json_extract(:document_json, '$.layers'))", "required_changes": null},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_node (id, diagram_id, layer_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, coalesce(json_extract(value, '$.layer_id'), 'layer-content'), json_extract(value, '$.kind'), json_extract(value, '$.label'), json_extract(value, '$.x'), json_extract(value, '$.y'), json_extract(value, '$.width'), json_extract(value, '$.height'), coalesce(json_extract(value, '$.z_index'), 0), json_extract(value, '$.style_json'), json_extract(value, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(json_extract(:document_json, '$.nodes'))", "required_changes": null},
+      {"sequence": 5, "sql_text": "INSERT INTO diagram_edge (id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, coalesce(json_extract(value, '$.layer_id'), 'layer-connectors'), json_extract(value, '$.source_id'), json_extract(value, '$.target_id'), coalesce(json_extract(value, '$.kind'), 'flow'), coalesce(json_extract(value, '$.label'), ''), coalesce(json_extract(value, '$.source_port'), 'auto'), coalesce(json_extract(value, '$.target_port'), 'auto'), coalesce(json_extract(value, '$.route_mode'), 'orthogonal'), coalesce(json_extract(value, '$.waypoints_json'), '[]'), json_extract(value, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(json_extract(:document_json, '$.edges'))", "required_changes": null},
+      {"sequence": 6, "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, coalesce(json_extract(value, '$.layer_id'), 'layer-content'), json_extract(value, '$.name'), coalesce(json_extract(value, '$.z_index'), 0), coalesce(json_extract(value, '$.locked'), 0), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(json_extract(:document_json, '$.groups'))", "required_changes": null},
+      {"sequence": 7, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT json_extract(g.value, '$.id'), m.value, CAST(m.key AS INTEGER) + 1 FROM json_each(json_extract(:document_json, '$.groups')) g, json_each(json_extract(g.value, '$.member_ids')) m", "required_changes": null},
+      {"sequence": 8, "sql_text": "INSERT INTO diagram_scene (id, diagram_id, position, title, narrative, viewport_json, focus_json, created_at, updated_at) SELECT json_extract(value, '$.id'), :diagram_id, (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) + CAST(key AS INTEGER) + 1, json_extract(value, '$.title'), coalesce(json_extract(value, '$.narrative'), ''), json_extract(value, '$.viewport_json'), coalesce(json_extract(value, '$.focus_json'), '[]'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM json_each(json_extract(:document_json, '$.scenes'))", "required_changes": null},
+      {"sequence": 9, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(s.value, '$.id'), json_extract(o.value, '$.node_id'), json_extract(o.value, '$.x'), json_extract(o.value, '$.y'), json_extract(o.value, '$.width'), json_extract(o.value, '$.height'), json_extract(o.value, '$.visible'), CASE WHEN json_type(o.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(o.value, '$.style_json') END FROM json_each(json_extract(:document_json, '$.scenes')) s, json_each(json_extract(s.value, '$.overrides_json')) o", "required_changes": null},
+      {"sequence": 10, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND (SELECT count(*) FROM diagram_node WHERE id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(:document_json, '$.nodes')))) = json_array_length(json_extract(:document_json, '$.nodes')) AND (SELECT count(*) FROM diagram_edge WHERE id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(:document_json, '$.edges')))) = json_array_length(json_extract(:document_json, '$.edges'))", "required_changes": 1},
+      {"sequence": 11, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'diagram.import', 'Import diagram objects', 'diagram.import.undo', 'diagram.import.redo', json_object('document', json(:document_json)), json_object('document', json(:document_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "diagram.import.undo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.document.scenes')) WHERE o.id = :operation_id)",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Undo one bounded atomic interchange import.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_scene WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.document.scenes')) WHERE o.id = :operation_id)", "required_changes": null},
+      {"sequence": 2, "sql_text": "DELETE FROM diagram_group WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.document.groups')) WHERE o.id = :operation_id)", "required_changes": null},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.document.nodes')) WHERE o.id = :operation_id)", "required_changes": null},
+      {"sequence": 4, "sql_text": "DELETE FROM diagram_layer WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.document.layers')) WHERE o.id = :operation_id)", "required_changes": null},
+      {"sequence": 5, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'diagram.import' AND NOT EXISTS (SELECT 1 FROM diagram_node WHERE id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(inverse_json, '$.document.nodes'))))", "required_changes": 1},
+      {"sequence": 6, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "diagram.import.redo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_layer (id, diagram_id, name, position, visible, locked, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.name'), (SELECT count(*) FROM diagram_layer WHERE diagram_id = :diagram_id) + CAST(j.key AS INTEGER) + 1, coalesce(json_extract(j.value, '$.visible'), 1), coalesce(json_extract(j.value, '$.locked'), 0), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.layers')) j WHERE o.id = :operation_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone'",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Redo one bounded atomic interchange import.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "INSERT INTO diagram_layer (id, diagram_id, name, position, visible, locked, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.name'), (SELECT count(*) FROM diagram_layer WHERE diagram_id = :diagram_id) + CAST(j.key AS INTEGER) + 1, coalesce(json_extract(j.value, '$.visible'), 1), coalesce(json_extract(j.value, '$.locked'), 0), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.layers')) j WHERE o.id = :operation_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone'", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_node (id, diagram_id, layer_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, coalesce(json_extract(j.value, '$.layer_id'), 'layer-content'), json_extract(j.value, '$.kind'), json_extract(j.value, '$.label'), json_extract(j.value, '$.x'), json_extract(j.value, '$.y'), json_extract(j.value, '$.width'), json_extract(j.value, '$.height'), coalesce(json_extract(j.value, '$.z_index'), 0), json_extract(j.value, '$.style_json'), json_extract(j.value, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.nodes')) j WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_edge (id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, coalesce(json_extract(j.value, '$.layer_id'), 'layer-connectors'), json_extract(j.value, '$.source_id'), json_extract(j.value, '$.target_id'), coalesce(json_extract(j.value, '$.kind'), 'flow'), coalesce(json_extract(j.value, '$.label'), ''), coalesce(json_extract(j.value, '$.source_port'), 'auto'), coalesce(json_extract(j.value, '$.target_port'), 'auto'), coalesce(json_extract(j.value, '$.route_mode'), 'orthogonal'), coalesce(json_extract(j.value, '$.waypoints_json'), '[]'), json_extract(j.value, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.edges')) j WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_group (id, diagram_id, layer_id, name, z_index, locked, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, coalesce(json_extract(j.value, '$.layer_id'), 'layer-content'), json_extract(j.value, '$.name'), coalesce(json_extract(j.value, '$.z_index'), 0), coalesce(json_extract(j.value, '$.locked'), 0), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.groups')) j WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 5, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT json_extract(g.value, '$.id'), m.value, CAST(m.key AS INTEGER) + 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.groups')) g, json_each(json_extract(g.value, '$.member_ids')) m WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 6, "sql_text": "INSERT INTO diagram_scene (id, diagram_id, position, title, narrative, viewport_json, focus_json, created_at, updated_at) SELECT json_extract(s.value, '$.id'), :diagram_id, (SELECT count(*) FROM diagram_scene WHERE diagram_id = :diagram_id) + CAST(s.key AS INTEGER) + 1, json_extract(s.value, '$.title'), coalesce(json_extract(s.value, '$.narrative'), ''), json_extract(s.value, '$.viewport_json'), coalesce(json_extract(s.value, '$.focus_json'), '[]'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.scenes')) s WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 7, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(s.value, '$.id'), json_extract(v.value, '$.node_id'), json_extract(v.value, '$.x'), json_extract(v.value, '$.y'), json_extract(v.value, '$.width'), json_extract(v.value, '$.height'), json_extract(v.value, '$.visible'), CASE WHEN json_type(v.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(v.value, '$.style_json') END FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.document.scenes')) s, json_each(json_extract(s.value, '$.overrides_json')) v WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 8, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'diagram.import' AND (SELECT count(*) FROM diagram_node WHERE id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(forward_json, '$.document.nodes')))) = json_array_length(json_extract(forward_json, '$.document.nodes'))", "required_changes": 1},
+      {"sequence": 9, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "node.create",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "kind": {"type": "string", "required": true},
+      "label": {"type": "string", "required": true},
+      "x": {"type": "number", "required": true},
+      "y": {"type": "number", "required": true},
+      "width": {"type": "number", "required": true},
+      "height": {"type": "number", "required": true},
+      "z_index": {"type": "integer", "required": true},
+      "style_json": {"type": "json", "required": true},
+      "data_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically create a diagram node and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "INSERT INTO diagram_node (id, diagram_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) VALUES (:id, :diagram_id, :kind, :label, :x, :y, :width, :height, :z_index, :style_json, :data_json, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'node.create', 'Create node', 'node.create.undo', 'node.create.redo', json_object('id', :id, 'kind', :kind, 'label', :label, 'x', :x, 'y', :y, 'width', :width, 'height', :height, 'z_index', :z_index, 'style_json', json(:style_json), 'data_json', json(:data_json)), json_object('id', :id), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.create.undo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_node WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.create')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo the current durable node creation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_node WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.create')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.create.redo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_node (id, diagram_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(forward_json, '$.id'), :diagram_id, json_extract(forward_json, '$.kind'), json_extract(forward_json, '$.label'), json_extract(forward_json, '$.x'), json_extract(forward_json, '$.y'), json_extract(forward_json, '$.width'), json_extract(forward_json, '$.height'), json_extract(forward_json, '$.z_index'), json_extract(forward_json, '$.style_json'), json_extract(forward_json, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.create'",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo the next durable node creation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "INSERT INTO diagram_node (id, diagram_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(forward_json, '$.id'), :diagram_id, json_extract(forward_json, '$.kind'), json_extract(forward_json, '$.label'), json_extract(forward_json, '$.x'), json_extract(forward_json, '$.y'), json_extract(forward_json, '$.width'), json_extract(forward_json, '$.height'), json_extract(forward_json, '$.z_index'), json_extract(forward_json, '$.style_json'), json_extract(forward_json, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.move",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true},
+      "from_x": {"type": "number", "required": true},
+      "from_y": {"type": "number", "required": true},
+      "to_x": {"type": "number", "required": true},
+      "to_y": {"type": "number", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically move a node and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_node SET x = :to_x, y = :to_y, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND diagram_id = :diagram_id AND x = :from_x AND y = :from_y",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'node.move', 'Move node', 'node.move.undo', 'node.move.redo', json_object('id', :id, 'x', :to_x, 'y', :to_y), json_object('id', :id, 'x', :from_x, 'y', :from_y), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.move.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(inverse_json, '$.x') FROM diagram_operation WHERE id = :operation_id), y = (SELECT json_extract(inverse_json, '$.y') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.move')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo the current durable node move.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(inverse_json, '$.x') FROM diagram_operation WHERE id = :operation_id), y = (SELECT json_extract(inverse_json, '$.y') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.move')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'node.move'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.move.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(forward_json, '$.x') FROM diagram_operation WHERE id = :operation_id), y = (SELECT json_extract(forward_json, '$.y') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.move')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo the next durable node move.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(forward_json, '$.x') FROM diagram_operation WHERE id = :operation_id), y = (SELECT json_extract(forward_json, '$.y') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.move')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'node.move'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.rename",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true},
+      "from_label": {"type": "string", "required": true},
+      "to_label": {"type": "string", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically rename a node and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_node SET label = :to_label, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND diagram_id = :diagram_id AND label = :from_label",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'node.rename', 'Rename node', 'node.property.undo', 'node.property.redo', json_object('id', :id, 'label', :to_label), json_object('id', :id, 'label', :from_label), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.resize",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true},
+      "from_width": {"type": "number", "required": true},
+      "from_height": {"type": "number", "required": true},
+      "to_width": {"type": "number", "required": true},
+      "to_height": {"type": "number", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically resize a node and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_node SET width = :to_width, height = :to_height, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND diagram_id = :diagram_id AND width = :from_width AND height = :from_height",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'node.resize', 'Resize node', 'node.property.undo', 'node.property.redo', json_object('id', :id, 'width', :to_width, 'height', :to_height), json_object('id', :id, 'width', :from_width, 'height', :from_height), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.property.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET label = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.rename' THEN (SELECT json_extract(inverse_json, '$.label') FROM diagram_operation WHERE id = :operation_id) ELSE label END, width = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(inverse_json, '$.width') FROM diagram_operation WHERE id = :operation_id) ELSE width END, height = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(inverse_json, '$.height') FROM diagram_operation WHERE id = :operation_id) ELSE height END, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind IN ('node.rename', 'node.resize'))",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo the current durable node property change.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET label = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.rename' THEN (SELECT json_extract(inverse_json, '$.label') FROM diagram_operation WHERE id = :operation_id) ELSE label END, width = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(inverse_json, '$.width') FROM diagram_operation WHERE id = :operation_id) ELSE width END, height = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(inverse_json, '$.height') FROM diagram_operation WHERE id = :operation_id) ELSE height END, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind IN ('node.rename', 'node.resize'))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind IN ('node.rename', 'node.resize')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "node.property.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET label = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.rename' THEN (SELECT json_extract(forward_json, '$.label') FROM diagram_operation WHERE id = :operation_id) ELSE label END, width = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(forward_json, '$.width') FROM diagram_operation WHERE id = :operation_id) ELSE width END, height = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(forward_json, '$.height') FROM diagram_operation WHERE id = :operation_id) ELSE height END, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind IN ('node.rename', 'node.resize'))",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo the next durable node property change.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET label = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.rename' THEN (SELECT json_extract(forward_json, '$.label') FROM diagram_operation WHERE id = :operation_id) ELSE label END, width = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(forward_json, '$.width') FROM diagram_operation WHERE id = :operation_id) ELSE width END, height = CASE WHEN (SELECT command_kind FROM diagram_operation WHERE id = :operation_id) = 'node.resize' THEN (SELECT json_extract(forward_json, '$.height') FROM diagram_operation WHERE id = :operation_id) ELSE height END, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind IN ('node.rename', 'node.resize'))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind IN ('node.rename', 'node.resize')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "nodes.transform",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "summary": {"type": "string", "required": true},
+      "changes_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically apply one bounded semantic transform to one or more unlocked nodes.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(j.value, '$.to.x') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), y = (SELECT json_extract(j.value, '$.to.y') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), width = (SELECT json_extract(j.value, '$.to.width') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), height = (SELECT json_extract(j.value, '$.to.height') FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND coalesce(json_extract(data_json, '$.locked'), 0) = 0 AND EXISTS (SELECT 1 FROM json_each(:changes_json) j WHERE json_extract(j.value, '$.id') = diagram_node.id AND json_extract(j.value, '$.from.x') = diagram_node.x AND json_extract(j.value, '$.from.y') = diagram_node.y AND json_extract(j.value, '$.from.width') = diagram_node.width AND json_extract(j.value, '$.from.height') = diagram_node.height)",
+        "required_changes": null
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_array_length(:changes_json) BETWEEN 1 AND 256 AND (SELECT count(DISTINCT json_extract(value, '$.id')) FROM json_each(:changes_json)) = json_array_length(:changes_json) AND NOT EXISTS (SELECT 1 FROM json_each(:changes_json) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') AND n.diagram_id = :diagram_id WHERE n.id IS NULL OR coalesce(json_extract(n.data_json, '$.locked'), 0) != 0 OR n.x != json_extract(j.value, '$.to.x') OR n.y != json_extract(j.value, '$.to.y') OR n.width != json_extract(j.value, '$.to.width') OR n.height != json_extract(j.value, '$.to.height'))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'nodes.transform', :summary, 'nodes.transform.undo', 'nodes.transform.redo', json_object('changes', json(:changes_json)), json_object('changes', json(:changes_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "nodes.transform.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(j.value, '$.from.x') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), y = (SELECT json_extract(j.value, '$.from.y') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), width = (SELECT json_extract(j.value, '$.from.width') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), height = (SELECT json_extract(j.value, '$.from.height') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.transform' AND json_extract(j.value, '$.id') = diagram_node.id)",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo one durable bounded multi-node transform.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(j.value, '$.from.x') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), y = (SELECT json_extract(j.value, '$.from.y') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), width = (SELECT json_extract(j.value, '$.from.width') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), height = (SELECT json_extract(j.value, '$.from.height') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.transform' AND json_extract(j.value, '$.id') = diagram_node.id)",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'nodes.transform' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(inverse_json, '$.changes')) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') AND n.diagram_id = :diagram_id WHERE n.id IS NULL OR n.x != json_extract(j.value, '$.from.x') OR n.y != json_extract(j.value, '$.from.y') OR n.width != json_extract(j.value, '$.from.width') OR n.height != json_extract(j.value, '$.from.height'))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "nodes.transform.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(j.value, '$.to.x') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), y = (SELECT json_extract(j.value, '$.to.y') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), width = (SELECT json_extract(j.value, '$.to.width') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), height = (SELECT json_extract(j.value, '$.to.height') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'nodes.transform' AND json_extract(j.value, '$.id') = diagram_node.id)",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo one durable bounded multi-node transform.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_node SET x = (SELECT json_extract(j.value, '$.to.x') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), y = (SELECT json_extract(j.value, '$.to.y') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), width = (SELECT json_extract(j.value, '$.to.width') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), height = (SELECT json_extract(j.value, '$.to.height') FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.id') = diagram_node.id), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation o, json_each(json_extract(o.forward_json, '$.changes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor + 1 AND o.state = 'undone' AND o.command_kind = 'nodes.transform' AND json_extract(j.value, '$.id') = diagram_node.id)",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'nodes.transform' AND NOT EXISTS (SELECT 1 FROM json_each(json_extract(forward_json, '$.changes')) j LEFT JOIN diagram_node n ON n.id = json_extract(j.value, '$.id') AND n.diagram_id = :diagram_id WHERE n.id IS NULL OR n.x != json_extract(j.value, '$.to.x') OR n.y != json_extract(j.value, '$.to.y') OR n.width != json_extract(j.value, '$.to.width') OR n.height != json_extract(j.value, '$.to.height'))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "nodes.delete",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "node_ids_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically delete a bounded selection while deriving a complete semantic inverse from trusted database state.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND json_array_length(:node_ids_json) BETWEEN 1 AND 256 AND (SELECT count(DISTINCT value) FROM json_each(:node_ids_json)) = json_array_length(:node_ids_json) AND (SELECT count(*) FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each(:node_ids_json)) AND coalesce(json_extract(data_json, '$.locked'), 0) = 0) = json_array_length(:node_ids_json)",
+        "required_changes": 1
+      },
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) SELECT :operation_id, :diagram_id, :expected_cursor + 1, 'nodes.delete', 'Delete nodes', 'nodes.delete.undo', 'nodes.delete.redo', json_object('ids', json(:node_ids_json)), json_object('nodes', json(coalesce((SELECT json_group_array(json_object('id', id, 'diagram_id', diagram_id, 'layer_id', layer_id, 'kind', kind, 'label', label, 'x', x, 'y', y, 'width', width, 'height', height, 'z_index', z_index, 'style_json', json(style_json), 'data_json', json(data_json))) FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each(:node_ids_json))), '[]')), 'edges', json(coalesce((SELECT json_group_array(json_object('id', id, 'diagram_id', diagram_id, 'layer_id', layer_id, 'source_id', source_id, 'target_id', target_id, 'kind', kind, 'label', label, 'source_port', source_port, 'target_port', target_port, 'route_mode', route_mode, 'waypoints_json', json(waypoints_json), 'style_json', json(style_json))) FROM diagram_edge WHERE diagram_id = :diagram_id AND (source_id IN (SELECT value FROM json_each(:node_ids_json)) OR target_id IN (SELECT value FROM json_each(:node_ids_json)))), '[]')), 'group_members', json(coalesce((SELECT json_group_array(json_object('group_id', m.group_id, 'node_id', m.node_id, 'position', m.position)) FROM diagram_group_member m JOIN diagram_group g ON g.id = m.group_id WHERE g.diagram_id = :diagram_id AND m.node_id IN (SELECT value FROM json_each(:node_ids_json))), '[]')), 'scene_focus', json(coalesce((SELECT json_group_array(json_object('scene_id', s.id, 'focus_json', json(s.focus_json))) FROM diagram_scene s WHERE s.diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM json_each(s.focus_json) f WHERE f.value IN (SELECT value FROM json_each(:node_ids_json)))), '[]')), 'scene_overrides', json(coalesce((SELECT json_group_array(json_object('scene_id', o.scene_id, 'node_id', o.node_id, 'x', o.x, 'y', o.y, 'width', o.width, 'height', o.height, 'visible', o.visible, 'style_json', CASE WHEN o.style_json IS NULL THEN NULL ELSE json(o.style_json) END)) FROM diagram_scene_override o JOIN diagram_scene s ON s.id = o.scene_id WHERE s.diagram_id = :diagram_id AND o.node_id IN (SELECT value FROM json_each(:node_ids_json))), '[]'))), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP", "required_changes": 1},
+      {"sequence": 4, "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND length((SELECT inverse_json FROM diagram_operation WHERE id = :operation_id)) <= 65536", "required_changes": 1},
+      {"sequence": 5, "sql_text": "UPDATE diagram_scene SET focus_json = coalesce((SELECT json_group_array(value) FROM json_each(diagram_scene.focus_json) WHERE value NOT IN (SELECT value FROM json_each(:node_ids_json))), '[]'), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM json_each(focus_json) f WHERE f.value IN (SELECT value FROM json_each(:node_ids_json)))", "required_changes": null},
+      {"sequence": 6, "sql_text": "DELETE FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each(:node_ids_json))", "required_changes": null},
+      {"sequence": 7, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND NOT EXISTS (SELECT 1 FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each(:node_ids_json))) AND NOT EXISTS (SELECT 1 FROM diagram_scene s, json_each(s.focus_json) f WHERE s.diagram_id = :diagram_id AND f.value IN (SELECT value FROM json_each(:node_ids_json)))", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "nodes.delete.undo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_node (id, diagram_id, layer_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.layer_id'), json_extract(j.value, '$.kind'), json_extract(j.value, '$.label'), json_extract(j.value, '$.x'), json_extract(j.value, '$.y'), json_extract(j.value, '$.width'), json_extract(j.value, '$.height'), json_extract(j.value, '$.z_index'), json_extract(j.value, '$.style_json'), json_extract(j.value, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.nodes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.delete'",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo a durable selected-node deletion and restore semantic layers, connectors, groups, scene focus, and overrides.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "INSERT INTO diagram_node (id, diagram_id, layer_id, kind, label, x, y, width, height, z_index, style_json, data_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.layer_id'), json_extract(j.value, '$.kind'), json_extract(j.value, '$.label'), json_extract(j.value, '$.x'), json_extract(j.value, '$.y'), json_extract(j.value, '$.width'), json_extract(j.value, '$.height'), json_extract(j.value, '$.z_index'), json_extract(j.value, '$.style_json'), json_extract(j.value, '$.data_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.nodes')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.delete'", "required_changes": null},
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_edge (id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at) SELECT json_extract(j.value, '$.id'), :diagram_id, json_extract(j.value, '$.layer_id'), json_extract(j.value, '$.source_id'), json_extract(j.value, '$.target_id'), json_extract(j.value, '$.kind'), json_extract(j.value, '$.label'), json_extract(j.value, '$.source_port'), json_extract(j.value, '$.target_port'), json_extract(j.value, '$.route_mode'), json_extract(j.value, '$.waypoints_json'), json_extract(j.value, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.edges')) j WHERE o.id = :operation_id AND o.diagram_id = :diagram_id AND o.sequence = :expected_cursor AND o.state = 'applied' AND o.command_kind = 'nodes.delete'", "required_changes": null},
+      {"sequence": 3, "sql_text": "INSERT INTO diagram_group_member (group_id, node_id, position) SELECT json_extract(j.value, '$.group_id'), json_extract(j.value, '$.node_id'), json_extract(j.value, '$.position') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.group_members')) j WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 4, "sql_text": "UPDATE diagram_scene SET focus_json = (SELECT json_extract(j.value, '$.focus_json') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.scene_focus')) j WHERE o.id = :operation_id AND json_extract(j.value, '$.scene_id') = diagram_scene.id), updated_at = CURRENT_TIMESTAMP WHERE id IN (SELECT json_extract(j.value, '$.scene_id') FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.scene_focus')) j WHERE o.id = :operation_id)", "required_changes": null},
+      {"sequence": 5, "sql_text": "INSERT INTO diagram_scene_override (scene_id, node_id, x, y, width, height, visible, style_json) SELECT json_extract(j.value, '$.scene_id'), json_extract(j.value, '$.node_id'), json_extract(j.value, '$.x'), json_extract(j.value, '$.y'), json_extract(j.value, '$.width'), json_extract(j.value, '$.height'), json_extract(j.value, '$.visible'), CASE WHEN json_type(j.value, '$.style_json') = 'null' THEN NULL ELSE json_extract(j.value, '$.style_json') END FROM diagram_operation o, json_each(json_extract(o.inverse_json, '$.scene_overrides')) j WHERE o.id = :operation_id", "required_changes": null},
+      {"sequence": 6, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'nodes.delete' AND (SELECT count(*) FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(inverse_json, '$.nodes')))) = json_array_length(json_extract(inverse_json, '$.nodes')) AND (SELECT count(*) FROM diagram_edge WHERE diagram_id = :diagram_id AND id IN (SELECT json_extract(value, '$.id') FROM json_each(json_extract(inverse_json, '$.edges')))) = json_array_length(json_extract(inverse_json, '$.edges')) AND (SELECT count(*) FROM diagram_group_member WHERE node_id IN (SELECT json_extract(value, '$.node_id') FROM json_each(json_extract(inverse_json, '$.group_members')))) = json_array_length(json_extract(inverse_json, '$.group_members')) AND (SELECT count(*) FROM diagram_scene_override WHERE (scene_id || char(0) || node_id) IN (SELECT json_extract(value, '$.scene_id') || char(0) || json_extract(value, '$.node_id') FROM json_each(json_extract(inverse_json, '$.scene_overrides')))) = json_array_length(json_extract(inverse_json, '$.scene_overrides'))", "required_changes": 1},
+      {"sequence": 7, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "nodes.delete.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'nodes.delete')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo a durable selected-node deletion.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "UPDATE diagram_history SET updated_at = updated_at WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'nodes.delete')",
+        "required_changes": 1
+      },
+      {"sequence": 2, "sql_text": "UPDATE diagram_scene SET focus_json = coalesce((SELECT json_group_array(value) FROM json_each(diagram_scene.focus_json) WHERE value NOT IN (SELECT value FROM json_each((SELECT json_extract(forward_json, '$.ids') FROM diagram_operation WHERE id = :operation_id)))), '[]'), updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM json_each(focus_json) f WHERE f.value IN (SELECT value FROM json_each((SELECT json_extract(forward_json, '$.ids') FROM diagram_operation WHERE id = :operation_id))))", "required_changes": null},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each((SELECT json_extract(forward_json, '$.ids') FROM diagram_operation WHERE id = :operation_id)))", "required_changes": null},
+      {
+        "sequence": 4,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'nodes.delete' AND NOT EXISTS (SELECT 1 FROM diagram_node WHERE diagram_id = :diagram_id AND id IN (SELECT value FROM json_each(json_extract(forward_json, '$.ids'))))",
+        "required_changes": 1
+      },
+      {
+        "sequence": 5,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "edge.create",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "source_id": {"type": "string", "required": true},
+      "target_id": {"type": "string", "required": true},
+      "kind": {"type": "string", "required": true},
+      "label": {"type": "string", "required": true},
+      "style_json": {"type": "json", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically create a connector and append its durable inverse operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {
+        "sequence": 2,
+        "sql_text": "INSERT INTO diagram_edge (id, diagram_id, source_id, target_id, kind, label, style_json, created_at, updated_at) VALUES (:id, :diagram_id, :source_id, :target_id, :kind, :label, :style_json, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      },
+      {
+        "sequence": 4,
+        "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'edge.create', 'Create connector', 'edge.create.undo', 'edge.create.redo', json_object('id', :id, 'source_id', :source_id, 'target_id', :target_id, 'kind', :kind, 'label', :label, 'style_json', json(:style_json)), json_object('id', :id), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "edge.create.undo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_edge WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.create')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo the current durable connector creation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_edge WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.create')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "edge.create.redo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_edge (id, diagram_id, source_id, target_id, kind, label, style_json, created_at, updated_at) SELECT json_extract(forward_json, '$.id'), :diagram_id, json_extract(forward_json, '$.source_id'), json_extract(forward_json, '$.target_id'), json_extract(forward_json, '$.kind'), json_extract(forward_json, '$.label'), json_extract(forward_json, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.create'",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo the next durable connector creation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "INSERT INTO diagram_edge (id, diagram_id, source_id, target_id, kind, label, style_json, created_at, updated_at) SELECT json_extract(forward_json, '$.id'), :diagram_id, json_extract(forward_json, '$.source_id'), json_extract(forward_json, '$.target_id'), json_extract(forward_json, '$.kind'), json_extract(forward_json, '$.label'), json_extract(forward_json, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.create'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "edge.configure",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}, "id": {"type": "string", "required": true},
+      "from_source_id": {"type": "string", "required": true}, "from_target_id": {"type": "string", "required": true}, "from_source_port": {"type": "string", "required": true}, "from_target_port": {"type": "string", "required": true}, "from_route_mode": {"type": "string", "required": true},
+      "to_source_id": {"type": "string", "required": true}, "to_target_id": {"type": "string", "required": true}, "to_source_port": {"type": "string", "required": true}, "to_target_port": {"type": "string", "required": true}, "to_route_mode": {"type": "string", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically reconnect an edge, choose visible ports, and select its routing intent.",
+    "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor", "required_changes": null},
+      {"sequence": 2, "sql_text": "UPDATE diagram_edge SET source_id = :to_source_id, target_id = :to_target_id, source_port = :to_source_port, target_port = :to_target_port, route_mode = :to_route_mode, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND diagram_id = :diagram_id AND source_id = :from_source_id AND target_id = :from_target_id AND source_port = :from_source_port AND target_port = :from_target_port AND route_mode = :from_route_mode AND :to_source_id != :to_target_id AND :to_source_port IN ('auto', 'north', 'east', 'south', 'west') AND :to_target_port IN ('auto', 'north', 'east', 'south', 'west') AND :to_route_mode IN ('orthogonal', 'direct') AND EXISTS (SELECT 1 FROM diagram_node WHERE id = :to_source_id AND diagram_id = :diagram_id) AND EXISTS (SELECT 1 FROM diagram_node WHERE id = :to_target_id AND diagram_id = :diagram_id)", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1},
+      {"sequence": 4, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) VALUES (:operation_id, :diagram_id, :expected_cursor + 1, 'edge.configure', 'Configure connector', 'edge.configure.undo', 'edge.configure.redo', json_object('id', :id, 'source_id', :to_source_id, 'target_id', :to_target_id, 'source_port', :to_source_port, 'target_port', :to_target_port, 'route_mode', :to_route_mode), json_object('id', :id, 'source_id', :from_source_id, 'target_id', :from_target_id, 'source_port', :from_source_port, 'target_port', :from_target_port, 'route_mode', :from_route_mode), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "edge.configure.undo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_edge SET source_id = (SELECT json_extract(inverse_json, '$.source_id') FROM diagram_operation WHERE id = :operation_id), target_id = (SELECT json_extract(inverse_json, '$.target_id') FROM diagram_operation WHERE id = :operation_id), source_port = (SELECT json_extract(inverse_json, '$.source_port') FROM diagram_operation WHERE id = :operation_id), target_port = (SELECT json_extract(inverse_json, '$.target_port') FROM diagram_operation WHERE id = :operation_id), route_mode = (SELECT json_extract(inverse_json, '$.route_mode') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.configure')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Undo one connector configuration.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_edge SET source_id = (SELECT json_extract(inverse_json, '$.source_id') FROM diagram_operation WHERE id = :operation_id), target_id = (SELECT json_extract(inverse_json, '$.target_id') FROM diagram_operation WHERE id = :operation_id), source_port = (SELECT json_extract(inverse_json, '$.source_port') FROM diagram_operation WHERE id = :operation_id), target_port = (SELECT json_extract(inverse_json, '$.target_port') FROM diagram_operation WHERE id = :operation_id), route_mode = (SELECT json_extract(inverse_json, '$.route_mode') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(inverse_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.configure')", "required_changes": 1},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.configure'", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "edge.configure.redo",
+    "operation": "write",
+    "sql_text": "UPDATE diagram_edge SET source_id = (SELECT json_extract(forward_json, '$.source_id') FROM diagram_operation WHERE id = :operation_id), target_id = (SELECT json_extract(forward_json, '$.target_id') FROM diagram_operation WHERE id = :operation_id), source_port = (SELECT json_extract(forward_json, '$.source_port') FROM diagram_operation WHERE id = :operation_id), target_port = (SELECT json_extract(forward_json, '$.target_port') FROM diagram_operation WHERE id = :operation_id), route_mode = (SELECT json_extract(forward_json, '$.route_mode') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.configure')",
+    "parameters_json": {"operation_id": {"type": "string", "required": true}, "diagram_id": {"type": "string", "required": true}, "expected_cursor": {"type": "integer", "required": true}},
+    "result_mode": "changes", "description": "Redo one connector configuration.", "enabled": 1,
+    "steps": [
+      {"sequence": 1, "sql_text": "UPDATE diagram_edge SET source_id = (SELECT json_extract(forward_json, '$.source_id') FROM diagram_operation WHERE id = :operation_id), target_id = (SELECT json_extract(forward_json, '$.target_id') FROM diagram_operation WHERE id = :operation_id), source_port = (SELECT json_extract(forward_json, '$.source_port') FROM diagram_operation WHERE id = :operation_id), target_port = (SELECT json_extract(forward_json, '$.target_port') FROM diagram_operation WHERE id = :operation_id), route_mode = (SELECT json_extract(forward_json, '$.route_mode') FROM diagram_operation WHERE id = :operation_id), updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND diagram_id = :diagram_id AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.configure')", "required_changes": 1},
+      {"sequence": 2, "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.configure'", "required_changes": 1},
+      {"sequence": 3, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "edge.delete",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true},
+      "id": {"type": "string", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Atomically delete a connector and append its durable restoration operation.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_operation WHERE diagram_id = :diagram_id AND sequence > :expected_cursor",
+        "required_changes": null
+      },
+      {"sequence": 2, "sql_text": "INSERT INTO diagram_operation (id, diagram_id, sequence, command_kind, summary, undo_endpoint, redo_endpoint, forward_json, inverse_json, state, created_at, updated_at) SELECT :operation_id, :diagram_id, :expected_cursor + 1, 'edge.delete', 'Delete connector', 'edge.delete.undo', 'edge.delete.redo', json_object('id', e.id), json_object('id', e.id, 'layer_id', e.layer_id, 'source_id', e.source_id, 'target_id', e.target_id, 'kind', e.kind, 'label', e.label, 'source_port', e.source_port, 'target_port', e.target_port, 'route_mode', e.route_mode, 'waypoints_json', json(e.waypoints_json), 'style_json', json(e.style_json)), 'applied', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_edge e WHERE e.id = :id AND e.diagram_id = :diagram_id", "required_changes": 1},
+      {"sequence": 3, "sql_text": "DELETE FROM diagram_edge WHERE id = :id AND diagram_id = :diagram_id", "required_changes": 1},
+      {"sequence": 4, "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, tip = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor", "required_changes": 1}
+    ]
+  },
+  {
+    "name": "edge.delete.undo",
+    "operation": "write",
+    "sql_text": "INSERT INTO diagram_edge (id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at) SELECT json_extract(inverse_json, '$.id'), :diagram_id, json_extract(inverse_json, '$.layer_id'), json_extract(inverse_json, '$.source_id'), json_extract(inverse_json, '$.target_id'), json_extract(inverse_json, '$.kind'), json_extract(inverse_json, '$.label'), json_extract(inverse_json, '$.source_port'), json_extract(inverse_json, '$.target_port'), json_extract(inverse_json, '$.route_mode'), json_extract(inverse_json, '$.waypoints_json'), json_extract(inverse_json, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.delete'",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Undo the current durable connector deletion.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "INSERT INTO diagram_edge (id, diagram_id, layer_id, source_id, target_id, kind, label, source_port, target_port, route_mode, waypoints_json, style_json, created_at, updated_at) SELECT json_extract(inverse_json, '$.id'), :diagram_id, json_extract(inverse_json, '$.layer_id'), json_extract(inverse_json, '$.source_id'), json_extract(inverse_json, '$.target_id'), json_extract(inverse_json, '$.kind'), json_extract(inverse_json, '$.label'), json_extract(inverse_json, '$.source_port'), json_extract(inverse_json, '$.target_port'), json_extract(inverse_json, '$.route_mode'), json_extract(inverse_json, '$.waypoints_json'), json_extract(inverse_json, '$.style_json'), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.delete'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'undone', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor AND state = 'applied' AND command_kind = 'edge.delete'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor - 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor",
+        "required_changes": 1
+      }
+    ]
+  },
+  {
+    "name": "edge.delete.redo",
+    "operation": "write",
+    "sql_text": "DELETE FROM diagram_edge WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.delete')",
+    "parameters_json": {
+      "operation_id": {"type": "string", "required": true},
+      "diagram_id": {"type": "string", "required": true},
+      "expected_cursor": {"type": "integer", "required": true}
+    },
+    "result_mode": "changes",
+    "description": "Redo the next durable connector deletion.",
+    "enabled": 1,
+    "steps": [
+      {
+        "sequence": 1,
+        "sql_text": "DELETE FROM diagram_edge WHERE id = (SELECT json_extract(forward_json, '$.id') FROM diagram_operation WHERE id = :operation_id) AND EXISTS (SELECT 1 FROM diagram_operation WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.delete')",
+        "required_changes": 1
+      },
+      {
+        "sequence": 2,
+        "sql_text": "UPDATE diagram_operation SET state = 'applied', updated_at = CURRENT_TIMESTAMP WHERE id = :operation_id AND diagram_id = :diagram_id AND sequence = :expected_cursor + 1 AND state = 'undone' AND command_kind = 'edge.delete'",
+        "required_changes": 1
+      },
+      {
+        "sequence": 3,
+        "sql_text": "UPDATE diagram_history SET cursor = cursor + 1, updated_at = CURRENT_TIMESTAMP WHERE diagram_id = :diagram_id AND cursor = :expected_cursor AND tip >= :expected_cursor + 1",
+        "required_changes": 1
+      }
+    ]
+  }
+]

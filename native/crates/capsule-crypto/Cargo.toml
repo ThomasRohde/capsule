@@ -1,0 +1,17 @@
+[package]
+name = "sqlite-capsule-crypto"
+version = "0.2.0"
+description = "Signed application compartment for SQLite Capsules"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ed25519-dalek.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_json_canonicalizer.workspace = true
+sha2.workspace = true
+thiserror.workspace = true

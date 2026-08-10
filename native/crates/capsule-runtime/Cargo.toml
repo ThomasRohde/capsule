@@ -1,0 +1,26 @@
+[package]
+name = "sqlite-capsule-runtime"
+version = "0.2.0"
+description = "Generic verified asset and named-endpoint runtime for SQLite Capsules"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+# The desktop enables this feature, but the implementation is additionally
+# compiled only with debug assertions and requires an explicit isolated-E2E
+# process guard. Release binaries contain no runtime fault hook.
+debug-fault-injection = []
+
+[dependencies]
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlite-capsule-core = { path = "../capsule-core" }
+sqlite-capsule-launch = { path = "../capsule-launch" }
+sqlite-capsule-lifecycle = { path = "../capsule-lifecycle" }
+sqlite-capsule-policy = { path = "../capsule-policy" }
+thiserror.workspace = true

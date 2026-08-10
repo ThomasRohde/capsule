@@ -1,0 +1,103 @@
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.example/format/capsule-html-export-v0.2.schema.json",
+  "title": "SQLite Capsule HTML export metadata v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "profile",
+    "created_at",
+    "source",
+    "current",
+    "runtime"
+  ],
+  "properties": {
+    "contract_id": {"const": "org.sqlite-capsule.html-export"},
+    "contract_version": {"const": "0.2"},
+    "profile": {"enum": ["view", "interactive", "editable"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256", "bytes", "capsule_id", "format_id", "format_version",
+        "runtime_protocol", "app_id", "app_version", "title"
+      ],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"$ref": "#/$defs/positiveBytes"},
+        "capsule_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "format_id": {"const": "org.sqlite-capsule"},
+        "format_version": {"const": "0.2"},
+        "runtime_protocol": {"const": "capsule-http/0.2"},
+        "app_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "app_version": {"type": "string", "minLength": 1, "maxLength": 128},
+        "title": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    },
+    "current": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision", "database_sha256", "parent_database_sha256",
+        "uncompressed_bytes", "compressed_sha256", "compressed_bytes"
+      ],
+      "properties": {
+        "revision": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "database_sha256": {"$ref": "#/$defs/sha256"},
+        "parent_database_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        },
+        "uncompressed_bytes": {"$ref": "#/$defs/positiveBytes"},
+        "compressed_sha256": {"$ref": "#/$defs/sha256"},
+        "compressed_bytes": {"$ref": "#/$defs/positiveBytes"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"revision": {"const": 1}}},
+          "then": {"properties": {"parent_database_sha256": {"type": "null"}}},
+          "else": {"properties": {"parent_database_sha256": {"$ref": "#/$defs/sha256"}}}
+        }
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host_id", "host_version", "sqlite_package", "sqlite_version",
+        "loader_sha256", "loader_bytes",
+        "sqlite_js_sha256", "sqlite_js_compressed_sha256", "sqlite_js_bytes",
+        "sqlite_wasm_sha256", "sqlite_wasm_compressed_sha256", "sqlite_wasm_bytes",
+        "worker_sha256", "worker_compressed_sha256", "worker_bytes"
+        , "notices_sha256", "notices_bytes"
+      ],
+      "properties": {
+        "host_id": {"const": "org.sqlite-capsule.browser-host"},
+        "host_version": {"const": "0.2"},
+        "sqlite_package": {"const": "@sqlite.org/sqlite-wasm"},
+        "sqlite_version": {"const": "3.53.0-build1"},
+        "loader_sha256": {"$ref": "#/$defs/sha256"},
+        "loader_bytes": {"$ref": "#/$defs/positiveBytes"},
+        "sqlite_js_sha256": {"$ref": "#/$defs/sha256"},
+        "sqlite_js_compressed_sha256": {"$ref": "#/$defs/sha256"},
+        "sqlite_js_bytes": {"$ref": "#/$defs/positiveBytes"},
+        "sqlite_wasm_sha256": {"$ref": "#/$defs/sha256"},
+        "sqlite_wasm_compressed_sha256": {"$ref": "#/$defs/sha256"},
+        "sqlite_wasm_bytes": {"$ref": "#/$defs/positiveBytes"},
+        "worker_sha256": {"$ref": "#/$defs/sha256"},
+        "worker_compressed_sha256": {"$ref": "#/$defs/sha256"},
+        "worker_bytes": {"$ref": "#/$defs/positiveBytes"}
+        , "notices_sha256": {"$ref": "#/$defs/sha256"}
+        , "notices_bytes": {"$ref": "#/$defs/positiveBytes"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "positiveBytes": {"type": "integer", "minimum": 1, "maximum": 67108864}
+  }
+}
+

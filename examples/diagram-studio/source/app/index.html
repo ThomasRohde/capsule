@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Diagram Studio packaged inside a SQLite Capsule">
+  <title>Diagram Studio — SQLite Capsule</title>
+  <link rel="stylesheet" href="/app/styles.css">
+  <script src="/app/theme.js"></script>
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 8h9a5 5 0 0 1 0 10H8"/><path d="M7 5 4 8l3 3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 8h-9a5 5 0 0 0 0 10h5"/><path d="m17 5 3 3-3 3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-connect" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="6" r="2.6"/><path d="M8 16 16 8"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="4" rx="1.5"/><rect x="13" y="10" width="7" height="10" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="15" rx="2"/><rect x="9" y="3" width="6" height="4" rx="1.2"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m8 12 4 4 4-4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8.2 8.2 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16Z"/><path d="m14 6 4 4"/></symbol>
+    <symbol id="i-capture" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+    <symbol id="i-diamond" viewBox="0 0 24 24"><path d="m12 3 9 9-9 9-9-9Z"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8V6"/><path d="M5 12c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8"/></symbol>
+  </defs></svg>
+
+  <div id="app" class="app-shell" aria-busy="true">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><svg class="ic"><use href="#i-db"></use></svg></div>
+        <div class="brand-copy">
+          <h1 id="diagram-title">Loading capsule…</h1>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <p id="diagram-description">The application assets and model are being read from the database.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="save-state" class="save-state">Opening SQLite</span>
+        <span class="rule" aria-hidden="true"></span>
+        <div class="theme-switch" role="group" aria-label="Colour theme">
+          <button id="theme-light" class="theme-button" type="button" title="Light theme" aria-label="Light theme"><svg class="ic"><use href="#i-sun"></use></svg></button>
+          <button id="theme-auto" class="theme-button" type="button" title="Match system theme" aria-label="Match system theme"><svg class="ic"><use href="#i-auto"></use></svg></button>
+          <button id="theme-dark" class="theme-button" type="button" title="Dark theme" aria-label="Dark theme"><svg class="ic"><use href="#i-moon"></use></svg></button>
+        </div>
+        <button id="present" class="tool-button tool-button-primary" type="button" title="Present scenes (P)">
+          <svg class="ic" aria-hidden="true"><use href="#i-play"></use></svg> Present
+        </button>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="Diagram tools">
+      <div class="tool-group" role="group" aria-label="Edit history">
+        <button id="undo" class="icon-button" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg class="ic"><use href="#i-undo"></use></svg></button>
+        <button id="redo" class="icon-button" type="button" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg class="ic"><use href="#i-redo"></use></svg></button>
+      </div>
+      <span class="rule" aria-hidden="true"></span>
+      <div class="split-control">
+        <button id="add-node" class="tool-button" type="button" title="Add node (N)"><svg class="ic"><use href="#i-plus"></use></svg> Node</button>
+        <span class="split-rule" aria-hidden="true"></span>
+        <label class="split-select" title="Shape for new nodes">
+          <span class="visually-hidden">New node shape</span>
+          <select id="shape-picker" aria-label="New node shape">
+            <option value="rounded-rectangle">Rounded</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="ellipse">Ellipse</option>
+            <option value="diamond">Diamond</option>
+            <option value="pill">Pill</option>
+            <option value="note">Note</option>
+            <option value="container">Container</option>
+          </select>
+        </label>
+      </div>
+      <button id="connect-mode" class="tool-button" type="button" title="Connect two nodes (C)"><svg class="ic"><use href="#i-connect"></use></svg> Connect</button>
+      <span class="rule" aria-hidden="true"></span>
+      <div class="split-control">
+        <button id="layout-preview" class="tool-button" type="button" title="Preview layout for selected nodes or the whole diagram"><svg class="ic"><use href="#i-layout"></use></svg> Layout</button>
+        <span class="split-rule" aria-hidden="true"></span>
+        <label class="split-select" title="Deterministic layout experiment">
+          <span class="visually-hidden">Layout experiment</span>
+          <select id="layout-picker" aria-label="Layout experiment">
+            <option value="grid">Grid</option>
+            <option value="directional">Directional flow</option>
+            <option value="layered">Layered graph</option>
+          </select>
+        </label>
+      </div>
+      <button id="fit-view" class="tool-button" type="button" title="Fit diagram (F)"><svg class="ic"><use href="#i-fit"></use></svg> Fit</button>
+      <span class="rule" aria-hidden="true"></span>
+      <details class="overflow-menu">
+        <summary title="Clipboard, import and export" aria-label="More actions"><svg class="ic"><use href="#i-more"></use></svg></summary>
+        <div class="overflow-panel">
+          <button id="copy-selection" class="menu-item" type="button" title="Copy selection (Ctrl+C)"><svg class="ic"><use href="#i-copy"></use></svg> Copy selection<kbd>⌘C</kbd></button>
+          <button id="paste-selection" class="menu-item" type="button" title="Paste Diagram Studio JSON (Ctrl+V)"><svg class="ic"><use href="#i-paste"></use></svg> Paste<kbd>⌘V</kbd></button>
+          <span class="menu-rule" aria-hidden="true"></span>
+          <button id="import-json" class="menu-item" type="button" title="Import a user-selected Diagram Studio JSON file"><svg class="ic"><use href="#i-import"></use></svg> Import JSON…</button>
+          <div class="menu-row">
+            <button id="export-diagram" class="menu-item" type="button" title="Export diagram"><svg class="ic"><use href="#i-export"></use></svg> Export as</button>
+            <label class="menu-select">
+              <span class="visually-hidden">Export format</span>
+              <select id="export-picker" aria-label="Export format"><option value="json">JSON</option><option value="svg">SVG</option><option value="png">PNG</option></select>
+            </label>
+          </div>
+        </div>
+      </details>
+      <div class="toolbar-meta" aria-hidden="true"><span id="diagram-stats"></span></div>
+    </nav>
+
+    <main class="workspace">
+      <aside class="scene-panel" aria-label="Presentation scenes">
+        <div class="panel-heading">
+          <h2>Scenes</h2>
+          <div class="panel-heading-actions">
+            <span id="scene-count" class="count-badge">0</span>
+            <button id="scene-add" class="icon-button" type="button" title="Add scene" aria-label="Add scene"><svg class="ic"><use href="#i-plus"></use></svg></button>
+          </div>
+        </div>
+        <div id="scene-list" class="scene-list"></div>
+        <div class="scene-authoring" role="group" aria-label="Scene authoring">
+          <button id="scene-rename" class="icon-button" type="button" title="Rename selected scene" aria-label="Rename scene"><svg class="ic"><use href="#i-pencil"></use></svg></button>
+          <button id="scene-capture" class="icon-button" type="button" title="Capture viewport, focus, and selected node overrides" aria-label="Capture scene"><svg class="ic"><use href="#i-capture"></use></svg></button>
+          <button id="scene-duplicate" class="icon-button" type="button" title="Duplicate selected scene" aria-label="Duplicate scene"><svg class="ic"><use href="#i-copy"></use></svg></button>
+          <button id="scene-up" class="icon-button" type="button" title="Move scene earlier" aria-label="Move scene earlier"><svg class="ic"><use href="#i-up"></use></svg></button>
+          <button id="scene-down" class="icon-button" type="button" title="Move scene later" aria-label="Move scene later"><svg class="ic"><use href="#i-down"></use></svg></button>
+          <span class="authoring-spacer"></span>
+          <button id="scene-delete" class="icon-button is-danger" type="button" title="Delete selected scene" aria-label="Delete scene"><svg class="ic"><use href="#i-minus"></use></svg></button>
+        </div>
+        <div class="panel-heading layer-heading"><h2>Layers</h2></div>
+        <div id="layer-list" class="layer-list"></div>
+        <p class="panel-note">Every scene is a saved camera and focus set over stable node IDs, stored in the capsule.</p>
+      </aside>
+
+      <section class="canvas-shell" aria-label="Diagram canvas">
+        <div id="mode-hint" class="mode-hint" hidden></div>
+        <svg id="diagram-canvas" class="diagram-canvas" viewBox="0 0 2200 1250" tabindex="0" aria-label="Interactive architecture diagram">
+          <defs>
+            <pattern id="minor-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M 24 0 L 0 0 0 24" class="grid-minor"></path>
+            </pattern>
+            <pattern id="major-grid" width="120" height="120" patternUnits="userSpaceOnUse">
+              <rect width="120" height="120" fill="url(#minor-grid)"></rect>
+              <path d="M 120 0 L 0 0 0 120" class="grid-major"></path>
+            </pattern>
+            <marker id="arrow-head" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path>
+            </marker>
+            <filter id="node-shadow" x="-30%" y="-30%" width="160%" height="170%">
+              <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.12"></feDropShadow>
+            </filter>
+          </defs>
+          <rect id="canvas-background" x="-10000" y="-10000" width="20000" height="20000" fill="url(#major-grid)"></rect>
+          <g id="element-layer"></g>
+          <g id="marquee-layer"></g>
+        </svg>
+        <div class="canvas-footer">
+          <span id="coordinates">x 0 · y 0 · 100%</span>
+          <span class="canvas-hints">Drag to pan · Shift-drag to marquee · Wheel to zoom · Double-click to rename</span>
+        </div>
+      </section>
+
+      <aside class="inspector-panel" aria-label="Selection inspector">
+        <div class="panel-heading"><h2>Inspector</h2><span id="selection-kind" class="panel-meta"></span></div>
+        <div id="inspector" class="inspector-content">
+          <div class="empty-inspector">
+            <div class="empty-icon"><svg class="ic"><use href="#i-diamond"></use></svg></div>
+            <h3>Nothing selected</h3>
+            <p>Select a node or connector to inspect it. Drag unlocked nodes to persist their position in the database.</p>
+          </div>
+        </div>
+        <div class="keyboard-card">
+          <span><kbd>Ctrl</kbd><kbd>Z</kbd> undo</span>
+          <span><kbd>Ctrl</kbd><kbd>Y</kbd> redo</span>
+          <span><kbd>N</kbd> new node</span>
+          <span><kbd>C</kbd> connect</span>
+          <span><kbd>F</kbd> fit</span>
+          <span><kbd>Del</kbd> delete</span>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="loading-screen" class="loading-screen" role="status">
+    <div class="loading-card">
+      <div class="loading-mark" aria-hidden="true"><svg class="ic"><use href="#i-db"></use></svg><span class="panel-kicker">SQLite Capsule</span></div>
+      <h2>Opening the application from its database</h2>
+      <p>Reading the manifest, embedded assets, diagram model, endpoints, and scenes.</p>
+      <div class="loading-line"><span></span></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <input id="import-file" class="visually-hidden" type="file" accept="application/json,.json">
+
+  <section id="presentation-overlay" class="presentation-overlay" aria-live="polite">
+    <div class="presentation-copy">
+      <span id="presentation-index" class="presentation-index">1 / 5</span>
+      <h2 id="presentation-title"></h2>
+      <p id="presentation-narrative"></p>
+    </div>
+    <div class="presentation-controls">
+      <button id="previous-scene" type="button" aria-label="Previous scene"><svg class="ic"><use href="#i-left"></use></svg></button>
+      <button id="next-scene" type="button" aria-label="Next scene"><svg class="ic"><use href="#i-right"></use></svg></button>
+      <button id="exit-presentation" type="button">Exit</button>
+    </div>
+  </section>
+
+  <script src="/app/capsule-client.js" defer></script>
+  <script src="/app/geometry.js" defer></script>
+  <script src="/app/interchange.js" defer></script>
+  <script src="/app/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+# Deterministic generated and vendored binary artifacts.
+*.sqlite binary
+*.sqlitecapsule binary
+*.wasm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.exe binary
+*.msi binary
+*.zip binary

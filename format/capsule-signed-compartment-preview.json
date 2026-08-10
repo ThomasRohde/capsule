@@ -1,0 +1,38 @@
+{
+  "description_format": "org.sqlite-capsule.signed-compartment/0.2-preview",
+  "status": "design-only",
+  "purpose": "Describe how a future publisher signature can cover immutable application content while leaving user data editable. No signature in this document authenticates a capsule.",
+  "hash_algorithm": "sha256",
+  "immutable_application_compartment": {
+    "included": [
+      "capsule_manifest.format_id",
+      "capsule_manifest.format_version",
+      "capsule_manifest.app_id",
+      "capsule_manifest.app_version",
+      "capsule_manifest.entry_asset",
+      "capsule_endpoint declarations",
+      "capsule_asset content and metadata",
+      "platform schema and indexes"
+    ],
+    "content_digest": "lowercase hexadecimal digest over a canonical manifest and ordered content records",
+    "signature_envelope": {
+      "publisher_key_id": "opaque stable key identifier",
+      "algorithm": "future-approved public-key signature algorithm",
+      "signature": "base64url signature over content_digest"
+    }
+  },
+  "mutable_data_compartment": {
+    "included": [
+      "domain tables",
+      "capsule_change_log",
+      "user-editable presentation state"
+    ],
+    "rule": "Mutating these records must not rewrite the immutable application digest. A host may downgrade trust when application content or schema changes."
+  },
+  "verification_rules": [
+    "Canonicalization must be deterministic and independently implementable.",
+    "The signature envelope is metadata until a trusted verifier and publisher key policy exist.",
+    "Unsigned and modified capsules remain inspectable as ordinary SQLite files.",
+    "Hosts must not interpret this preview as an executable trust grant."
+  ]
+}

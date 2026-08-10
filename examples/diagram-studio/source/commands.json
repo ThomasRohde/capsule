@@ -1,0 +1,148 @@
+[
+  {
+    "id": "inspect.repo",
+    "purpose": "Inspect manifest, assets, prompts, commands, and document inventory using the repository host.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py inspect \"{capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "inspect", "{capsule}"],
+    "risk_class": "read-only",
+    "success_condition": "JSON is printed with one manifest and an asset inventory."
+  },
+  {
+    "id": "verify.repo",
+    "purpose": "Run SQLite integrity, foreign-key, asset-hash, format, endpoint, and application checks.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py verify \"{capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "verify", "{capsule}"],
+    "risk_class": "read-only",
+    "success_condition": "The command exits zero and prints \"ok\": true."
+  },
+  {
+    "id": "start.repo",
+    "purpose": "Launch a detached loopback host from the repository runtime.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py start \"{capsule}\" --trust-capsule",
+    "argv_json": ["{python}", "tools/capsule.py", "start", "{capsule}", "--trust-capsule"],
+    "risk_class": "local-execute",
+    "success_condition": "The command exits zero and prints a local http://127.0.0.1 URL with a healthy capsule ID."
+  },
+  {
+    "id": "status.repo",
+    "purpose": "Confirm that the detached host is healthy.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py status \"{capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "status", "{capsule}"],
+    "risk_class": "read-only",
+    "success_condition": "The command reports \"running\": true and the expected capsule identity."
+  },
+  {
+    "id": "stop.repo",
+    "purpose": "Stop the detached loopback host for this capsule.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py stop \"{capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "stop", "{capsule}"],
+    "risk_class": "local-execute",
+    "success_condition": "The command reports that the host is no longer running."
+  },
+  {
+    "id": "extract.embedded",
+    "purpose": "When only the database is available, integrity-check and exclusively extract its embedded compatible host using Python's sqlite3 module.",
+    "platform": "any",
+    "cwd": ".",
+    "command_template": "{python} -c \"import hashlib,pathlib,sqlite3,sys; c=sqlite3.connect(sys.argv[1]); r=c.execute('SELECT content,sha256 FROM capsule_asset WHERE path=?',('bootstrap/capsule_host.py',)).fetchone(); b=r[0]; hashlib.sha256(b).hexdigest()==r[1] or sys.exit('embedded host hash mismatch'); p=pathlib.Path(sys.argv[2])/'capsule_host.py'; p.parent.mkdir(parents=True,exist_ok=True); f=p.open('xb'); f.write(b); f.close(); print(p)\" \"{capsule}\" \"{cache}\"",
+    "argv_json": [
+      "{python}",
+      "-c",
+      "import hashlib,pathlib,sqlite3,sys; c=sqlite3.connect(sys.argv[1]); r=c.execute('SELECT content,sha256 FROM capsule_asset WHERE path=?',('bootstrap/capsule_host.py',)).fetchone(); b=r[0]; hashlib.sha256(b).hexdigest()==r[1] or sys.exit('embedded host hash mismatch'); p=pathlib.Path(sys.argv[2])/'capsule_host.py'; p.parent.mkdir(parents=True,exist_ok=True); f=p.open('xb'); f.write(b); f.close(); print(p)",
+      "{capsule}",
+      "{cache}"
+    ],
+    "risk_class": "write",
+    "success_condition": "A new capsule_host.py file is written under the selected cache directory; an existing target is never overwritten."
+  },
+  {
+    "id": "verify.embedded",
+    "purpose": "Execute the extracted host to verify the capsule before serving application assets.",
+    "platform": "any",
+    "cwd": ".",
+    "command_template": "{python} \"{cache}/capsule_host.py\" verify \"{capsule}\"",
+    "argv_json": ["{python}", "{cache}/capsule_host.py", "verify", "{capsule}"],
+    "risk_class": "local-execute",
+    "success_condition": "The extracted code exits zero and prints \"ok\": true."
+  },
+  {
+    "id": "start.embedded",
+    "purpose": "Run the capsule using the extracted compatible host.",
+    "platform": "any",
+    "cwd": ".",
+    "command_template": "{python} \"{cache}/capsule_host.py\" start \"{capsule}\" --trust-capsule",
+    "argv_json": ["{python}", "{cache}/capsule_host.py", "start", "{capsule}", "--trust-capsule"],
+    "risk_class": "local-execute",
+    "success_condition": "The command exits and prints a healthy local loopback URL."
+  },
+  {
+    "id": "status.embedded",
+    "purpose": "Confirm a database-only launch using the extracted compatible host.",
+    "platform": "any",
+    "cwd": ".",
+    "command_template": "{python} \"{cache}/capsule_host.py\" status \"{capsule}\"",
+    "argv_json": ["{python}", "{cache}/capsule_host.py", "status", "{capsule}"],
+    "risk_class": "local-execute",
+    "success_condition": "The command reports \"running\": true and the expected capsule identity."
+  },
+  {
+    "id": "stop.embedded",
+    "purpose": "Stop a database-only launch using the matching extracted host.",
+    "platform": "any",
+    "cwd": ".",
+    "command_template": "{python} \"{cache}/capsule_host.py\" stop \"{capsule}\"",
+    "argv_json": ["{python}", "{cache}/capsule_host.py", "stop", "{capsule}"],
+    "risk_class": "local-execute",
+    "success_condition": "The command reports that the host is no longer running."
+  },
+  {
+    "id": "unpack.repo",
+    "purpose": "Create a deterministic reviewable bundle from any capsule without executing its assets.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py unpack \"{capsule}\" \"{bundle}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "unpack", "{capsule}", "{bundle}"],
+    "risk_class": "write",
+    "success_condition": "A new deterministic authoring bundle is created and the source SHA-256 is reported."
+  },
+  {
+    "id": "pack.repo",
+    "purpose": "Pack and verify a deterministic authoring bundle into a new capsule.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py pack \"{bundle}\" \"{output_capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "pack", "{bundle}", "{output_capsule}"],
+    "risk_class": "write",
+    "success_condition": "A new capsule is created, fully verified, and its SHA-256 is reported."
+  },
+  {
+    "id": "diff.repo",
+    "purpose": "Compare two capsules semantically by pragma, schema, and table rows.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/capsule.py diff \"{capsule}\" \"{other_capsule}\"",
+    "argv_json": ["{python}", "tools/capsule.py", "diff", "{capsule}", "{other_capsule}"],
+    "risk_class": "read-only",
+    "success_condition": "JSON reports whether the capsules are semantically equal and identifies bounded changes."
+  },
+  {
+    "id": "test.repo",
+    "purpose": "Rebuild and test the complete bootstrap after source changes.",
+    "platform": "any",
+    "cwd": "{repo}",
+    "command_template": "{python} tools/build_example.py && {python} -m unittest discover -s tests -v && {python} tools/capsule.py verify \"{capsule}\" && {python} tools/build_example.py --check",
+    "argv_json": null,
+    "risk_class": "write",
+    "success_condition": "The example rebuilds, all tests pass, verification succeeds, and the checked distribution matches a fresh build."
+  }
+]

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "diagram-main-exists",
+    "severity": "error",
+    "description": "The example must contain exactly one main diagram.",
+    "sql_text": "SELECT count(*) FROM diagram_document WHERE id = 'diagram-main'",
+    "result_mode": "scalar",
+    "expected_json": 1
+  },
+  {
+    "id": "diagram-has-scenes",
+    "severity": "error",
+    "description": "The example must contain at least four presentation scenes.",
+    "sql_text": "SELECT CASE WHEN count(*) >= 4 THEN 1 ELSE 0 END FROM diagram_scene WHERE diagram_id = 'diagram-main'",
+    "result_mode": "scalar",
+    "expected_json": 1
+  },
+  {
+    "id": "no-orphan-edges",
+    "severity": "error",
+    "description": "Every edge endpoint must resolve to a node in the same diagram.",
+    "sql_text": "SELECT e.id FROM diagram_edge e LEFT JOIN diagram_node s ON s.id = e.source_id AND s.diagram_id = e.diagram_id LEFT JOIN diagram_node t ON t.id = e.target_id AND t.diagram_id = e.diagram_id WHERE s.id IS NULL OR t.id IS NULL ORDER BY e.id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "scene-focus-resolves",
+    "severity": "error",
+    "description": "Every stable node ID referenced by a scene must exist.",
+    "sql_text": "SELECT s.id AS scene_id, j.value AS missing_node_id FROM diagram_scene s, json_each(s.focus_json) j LEFT JOIN diagram_node n ON n.id = j.value AND n.diagram_id = s.diagram_id WHERE n.id IS NULL ORDER BY s.id, j.value",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "node-dimensions-valid",
+    "severity": "error",
+    "description": "All nodes must have finite, useful dimensions and coordinates.",
+    "sql_text": "SELECT id FROM diagram_node WHERE width < 60 OR height < 40 OR abs(x) > 100000 OR abs(y) > 100000 ORDER BY id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "presentation-order-contiguous",
+    "severity": "error",
+    "description": "Presentation scenes must form one contiguous one-based guided path.",
+    "sql_text": "SELECT CASE WHEN min(position) = 1 AND max(position) = count(*) AND count(DISTINCT position) = count(*) THEN 1 ELSE 0 END FROM diagram_scene WHERE diagram_id = 'diagram-main'",
+    "result_mode": "scalar",
+    "expected_json": 1
+  },
+  {
+    "id": "layer-order-contiguous",
+    "severity": "error",
+    "description": "Semantic layers must form one contiguous one-based order for every diagram.",
+    "sql_text": "SELECT diagram_id FROM diagram_layer GROUP BY diagram_id HAVING min(position) != 1 OR max(position) != count(*) OR count(DISTINCT position) != count(*) ORDER BY diagram_id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "semantic-layer-ownership-valid",
+    "severity": "error",
+    "description": "Nodes, connectors, and groups must reference a semantic layer owned by the same diagram.",
+    "sql_text": "SELECT 'node' AS kind, n.id AS object_id FROM diagram_node n LEFT JOIN diagram_layer l ON l.id = n.layer_id AND l.diagram_id = n.diagram_id WHERE l.id IS NULL UNION ALL SELECT 'edge', e.id FROM diagram_edge e LEFT JOIN diagram_layer l ON l.id = e.layer_id AND l.diagram_id = e.diagram_id WHERE l.id IS NULL UNION ALL SELECT 'group', g.id FROM diagram_group g LEFT JOIN diagram_layer l ON l.id = g.layer_id AND l.diagram_id = g.diagram_id WHERE l.id IS NULL ORDER BY kind, object_id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "group-membership-valid",
+    "severity": "error",
+    "description": "Every node belongs to at most one non-nested group in the same diagram and semantic layer.",
+    "sql_text": "SELECT m.group_id, m.node_id FROM diagram_group_member m JOIN diagram_group g ON g.id = m.group_id JOIN diagram_node n ON n.id = m.node_id WHERE g.diagram_id != n.diagram_id OR g.layer_id != n.layer_id ORDER BY m.group_id, m.position",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "scene-overrides-resolve",
+    "severity": "error",
+    "description": "Every scene override must target a stable node in the same diagram.",
+    "sql_text": "SELECT o.scene_id, o.node_id FROM diagram_scene_override o JOIN diagram_scene s ON s.id = o.scene_id JOIN diagram_node n ON n.id = o.node_id WHERE s.diagram_id != n.diagram_id ORDER BY o.scene_id, o.node_id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "connector-routing-valid",
+    "severity": "error",
+    "description": "Connector routing intent and optional waypoints must remain bounded JSON arrays.",
+    "sql_text": "SELECT id FROM diagram_edge WHERE source_port NOT IN ('auto', 'north', 'east', 'south', 'west') OR target_port NOT IN ('auto', 'north', 'east', 'south', 'west') OR route_mode NOT IN ('orthogonal', 'direct') OR json_type(waypoints_json) != 'array' OR json_array_length(waypoints_json) > 64 ORDER BY id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "history-cursor-valid",
+    "severity": "error",
+    "description": "Every diagram history cursor stays within its durable operation tip.",
+    "sql_text": "SELECT diagram_id FROM diagram_history WHERE cursor < 0 OR tip < cursor OR tip != (SELECT count(*) FROM diagram_operation WHERE diagram_id = diagram_history.diagram_id)",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "history-sequence-contiguous",
+    "severity": "error",
+    "description": "Durable operation sequences are contiguous and one-based for each diagram.",
+    "sql_text": "SELECT h.diagram_id FROM diagram_history h WHERE h.tip > 0 AND EXISTS (SELECT 1 FROM (SELECT count(*) AS total, min(sequence) AS first, max(sequence) AS last, count(DISTINCT sequence) AS distinct_total FROM diagram_operation WHERE diagram_id = h.diagram_id) x WHERE x.total != h.tip OR x.first != 1 OR x.last != h.tip OR x.distinct_total != x.total)",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "history-state-matches-cursor",
+    "severity": "error",
+    "description": "Operations at or before the cursor are applied and later operations are undone.",
+    "sql_text": "SELECT o.id FROM diagram_operation o JOIN diagram_history h ON h.diagram_id = o.diagram_id WHERE (o.sequence <= h.cursor AND o.state != 'applied') OR (o.sequence > h.cursor AND o.state != 'undone') ORDER BY o.diagram_id, o.sequence",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "history-endpoints-resolve",
+    "severity": "error",
+    "description": "Every stored operation references enabled named inverse and forward endpoints.",
+    "sql_text": "SELECT o.id FROM diagram_operation o LEFT JOIN capsule_endpoint u ON u.name = o.undo_endpoint AND u.operation = 'write' AND u.enabled = 1 LEFT JOIN capsule_endpoint r ON r.name = o.redo_endpoint AND r.operation = 'write' AND r.enabled = 1 WHERE u.name IS NULL OR r.name IS NULL ORDER BY o.id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "history-payloads-bounded",
+    "severity": "error",
+    "description": "Semantic operation payloads remain bounded for predictable offline execution.",
+    "sql_text": "SELECT id FROM diagram_operation WHERE length(forward_json) > 65536 OR length(inverse_json) > 65536 ORDER BY id",
+    "result_mode": "empty",
+    "expected_json": []
+  },
+  {
+    "id": "agent-boot-path-complete",
+    "severity": "error",
+    "description": "A database-only recipient must have extract, verify, start, status, and stop argument vectors.",
+    "sql_text": "SELECT count(*) FROM capsule_command WHERE id IN ('extract.embedded','verify.embedded','start.embedded','status.embedded','stop.embedded') AND json_type(argv_json) = 'array'",
+    "result_mode": "scalar",
+    "expected_json": 5
+  },
+  {
+    "id": "embedded-host-present",
+    "severity": "error",
+    "description": "The agent-bootable distribution profile requires one executable standalone host asset.",
+    "sql_text": "SELECT count(*) FROM capsule_asset WHERE path = 'bootstrap/capsule_host.py' AND executable = 1",
+    "result_mode": "scalar",
+    "expected_json": 1
+  }
+]

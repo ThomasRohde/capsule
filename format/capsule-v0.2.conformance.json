@@ -1,0 +1,424 @@
+{
+  "description_format": "org.sqlite-capsule.conformance/0.2",
+  "title": "SQLite Capsule v0.2 platform conformance",
+  "purpose": "Independent machine-readable checks for the current v0.2 platform contract. This file is not executable application code and does not authenticate a publisher.",
+  "identity": {
+    "application_id": 1129337676,
+    "user_version": 2,
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "runtime_protocol": "capsule-http/0.2"
+  },
+  "required_objects": {
+    "tables": {
+      "capsule_manifest": {
+        "primary_key": [
+          "id"
+        ],
+        "columns": {
+          "id": {
+            "type": "INTEGER",
+            "notnull": false,
+            "pk": 1
+          },
+          "format_id": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "format_version": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "capsule_id": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "title": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "summary": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "app_id": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "app_version": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "entry_asset": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "runtime_protocol": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "permissions_json": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "created_at": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "updated_at": {
+            "type": "TEXT",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_asset": {
+        "primary_key": [
+          "path"
+        ],
+        "columns": {
+          "path": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "media_type": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "content": {
+            "type": "BLOB",
+            "notnull": true
+          },
+          "sha256": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "executable": {
+            "type": "INTEGER",
+            "notnull": true
+          },
+          "cache_policy": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "description": {
+            "type": "TEXT",
+            "notnull": false
+          }
+        }
+      },
+      "capsule_command": {
+        "primary_key": [
+          "id"
+        ],
+        "columns": {
+          "id": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "purpose": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "platform": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "cwd": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "command_template": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "argv_json": {
+            "type": "TEXT",
+            "notnull": false
+          },
+          "risk_class": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "success_condition": {
+            "type": "TEXT",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_runbook": {
+        "primary_key": [
+          "id"
+        ],
+        "foreign_keys": [
+          {
+            "from": "command_id",
+            "table": "capsule_command",
+            "to": "id"
+          }
+        ],
+        "columns": {
+          "id": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "audience": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "sequence": {
+            "type": "INTEGER",
+            "notnull": true
+          },
+          "title": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "body_md": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "command_id": {
+            "type": "TEXT",
+            "notnull": false
+          }
+        }
+      },
+      "capsule_doc": {
+        "primary_key": [
+          "slug"
+        ],
+        "columns": {
+          "slug": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "title": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "media_type": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "content": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "sequence": {
+            "type": "INTEGER",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_endpoint": {
+        "primary_key": [
+          "name"
+        ],
+        "columns": {
+          "name": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "operation": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "sql_text": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "parameters_json": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "result_mode": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "description": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "enabled": {
+            "type": "INTEGER",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_check": {
+        "primary_key": [
+          "id"
+        ],
+        "columns": {
+          "id": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "severity": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "description": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "sql_text": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "result_mode": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "expected_json": {
+            "type": "TEXT",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_prompt": {
+        "primary_key": [
+          "id"
+        ],
+        "columns": {
+          "id": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "title": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "prompt_text": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "sequence": {
+            "type": "INTEGER",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_change_log": {
+        "primary_key": [
+          "id"
+        ],
+        "columns": {
+          "id": {
+            "type": "INTEGER",
+            "notnull": false,
+            "pk": 1
+          },
+          "endpoint_name": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "parameters_json": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "changed_rows": {
+            "type": "INTEGER",
+            "notnull": true
+          },
+          "occurred_at": {
+            "type": "TEXT",
+            "notnull": true
+          }
+        }
+      },
+      "capsule_endpoint_step": {
+        "primary_key": [
+          "endpoint_name",
+          "sequence"
+        ],
+        "foreign_keys": [
+          {
+            "from": "endpoint_name",
+            "table": "capsule_endpoint",
+            "to": "name"
+          }
+        ],
+        "columns": {
+          "endpoint_name": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "sequence": {
+            "type": "INTEGER",
+            "notnull": true,
+            "pk": 2
+          },
+          "sql_text": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "required_changes": {
+            "type": "INTEGER",
+            "notnull": false
+          }
+        }
+      },
+      "capsule_grant": {
+        "primary_key": [
+          "capability"
+        ],
+        "columns": {
+          "capability": {
+            "type": "TEXT",
+            "notnull": true,
+            "pk": 1
+          },
+          "decision": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "reason": {
+            "type": "TEXT",
+            "notnull": true
+          },
+          "granted_at": {
+            "type": "TEXT",
+            "notnull": false
+          }
+        }
+      }
+    },
+    "views": {
+      "START_HERE": {
+        "columns": [
+          "sequence",
+          "audience",
+          "title",
+          "instruction",
+          "command_id",
+          "command_purpose",
+          "platform",
+          "cwd",
+          "command_template",
+          "argv_json",
+          "risk_class",
+          "success_condition"
+        ]
+      }
+    }
+  },
+  "minimum_nonempty_tables": [
+    "capsule_manifest",
+    "capsule_asset",
+    "capsule_command",
+    "capsule_runbook",
+    "capsule_doc",
+    "capsule_endpoint",
+    "capsule_check",
+    "capsule_prompt"
+  ]
+}

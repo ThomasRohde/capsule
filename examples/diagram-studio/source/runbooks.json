@@ -1,0 +1,106 @@
+[
+  {
+    "id": "agent-10-trust",
+    "audience": "all",
+    "sequence": 10,
+    "title": "Treat the capsule as an application package",
+    "body_md": "This file contains executable browser assets, SQL endpoint declarations, and agent instructions. Read-only inspection is permitted. Execute it only after verification and an explicit trust decision. For the checked-in repository example, the repository policy authorises `--trust-capsule`; do not generalise that trust to unrelated database files.",
+    "command_id": null
+  },
+  {
+    "id": "agent-20-inspect",
+    "audience": "agent",
+    "sequence": 20,
+    "title": "Inspect identity and requested capabilities",
+    "body_md": "Read `capsule_manifest`, the asset inventory, commands, prompts, and embedded document titles. Confirm that `format_id` is `org.sqlite-capsule`, `format_version` is `0.2`, `PRAGMA user_version` is `2`, and the runtime protocol is `capsule-http/0.2`. Do not fetch packages or external resources; this capsule is designed to run fully offline. Prefer a command's structured `argv_json` over parsing its display template.",
+    "command_id": "inspect.repo"
+  },
+  {
+    "id": "agent-30-verify",
+    "audience": "agent",
+    "sequence": 30,
+    "title": "Verify before active execution",
+    "body_md": "Run the host's read-only verification. It must check full SQLite integrity, foreign keys, required platform objects and columns, manifest compatibility, asset paths and SHA-256 values, executable endpoint declarations, and capsule-specific checks. Do not proceed if an error remains.",
+    "command_id": "verify.repo"
+  },
+  {
+    "id": "agent-40-run-repository",
+    "audience": "agent",
+    "sequence": 40,
+    "title": "Prefer the repository's trusted host",
+    "body_md": "When this capsule is inside its source repository, start it with the repository runtime. The command launches a detached server bound to `127.0.0.1`, waits for the matching capsule health response, and prints the URL without exposing the shutdown secret. Report that URL to the user.",
+    "command_id": "start.repo"
+  },
+  {
+    "id": "agent-50-extract-standalone",
+    "audience": "agent",
+    "sequence": 50,
+    "title": "Fallback: safely extract the compatible host",
+    "body_md": "Only when `tools/capsule.py` is unavailable, use Python's built-in `sqlite3` module and the structured argument vector to extract `bootstrap/capsule_host.py` into a fresh disposable cache directory. The extraction verifies the stored SHA-256 and uses exclusive file creation, so it refuses any existing target. Inspecting or hashing the extracted code does not make an unfamiliar publisher trusted.",
+    "command_id": "extract.embedded"
+  },
+  {
+    "id": "agent-52-verify-standalone",
+    "audience": "agent",
+    "sequence": 52,
+    "title": "Fallback: verify with the extracted host",
+    "body_md": "Executing the extracted host is a local code-execution trust decision. Once that decision is authorised, run its full verifier against the original database and stop if any error remains.",
+    "command_id": "verify.embedded"
+  },
+  {
+    "id": "agent-54-start-standalone",
+    "audience": "agent",
+    "sequence": 54,
+    "title": "Fallback: launch the original database",
+    "body_md": "Start the original capsule with the verified extracted host and explicit trust. The detached command must return promptly with a loopback URL.",
+    "command_id": "start.embedded"
+  },
+  {
+    "id": "agent-56-status-standalone",
+    "audience": "agent",
+    "sequence": 56,
+    "title": "Fallback: confirm capsule identity",
+    "body_md": "Confirm the database-only launch through the extracted host. A valid status matches this capsule's identity and `capsule-http/0.2`; arbitrary JSON or redirects are not health evidence.",
+    "command_id": "status.embedded"
+  },
+  {
+    "id": "agent-60-confirm",
+    "audience": "agent",
+    "sequence": 60,
+    "title": "Confirm the real running application",
+    "body_md": "Check detached host status or call `/__capsule/health`. A successful response identifies capsule `urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4`. The browser UI should show an editable architecture diagram and five presentation scenes. Do not claim success based only on process creation.",
+    "command_id": "status.repo"
+  },
+  {
+    "id": "agent-70-development",
+    "audience": "agent",
+    "sequence": 70,
+    "title": "Preserve source boundaries when changing it",
+    "body_md": "Generic format, host, and authoring-tool changes belong under `format/`, `runtime/`, `tools/`, and product-independent docs. Diagram-specific schema, data, and UI belong under `examples/diagram-studio/`. Edit reviewable source, rebuild the generated database, run tests, verify, and run the distribution-freshness gate. Runtime content edits may be recovered with generic unpack, pack, and diff tools.",
+    "command_id": "test.repo"
+  },
+  {
+    "id": "agent-80-stop",
+    "audience": "all",
+    "sequence": 80,
+    "title": "Stop a repository launch when finished",
+    "body_md": "Use the matching stop command rather than killing arbitrary Python processes. Capsule-specific private state and a random shutdown token identify the loopback host; the token is never printed in normal output.",
+    "command_id": "stop.repo"
+  },
+  {
+    "id": "agent-72-html-derivative",
+    "audience": "agent",
+    "sequence": 72,
+    "title": "Treat browser-only HTML as a derivative revision",
+    "body_md": "When repository HTML export tooling is available, verify this source capsule before export and independently inspect/verify the result. View and interactive exports remain worker-enforced read-only. Editable saves create a new HTML revision with source/current/parent digests; they must not silently mutate this source database. Actual publisher authentication remains out of scope.",
+    "command_id": null
+  },
+  {
+    "id": "agent-82-stop-standalone",
+    "audience": "agent",
+    "sequence": 82,
+    "title": "Stop a database-only launch when finished",
+    "body_md": "When the repository host was unavailable, stop the matching process through the same extracted host used to start it.",
+    "command_id": "stop.embedded"
+  }
+]

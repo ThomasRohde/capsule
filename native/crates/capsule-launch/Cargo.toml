@@ -1,0 +1,17 @@
+[package]
+name = "sqlite-capsule-launch"
+version = "0.2.0"
+description = "Shared structural, signature, and capability evidence for SQLite Capsule hosts"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rusqlite.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlite-capsule-core = { path = "../capsule-core" }
+sqlite-capsule-crypto = { path = "../capsule-crypto" }
+sqlite-capsule-policy = { path = "../capsule-policy" }
+thiserror.workspace = true

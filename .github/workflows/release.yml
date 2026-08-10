@@ -1,0 +1,164 @@
+name: Release Windows installers
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-installers-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    name: Qualify Windows x86-64 installers
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Require release tag and package versions to match
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python native/tools/check_release_version.py --tag $env:RELEASE_TAG
+
+      - name: Install pinned Rust toolchain, target, and audit tool
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
+          rustup target add x86_64-pc-windows-msvc
+          cargo install cargo-audit --version 0.22.2 --locked
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install pinned native acceptance dependencies
+        run: npm ci
+
+      - name: Verify capsule sources and generated distributions
+        run: |
+          python tools/build_example.py --check
+          python tools/build_exports.py --check
+          python tools/capsule.py verify capsules/diagram-studio.capsule.sqlite
+          python tools/capsule.py conformance capsules/diagram-studio.capsule.sqlite
+          python -m unittest discover -s tests -v
+
+      - name: Verify RustSec policy
+        run: python native/tools/check_rustsec.py
+
+      - name: Verify native workspace
+        working-directory: native
+        run: |
+          cargo fmt --all -- --check
+          cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
+          cargo test --workspace --all-targets --target x86_64-pc-windows-msvc
+          cargo clippy --workspace --all-targets --target x86_64-pc-windows-msvc -- -D warnings
+          python tools/generate_sbom.py --check
+          python tools/generate_license_report.py --check
+
+      - name: Verify trusted Windows shell through WebView2
+        run: |
+          npm run test:native:prepare
+          npm run test:native:prepare:check
+          npm run test:native
+          npm run test:native:raw
+
+      - name: Build and export pinned unsigned installers
+        run: >-
+          python native/tools/build_installers.py
+          --target x86_64-pc-windows-msvc
+          --bundles msi,nsis
+
+      - name: Verify emitted installer versions and file associations
+        working-directory: native
+        run: >-
+          cargo test --target x86_64-pc-windows-msvc
+          -p sqlite-capsule-installer
+          bundled_windows_installers_declare_only_unambiguous_association_when_available
+          -- --nocapture
+
+      - name: Verify Windows NSIS install and uninstall lifecycle
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem -LiteralPath "native/target/x86_64-pc-windows-msvc/release/bundle/nsis" -File -Filter '*-setup.exe')
+          if ($installers.Count -ne 1) {
+            throw "Expected exactly one NSIS installer, found $($installers.Count)."
+          }
+          & tests/native/windows-nsis-installer.ps1 -Installer $installers[0].FullName
+
+      - name: Collect deterministic unsigned build evidence
+        run: >-
+          python native/tools/collect_release_evidence.py
+          --bundle-root native/target/x86_64-pc-windows-msvc/release/bundle
+          --output native/release-evidence/windows-x86_64.json
+          --platform windows
+          --target x86_64-pc-windows-msvc
+          --source-revision ${{ github.sha }}
+          --development-unsigned
+
+      - name: Stage release files and checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item capsules/sqlite-capsule-host-setup.exe release/
+          Copy-Item capsules/sqlite-capsule-host.msi release/
+          Copy-Item native/release-evidence/windows-x86_64.json release/sqlite-capsule-host-windows-x86_64-evidence.json
+          Copy-Item native/sbom.cdx.json release/sqlite-capsule-host-sbom.cdx.json
+          Copy-Item native/THIRD_PARTY_LICENSES.md release/THIRD_PARTY_LICENSES.md
+          $lines = Get-ChildItem -LiteralPath release -File | Sort-Object Name | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash *$($_.Name)"
+          }
+          [System.IO.File]::WriteAllLines(
+            (Join-Path (Resolve-Path release) 'SHA256SUMS.txt'),
+            $lines,
+            [System.Text.UTF8Encoding]::new($false)
+          )
+
+      - name: Upload qualified unsigned installers
+        uses: actions/upload-artifact@v7
+        with:
+          name: sqlite-capsule-host-${{ github.run_id }}-${{ github.run_attempt }}-unsigned
+          if-no-files-found: error
+          retention-days: 14
+          path: release/*
+
+  publish:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: qualify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download qualified installers
+        uses: actions/download-artifact@v8
+        with:
+          name: sqlite-capsule-host-${{ github.run_id }}-${{ github.run_attempt }}-unsigned
+          path: release
+
+      - name: Create release and attach qualified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: pwsh
+        run: |
+          $assets = Get-ChildItem -LiteralPath release -File | Sort-Object Name | Select-Object -ExpandProperty FullName
+          if ($assets.Count -eq 0) {
+            throw "No qualified release assets were downloaded."
+          }
+          $warning = "Unsigned Windows development installers. Verify SHA256SUMS.txt and review the attached build evidence before use."
+          gh release create $env:RELEASE_TAG $assets --verify-tag --generate-notes --notes $warning

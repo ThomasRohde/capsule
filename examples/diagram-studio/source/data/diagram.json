@@ -1,0 +1,491 @@
+{
+  "document": {
+    "id": "diagram-main",
+    "slug": "sqlite-capsule-architecture",
+    "title": "A SQLite file that carries its own application",
+    "description": "The bootstrap architecture, rendered and edited by the application stored inside the database it describes.",
+    "canvas_width": 2200,
+    "canvas_height": 1250,
+    "background": "grid",
+    "created_at": "2026-08-07T19:00:00Z",
+    "updated_at": "2026-08-07T19:00:00Z"
+  },
+  "history": {
+    "diagram_id": "diagram-main",
+    "cursor": 0,
+    "tip": 0,
+    "updated_at": "2026-08-07T19:00:00Z"
+  },
+  "layers": [
+    {"id": "layer-background", "diagram_id": "diagram-main", "name": "Background", "position": 1, "visible": 1, "locked": 1},
+    {"id": "layer-connectors", "diagram_id": "diagram-main", "name": "Connectors", "position": 2, "visible": 1, "locked": 0},
+    {"id": "layer-content", "diagram_id": "diagram-main", "name": "Content", "position": 3, "visible": 1, "locked": 0}
+  ],
+  "nodes": [
+    {
+      "id": "node-capsule-shell",
+      "diagram_id": "diagram-main",
+      "kind": "container",
+      "label": "SQLite capsule",
+      "x": 390,
+      "y": 360,
+      "width": 1000,
+      "height": 640,
+      "z_index": 0,
+      "style_json": {
+        "fill": "#111827",
+        "fillOpacity": 0.42,
+        "stroke": "#64748b",
+        "strokeWidth": 2,
+        "dash": "10 8",
+        "text": "#e2e8f0",
+        "radius": 30,
+        "accent": "#94a3b8"
+      },
+      "data_json": {
+        "eyebrow": "THE ARTEFACT",
+        "description": "One portable database owns the runtime state and application payload.",
+        "locked": true
+      }
+    },
+    {
+      "id": "node-agent-prompt",
+      "diagram_id": "diagram-main",
+      "kind": "prompt",
+      "label": "One-sentence agent prompt",
+      "x": 80,
+      "y": 100,
+      "width": 270,
+      "height": 120,
+      "z_index": 20,
+      "style_json": {
+        "fill": "#312e81",
+        "stroke": "#818cf8",
+        "text": "#eef2ff",
+        "accent": "#a5b4fc",
+        "radius": 22
+      },
+      "data_json": {
+        "eyebrow": "INTENT",
+        "description": "Read START_HERE, verify this capsule, and run it."
+      }
+    },
+    {
+      "id": "node-start-here",
+      "diagram_id": "diagram-main",
+      "kind": "instruction",
+      "label": "Embedded START_HERE runbook",
+      "x": 420,
+      "y": 100,
+      "width": 270,
+      "height": 120,
+      "z_index": 20,
+      "style_json": {
+        "fill": "#78350f",
+        "stroke": "#f59e0b",
+        "text": "#fffbeb",
+        "accent": "#fbbf24",
+        "radius": 22
+      },
+      "data_json": {
+        "eyebrow": "DISCOVERY",
+        "description": "Version-specific commands, safety notes, and success conditions live in the DB."
+      }
+    },
+    {
+      "id": "node-trusted-host",
+      "diagram_id": "diagram-main",
+      "kind": "runtime",
+      "label": "Trusted generic capsule host",
+      "x": 760,
+      "y": 90,
+      "width": 320,
+      "height": 140,
+      "z_index": 20,
+      "style_json": {
+        "fill": "#0c4a6e",
+        "stroke": "#38bdf8",
+        "text": "#f0f9ff",
+        "accent": "#7dd3fc",
+        "radius": 24
+      },
+      "data_json": {
+        "eyebrow": "TRUST BOUNDARY",
+        "description": "Verifies, serves assets, validates named operations, and writes transactions."
+      }
+    },
+    {
+      "id": "node-manifest",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "Manifest and permissions",
+      "x": 470,
+      "y": 470,
+      "width": 240,
+      "height": 120,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#1e293b",
+        "stroke": "#94a3b8",
+        "text": "#f8fafc",
+        "accent": "#cbd5e1",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "IDENTITY",
+        "description": "Format, app version, entry asset, capabilities, and provenance."
+      }
+    },
+    {
+      "id": "node-app-assets",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "HTML, CSS and JavaScript",
+      "x": 780,
+      "y": 470,
+      "width": 240,
+      "height": 120,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#172554",
+        "stroke": "#60a5fa",
+        "text": "#eff6ff",
+        "accent": "#93c5fd",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "APP ASSETS",
+        "description": "The viewer and editor travel inside the database."
+      }
+    },
+    {
+      "id": "node-domain-data",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "Semantic domain data",
+      "x": 1090,
+      "y": 470,
+      "width": 240,
+      "height": 120,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#064e3b",
+        "stroke": "#34d399",
+        "text": "#ecfdf5",
+        "accent": "#6ee7b7",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "SOURCE OF TRUTH",
+        "description": "Nodes, edges, scenes, stable IDs, constraints, and history."
+      }
+    },
+    {
+      "id": "node-endpoints",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "Named read and write endpoints",
+      "x": 470,
+      "y": 700,
+      "width": 240,
+      "height": 130,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#3f1d2e",
+        "stroke": "#f472b6",
+        "text": "#fdf2f8",
+        "accent": "#f9a8d4",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "CAPABILITY BRIDGE",
+        "description": "Parameterised allowlisted operations; no raw browser SQL."
+      }
+    },
+    {
+      "id": "node-scenes",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "Views and presentation scenes",
+      "x": 780,
+      "y": 700,
+      "width": 240,
+      "height": 130,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#4c1d95",
+        "stroke": "#c084fc",
+        "text": "#faf5ff",
+        "accent": "#d8b4fe",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "STORY",
+        "description": "A guided path through live data, not a duplicate slide deck."
+      }
+    },
+    {
+      "id": "node-docs-checks",
+      "diagram_id": "diagram-main",
+      "kind": "component",
+      "label": "Docs, checks and agent prompts",
+      "x": 1090,
+      "y": 700,
+      "width": 240,
+      "height": 130,
+      "z_index": 10,
+      "style_json": {
+        "fill": "#422006",
+        "stroke": "#facc15",
+        "text": "#fefce8",
+        "accent": "#fde047",
+        "radius": 18
+      },
+      "data_json": {
+        "eyebrow": "SELF-DESCRIBING",
+        "description": "The artefact explains, validates, and helps operate itself."
+      }
+    },
+    {
+      "id": "node-browser-ui",
+      "diagram_id": "diagram-main",
+      "kind": "output",
+      "label": "Interactive browser experience",
+      "x": 1510,
+      "y": 390,
+      "width": 420,
+      "height": 210,
+      "z_index": 20,
+      "style_json": {
+        "fill": "#064e3b",
+        "stroke": "#2dd4bf",
+        "text": "#f0fdfa",
+        "accent": "#5eead4",
+        "radius": 28
+      },
+      "data_json": {
+        "eyebrow": "VIEW · EDIT · PRESENT",
+        "description": "The database renders as a visual application and saves edits back into itself."
+      }
+    },
+    {
+      "id": "node-html-export",
+      "diagram_id": "diagram-main",
+      "kind": "export",
+      "label": "Self-contained HTML export",
+      "x": 1510,
+      "y": 740,
+      "width": 420,
+      "height": 190,
+      "z_index": 20,
+      "style_json": {
+        "fill": "#500724",
+        "stroke": "#fb7185",
+        "text": "#fff1f2",
+        "accent": "#fda4af",
+        "radius": 28
+      },
+      "data_json": {
+        "eyebrow": "BROWSER-ONLY DISTRIBUTION",
+        "description": "Package SQLite WASM, the database payload, and the same app contract into one file."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-prompt-runbook",
+      "diagram_id": "diagram-main",
+      "source_id": "node-agent-prompt",
+      "target_id": "node-start-here",
+      "kind": "flow",
+      "label": "discover",
+      "style_json": {"stroke": "#a5b4fc", "width": 3}
+    },
+    {
+      "id": "edge-runbook-host",
+      "diagram_id": "diagram-main",
+      "source_id": "node-start-here",
+      "target_id": "node-trusted-host",
+      "kind": "flow",
+      "label": "verify and launch",
+      "style_json": {"stroke": "#fbbf24", "width": 3}
+    },
+    {
+      "id": "edge-manifest-host",
+      "diagram_id": "diagram-main",
+      "source_id": "node-manifest",
+      "target_id": "node-trusted-host",
+      "kind": "control",
+      "label": "identity + permissions",
+      "style_json": {"stroke": "#94a3b8", "width": 2.5, "curve": -0.2}
+    },
+    {
+      "id": "edge-checks-host",
+      "diagram_id": "diagram-main",
+      "source_id": "node-docs-checks",
+      "target_id": "node-trusted-host",
+      "kind": "control",
+      "label": "validation",
+      "style_json": {"stroke": "#fde047", "width": 2.5, "curve": 0.22}
+    },
+    {
+      "id": "edge-host-assets",
+      "diagram_id": "diagram-main",
+      "source_id": "node-trusted-host",
+      "target_id": "node-app-assets",
+      "kind": "flow",
+      "label": "serve",
+      "style_json": {"stroke": "#7dd3fc", "width": 3, "curve": -0.15}
+    },
+    {
+      "id": "edge-host-endpoints",
+      "diagram_id": "diagram-main",
+      "source_id": "node-trusted-host",
+      "target_id": "node-endpoints",
+      "kind": "flow",
+      "label": "enforce",
+      "style_json": {"stroke": "#7dd3fc", "width": 3, "curve": 0.15}
+    },
+    {
+      "id": "edge-data-endpoints",
+      "diagram_id": "diagram-main",
+      "source_id": "node-domain-data",
+      "target_id": "node-endpoints",
+      "kind": "data",
+      "label": "transactions",
+      "style_json": {"stroke": "#6ee7b7", "width": 2.5, "curve": 0.18}
+    },
+    {
+      "id": "edge-assets-browser",
+      "diagram_id": "diagram-main",
+      "source_id": "node-app-assets",
+      "target_id": "node-browser-ui",
+      "kind": "flow",
+      "label": "render",
+      "style_json": {"stroke": "#93c5fd", "width": 3, "curve": -0.08}
+    },
+    {
+      "id": "edge-scenes-browser",
+      "diagram_id": "diagram-main",
+      "source_id": "node-scenes",
+      "target_id": "node-browser-ui",
+      "kind": "flow",
+      "label": "present",
+      "style_json": {"stroke": "#d8b4fe", "width": 3, "curve": 0.08}
+    },
+    {
+      "id": "edge-endpoints-browser",
+      "diagram_id": "diagram-main",
+      "source_id": "node-endpoints",
+      "target_id": "node-browser-ui",
+      "kind": "data",
+      "label": "read model",
+      "style_json": {"stroke": "#f9a8d4", "width": 3, "curve": -0.16}
+    },
+    {
+      "id": "edge-browser-endpoints",
+      "diagram_id": "diagram-main",
+      "source_id": "node-browser-ui",
+      "target_id": "node-endpoints",
+      "kind": "data",
+      "label": "persist edits",
+      "style_json": {"stroke": "#5eead4", "width": 3, "curve": 0.16}
+    },
+    {
+      "id": "edge-data-export",
+      "diagram_id": "diagram-main",
+      "source_id": "node-domain-data",
+      "target_id": "node-html-export",
+      "kind": "export",
+      "label": "embed DB payload",
+      "style_json": {"stroke": "#fb7185", "width": 3, "curve": 0.1}
+    },
+    {
+      "id": "edge-assets-export",
+      "diagram_id": "diagram-main",
+      "source_id": "node-app-assets",
+      "target_id": "node-html-export",
+      "kind": "export",
+      "label": "bundle runtime",
+      "style_json": {"stroke": "#fb7185", "width": 3, "curve": -0.1}
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene-one-file",
+      "diagram_id": "diagram-main",
+      "position": 1,
+      "title": "One file is the product",
+      "narrative": "The SQLite file is not hidden persistence. It is the portable application artefact: semantic data, UI, instructions, and views.",
+      "viewport_json": {"x": 300, "y": 300, "width": 1740, "height": 760},
+      "focus_json": [
+        "node-capsule-shell",
+        "node-manifest",
+        "node-app-assets",
+        "node-domain-data",
+        "node-endpoints",
+        "node-scenes",
+        "node-docs-checks",
+        "node-browser-ui",
+        "node-html-export"
+      ]
+    },
+    {
+      "id": "scene-agent-boot",
+      "diagram_id": "diagram-main",
+      "position": 2,
+      "title": "The artefact tells an agent how to start it",
+      "narrative": "A one-sentence intent leads to a versioned START_HERE runbook, verification, and a trusted generic host. Setup knowledge travels with the database.",
+      "viewport_json": {"x": 20, "y": 35, "width": 1120, "height": 300},
+      "focus_json": ["node-agent-prompt", "node-start-here", "node-trusted-host"]
+    },
+    {
+      "id": "scene-inside",
+      "diagram_id": "diagram-main",
+      "position": 3,
+      "title": "Inside the capsule",
+      "narrative": "The format separates identity, app assets, semantic data, a constrained capability bridge, guided views, and self-description.",
+      "viewport_json": {"x": 340, "y": 320, "width": 1110, "height": 740},
+      "focus_json": [
+        "node-capsule-shell",
+        "node-manifest",
+        "node-app-assets",
+        "node-domain-data",
+        "node-endpoints",
+        "node-scenes",
+        "node-docs-checks"
+      ]
+    },
+    {
+      "id": "scene-interaction",
+      "diagram_id": "diagram-main",
+      "position": 4,
+      "title": "A narrow trusted interaction loop",
+      "narrative": "The host serves database-backed assets and executes only named, typed, parameterised operations. Browser code never receives a general SQL capability.",
+      "viewport_json": {"x": 650, "y": 250, "width": 1380, "height": 690},
+      "focus_json": [
+        "node-trusted-host",
+        "node-app-assets",
+        "node-domain-data",
+        "node-endpoints",
+        "node-scenes",
+        "node-browser-ui"
+      ]
+    },
+    {
+      "id": "scene-distribution",
+      "diagram_id": "diagram-main",
+      "position": 5,
+      "title": "SQLite source, HTML reach",
+      "narrative": "SQLite remains canonical. The verified export packages pinned SQLite WASM, the database, and the same application into one browser-openable HTML file with explicit provenance.",
+      "viewport_json": {"x": 330, "y": 300, "width": 1740, "height": 760},
+      "focus_json": [
+        "node-capsule-shell",
+        "node-app-assets",
+        "node-domain-data",
+        "node-browser-ui",
+        "node-html-export"
+      ]
+    }
+  ]
+}

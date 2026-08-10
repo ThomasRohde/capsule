@@ -1,0 +1,9 @@
+[project]
+name = "sqlite-capsule-lab"
+version = "0.2.0"
+description = "Reference implementation for self-describing applications packaged in SQLite"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.ruff]
+line-length = 100

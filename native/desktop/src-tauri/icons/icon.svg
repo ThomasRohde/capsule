@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">SQLite Capsule Host</title>
+  <desc id="desc">A mint database cylinder held inside a dark rounded capsule with an amber trust indicator.</desc>
+  <rect x="12" y="12" width="232" height="232" rx="56" fill="#10151a"/>
+  <path d="M55 84c0-25 33-42 73-42s73 17 73 42v88c0 25-33 42-73 42s-73-17-73-42V84Z" fill="#16241f" stroke="#83d4be" stroke-width="10"/>
+  <ellipse cx="128" cy="84" rx="68" ry="34" fill="#245d4f" stroke="#9ee8d2" stroke-width="10"/>
+  <path d="M60 126c0 19 30 34 68 34s68-15 68-34M60 168c0 19 30 34 68 34s68-15 68-34" fill="none" stroke="#83d4be" stroke-width="9"/>
+  <circle cx="195" cy="61" r="23" fill="#e8b879" stroke="#10151a" stroke-width="8"/>
+  <path d="m185 61 7 7 14-17" fill="none" stroke="#291d0d" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+</svg>
+

@@ -1,0 +1,32 @@
+[package]
+name = "sqlite-capsule-installer"
+version = "0.2.0"
+description = "Host-only verified installer launch coordination for SQLite Capsule"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+sqlite-capsule-platform = { path = "../capsule-platform" }
+sqlite-capsule-update = { path = "../capsule-update" }
+thiserror.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_System_ApplicationInstallationAndServicing",
+  "Win32_System_Com",
+  "Win32_System_Registry",
+  "Win32_System_SystemInformation",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[dev-dependencies]
+ed25519-dalek.workspace = true
+serde_json.workspace = true
+serde_json_canonicalizer.workspace = true
+sha2.workspace = true
+sqlite-capsule-distribution = { path = "../capsule-distribution" }

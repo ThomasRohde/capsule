@@ -1,0 +1,295 @@
+{
+  "profile": "org.sqlite-capsule.rustsec-exceptions/0.2",
+  "cargo_audit_version": "0.22.2",
+  "exceptions": [
+    {
+      "id": "RUSTSEC-2024-0370",
+      "package": "proc-macro-error",
+      "version": "1.0.4",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> GTK3 0.18.2 -> gtk3-macros 0.18.2 -> proc-macro-error 1.0.4.",
+      "api_reachability": "Linux build-time procedural macro only; it is not linked as executable runtime code.",
+      "rationale": "The newest compatible Tauri Linux stack still selects GTK3 macros, and this warning reports maintenance status rather than a known vulnerability.",
+      "compensating_controls": [
+        "Cargo.lock and Rust 1.97.1 pin the exact reviewed build graph.",
+        "CI compiles and runs tests from source and rejects every dependency or advisory drift."
+      ],
+      "removal_condition": "Remove when the Tauri Linux dependency graph no longer contains proc-macro-error 1.0.4.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0411",
+      "package": "gdkwayland-sys",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0412",
+      "package": "gdk",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0413",
+      "package": "atk",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0414",
+      "package": "gdkx11-sys",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0415",
+      "package": "gtk",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0416",
+      "package": "atk-sys",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0417",
+      "package": "gdkx11",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0418",
+      "package": "gdk-sys",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0419",
+      "package": "gtk3-macros",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linux build-time procedural macro only; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Cargo.lock and Rust 1.97.1 pin the exact reviewed build graph.",
+        "CI compiles and runs tests from source and rejects every dependency or advisory drift."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0420",
+      "package": "gtk-sys",
+      "version": "0.18.2",
+      "kind": "unmaintained",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> GTK3 0.18.2 Linux bindings.",
+      "api_reachability": "Linked on Linux through the system WebKitGTK shell; absent from Windows and macOS target graphs.",
+      "rationale": "The newest compatible Tauri and Wry Linux stack still requires the archived GTK3 bindings; this advisory reports maintenance status.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or dynamically select host GUI libraries.",
+        "The default-deny child protocol exposes only verified assets and named endpoints."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry migrates the Linux host away from gtk-rs GTK3.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2024-0429",
+      "package": "glib",
+      "version": "0.18.5",
+      "kind": "unsound",
+      "targets": ["linux"],
+      "dependency_path": "Tauri 2.11.5 -> Wry 0.55.1/WebKit2GTK -> glib 0.18.5 on Linux.",
+      "api_reachability": "The affected VariantStrIter iterator methods have no caller in this workspace or any other locked registry source.",
+      "rationale": "The Linux shell links glib, but exhaustive source search found no path to the advisory's affected VariantStrIter API.",
+      "compensating_controls": [
+        "Capsules cannot load native plugins or invoke arbitrary host library APIs.",
+        "The raw child WebView has no Tauri IPC and reaches only the exact default-deny custom protocol."
+      ],
+      "removal_condition": "Remove when upstream Tauri/Wry selects glib 0.20 or later, or immediately if VariantStrIter becomes reachable.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2025-0075",
+      "package": "unic-char-range",
+      "version": "0.9.0",
+      "kind": "unmaintained",
+      "targets": ["linux", "macos", "windows"],
+      "dependency_path": "Tauri 2.11.5 -> tauri-utils 2.9.3 -> urlpattern 0.3.0 -> unic 0.9.",
+      "api_reachability": "Reachable while Tauri parses bundled capability URL patterns on every desktop target; no vulnerable API is reported.",
+      "rationale": "Current tauri-utils pins urlpattern 0.3; the advisory reports maintenance status and urlpattern 0.6 is not semver-compatible.",
+      "compensating_controls": [
+        "Capability URL patterns are static host-owned JSON and cannot be supplied by a capsule.",
+        "The bundled capability grants no remote URL and excludes install and rollback commands."
+      ],
+      "removal_condition": "Remove when tauri-utils moves to urlpattern 0.6 or another maintained Unicode implementation.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2025-0080",
+      "package": "unic-common",
+      "version": "0.9.0",
+      "kind": "unmaintained",
+      "targets": ["linux", "macos", "windows"],
+      "dependency_path": "Tauri 2.11.5 -> tauri-utils 2.9.3 -> urlpattern 0.3.0 -> unic 0.9.",
+      "api_reachability": "Reachable while Tauri parses bundled capability URL patterns on every desktop target; no vulnerable API is reported.",
+      "rationale": "Current tauri-utils pins urlpattern 0.3; the advisory reports maintenance status and urlpattern 0.6 is not semver-compatible.",
+      "compensating_controls": [
+        "Capability URL patterns are static host-owned JSON and cannot be supplied by a capsule.",
+        "The bundled capability grants no remote URL and excludes install and rollback commands."
+      ],
+      "removal_condition": "Remove when tauri-utils moves to urlpattern 0.6 or another maintained Unicode implementation.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2025-0081",
+      "package": "unic-char-property",
+      "version": "0.9.0",
+      "kind": "unmaintained",
+      "targets": ["linux", "macos", "windows"],
+      "dependency_path": "Tauri 2.11.5 -> tauri-utils 2.9.3 -> urlpattern 0.3.0 -> unic 0.9.",
+      "api_reachability": "Reachable while Tauri parses bundled capability URL patterns on every desktop target; no vulnerable API is reported.",
+      "rationale": "Current tauri-utils pins urlpattern 0.3; the advisory reports maintenance status and urlpattern 0.6 is not semver-compatible.",
+      "compensating_controls": [
+        "Capability URL patterns are static host-owned JSON and cannot be supplied by a capsule.",
+        "The bundled capability grants no remote URL and excludes install and rollback commands."
+      ],
+      "removal_condition": "Remove when tauri-utils moves to urlpattern 0.6 or another maintained Unicode implementation.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2025-0098",
+      "package": "unic-ucd-version",
+      "version": "0.9.0",
+      "kind": "unmaintained",
+      "targets": ["linux", "macos", "windows"],
+      "dependency_path": "Tauri 2.11.5 -> tauri-utils 2.9.3 -> urlpattern 0.3.0 -> unic 0.9.",
+      "api_reachability": "Reachable while Tauri parses bundled capability URL patterns on every desktop target; no vulnerable API is reported.",
+      "rationale": "Current tauri-utils pins urlpattern 0.3; the advisory reports maintenance status and urlpattern 0.6 is not semver-compatible.",
+      "compensating_controls": [
+        "Capability URL patterns are static host-owned JSON and cannot be supplied by a capsule.",
+        "The bundled capability grants no remote URL and excludes install and rollback commands."
+      ],
+      "removal_condition": "Remove when tauri-utils moves to urlpattern 0.6 or another maintained Unicode implementation.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    },
+    {
+      "id": "RUSTSEC-2025-0100",
+      "package": "unic-ucd-ident",
+      "version": "0.9.0",
+      "kind": "unmaintained",
+      "targets": ["linux", "macos", "windows"],
+      "dependency_path": "Tauri 2.11.5 -> tauri-utils 2.9.3 -> urlpattern 0.3.0 -> unic 0.9.",
+      "api_reachability": "Reachable while Tauri parses bundled capability URL patterns on every desktop target; no vulnerable API is reported.",
+      "rationale": "Current tauri-utils pins urlpattern 0.3; the advisory reports maintenance status and urlpattern 0.6 is not semver-compatible.",
+      "compensating_controls": [
+        "Capability URL patterns are static host-owned JSON and cannot be supplied by a capsule.",
+        "The bundled capability grants no remote URL and excludes install and rollback commands."
+      ],
+      "removal_condition": "Remove when tauri-utils moves to urlpattern 0.6 or another maintained Unicode implementation.",
+      "owner": "Native host release owner",
+      "review_by": "2026-09-30"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[package]
+name = "sqlite-capsule-sigstore"
+version = "0.2.0"
+description = "Offline Sigstore identity and transparency verification for SQLite Capsule host updates"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+sha2.workspace = true
+sigstore-verify.workspace = true
+thiserror.workspace = true

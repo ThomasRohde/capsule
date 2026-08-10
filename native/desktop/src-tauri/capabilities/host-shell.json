@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "host-shell",
+  "description": "Minimal launch-report and first-open decision permission for the bundled trusted shell.",
+  "local": true,
+  "webviews": ["main"],
+  "permissions": [
+    "allow-host-first-open",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}

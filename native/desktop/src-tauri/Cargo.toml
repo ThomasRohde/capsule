@@ -1,0 +1,47 @@
+[package]
+name = "sqlite-capsule-desktop"
+version = "0.2.0"
+description = "Trusted desktop shell for SQLite Capsules"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "sqlite_capsule_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+base64.workspace = true
+getrandom.workspace = true
+minisign-verify.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlite-capsule-core = { path = "../../crates/capsule-core" }
+sqlite-capsule-distribution = { path = "../../crates/capsule-distribution" }
+sqlite-capsule-installer = { path = "../../crates/capsule-installer" }
+sqlite-capsule-launch = { path = "../../crates/capsule-launch" }
+sqlite-capsule-lifecycle = { path = "../../crates/capsule-lifecycle" }
+sqlite-capsule-policy = { path = "../../crates/capsule-policy" }
+sqlite-capsule-platform = { path = "../../crates/capsule-platform" }
+sqlite-capsule-runtime = { path = "../../crates/capsule-runtime", features = ["debug-fault-injection"] }
+sqlite-capsule-sigstore = { path = "../../crates/capsule-sigstore" }
+sqlite-capsule-update = { path = "../../crates/capsule-update" }
+tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-single-instance.workspace = true
+tauri-plugin-updater.workspace = true
+wry.workspace = true
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[dev-dependencies]
+ed25519-dalek.workspace = true
+serde_json_canonicalizer.workspace = true
+sha2.workspace = true
