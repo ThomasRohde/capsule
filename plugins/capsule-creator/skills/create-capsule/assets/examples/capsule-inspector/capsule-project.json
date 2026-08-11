@@ -1,6 +1,6 @@
 {
   "app_id": "org.sqlite-capsule.inspector",
-  "app_version": "0.1.4",
+  "app_version": "0.1.5",
   "capsule_id": "urn:uuid:7e010b23-32e5-5aa7-8bf0-1b33efaec493",
   "created_at": "2026-08-11T11:16:51Z",
   "entry_asset": "app/index.html",
@@ -18,5 +18,5 @@
   "project_format": "org.sqlite-capsule.source-project/0.2",
   "summary": "Inspect SQLite Capsule files locally without executing their embedded application code.",
   "title": "Capsule Inspector",
-  "updated_at": "2026-08-11T17:30:00Z"
+  "updated_at": "2026-08-11T17:45:00Z"
 }

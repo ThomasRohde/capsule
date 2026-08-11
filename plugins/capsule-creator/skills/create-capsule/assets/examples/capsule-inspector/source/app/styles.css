@@ -85,7 +85,7 @@ button:focus-visible, label:focus-within, a:focus-visible { outline: 2px solid v
 .titlebar-identity { gap: 10px; font-size: 12px; font-weight: 600; }
 .app-mark { display: block; width: 25px; height: 25px; flex: 0 0 auto; }
 .titlebar-actions { gap: 9px; }
-.offline-pill { gap: 7px; min-height: 26px; padding: 3px 10px; border: 1px solid var(--stroke); border-radius: 13px; color: var(--text-secondary); background: var(--card); font-size: 11px; }
+.offline-pill { gap: 7px; min-height: 26px; padding: 3px 10px; border: 1px solid var(--stroke); border-radius: 13px; color: var(--text-secondary); background: var(--card); font-size: 11px; white-space: nowrap; }
 .offline-pill > span { width: 7px; height: 7px; border-radius: 50%; background: var(--ok-fg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-fg) 16%, transparent); }
 .theme-options { display: flex; gap: 4px; }
 .theme-options button { display: flex; height: 32px; min-width: 68px; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid var(--control-stroke); border-radius: 4px; color: var(--text-primary); background: var(--control); font-size: 12px; font-weight: 400; cursor: pointer; }

@@ -2,3 +2,6 @@ interface:
   display_name: "Create Capsule"
   short_description: "Build exceptional self-contained SQLite applications"
   default_prompt: "Use $create-capsule to create, verify, run, and black-box test an exceptional offline SQLite Capsule application without a repository or native client dependency."
+
+policy:
+  allow_implicit_invocation: false

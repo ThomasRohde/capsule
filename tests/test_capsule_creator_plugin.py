@@ -282,6 +282,13 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
         self.assertIn('<html lang="en" data-theme="light">', index)
         self.assertEqual(index.count('src="/app/favicon.svg"'), 2)
         self.assertNotIn('class="database-shape"', index)
+        self.assertIn("No external network", index)
+        self.assertNotIn("Local only", index)
+        self.assertIn(
+            'title="Runs on this device and communicates only with the local Capsule Host."',
+            index,
+        )
+        self.assertIn("white-space: nowrap", styles)
         for path_data in re.findall(r'\bd="([^"]+)"', canonical_icon):
             self.assertIn(f'd="{path_data}"', icon)
         self.assertIn('transform="translate(12 34) scale(.9)"', icon)
