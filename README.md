@@ -1,3 +1,5 @@
+![SQLite Capsule](sqlite-capsule-mark-currentcolor.svg)
+
 # SQLite Capsule reference implementation
 
 SQLite Capsule explores a simple idea: one SQLite file can be an application,
@@ -89,11 +91,12 @@ python native\tools\build_installers.py
 The local default uses Cargo's debug profile and writes
 `capsules\sqlite-capsule-host-setup.exe` as an ignored build output. Repackage
 the existing debug executable without compiling Rust with
-`python native\tools\build_installers.py --bundle-only`. Use `--release` only
-when a fully optimized full-LTO binary is required; the GitHub release workflow
-sets it explicitly. Bundle-only mode does not establish source freshness and is
-intended only after a successful matching build. MSI packaging is skipped by
-default and remains opt-in with
+`python native\tools\build_installers.py --bundle-only`. Debug and release
+Windows executables both use the GUI subsystem and do not open a companion
+console window. Use `--release` only when a fully optimized full-LTO binary is
+required; the GitHub release workflow sets it explicitly. Bundle-only mode does
+not establish source freshness and is intended only after a successful matching
+build. MSI packaging is skipped by default and remains opt-in with
 `python native\tools\build_installers.py --bundles msi`.
 The wrapper accepts only the repository-pinned Tauri CLI version. It reuses an
 exact matching installation or bootstraps it into ignored `native\.tools` on

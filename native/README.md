@@ -118,8 +118,10 @@ python native/tools/build_installers.py --bundle-only
 ```
 
 The second command packages the existing debug executable without invoking a
-Rust compilation. It fails closed if that executable does not exist, but does
-not establish source freshness; use it only after a successful matching build.
+Rust compilation. Windows debug and release executables both use the GUI
+subsystem, so neither installer opens a companion console window. Bundle-only
+mode fails closed if that executable does not exist, but does not establish
+source freshness; use it only after a successful matching build.
 Use `python native/tools/build_installers.py --release` only for a fully
 optimized full-LTO build. The GitHub release workflow passes `--release`
 explicitly; `--release --bundle-only` can repackage an already-built release

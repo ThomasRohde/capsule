@@ -51,10 +51,11 @@ class HostMarkupParser(HTMLParser):
 
 
 class NativeTrustedUiAccessibilityTests(unittest.TestCase):
-    def test_packaged_windows_entrypoint_uses_the_gui_subsystem(self) -> None:
+    def test_every_windows_entrypoint_uses_the_gui_subsystem(self) -> None:
         entrypoint = NATIVE_ENTRYPOINT.read_text(encoding="utf-8")
-        self.assertIn('all(not(debug_assertions), target_os = "windows")', entrypoint)
+        self.assertIn('cfg_attr(target_os = "windows"', entrypoint)
         self.assertIn('windows_subsystem = "windows"', entrypoint)
+        self.assertNotIn("debug_assertions", entrypoint)
 
     def test_trusted_shell_has_bounded_keyboard_and_name_baseline(self) -> None:
         parser = HostMarkupParser()

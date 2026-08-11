@@ -52,19 +52,15 @@ body {
 }
 
 .host-mark {
-  display: grid;
-  width: 38px;
+  display: flex;
+  width: 46px;
   height: 38px;
   margin-right: 12px;
-  place-items: center;
-  border: 1px solid #55717a;
-  border-radius: 50%;
+  align-items: center;
   color: var(--mint);
-  font-family: Consolas, "Cascadia Mono", monospace;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: -0.08em;
 }
+
+.host-mark svg { display: block; width: 46px; height: auto; }
 
 .host-title { min-width: 0; }
 h1, h2, p { margin-top: 0; }

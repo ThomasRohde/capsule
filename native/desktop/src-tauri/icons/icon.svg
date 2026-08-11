@@ -1,11 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
   <title id="title">SQLite Capsule Host</title>
-  <desc id="desc">A mint database cylinder held inside a dark rounded capsule with an amber trust indicator.</desc>
-  <rect x="12" y="12" width="232" height="232" rx="56" fill="#10151a"/>
-  <path d="M55 84c0-25 33-42 73-42s73 17 73 42v88c0 25-33 42-73 42s-73-17-73-42V84Z" fill="#16241f" stroke="#83d4be" stroke-width="10"/>
-  <ellipse cx="128" cy="84" rx="68" ry="34" fill="#245d4f" stroke="#9ee8d2" stroke-width="10"/>
-  <path d="M60 126c0 19 30 34 68 34s68-15 68-34M60 168c0 19 30 34 68 34s68-15 68-34" fill="none" stroke="#83d4be" stroke-width="9"/>
-  <circle cx="195" cy="61" r="23" fill="#e8b879" stroke="#10151a" stroke-width="8"/>
-  <path d="m185 61 7 7 14-17" fill="none" stroke="#291d0d" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+  <desc id="desc">A blue capsule and play mark with an amber verification check.</desc>
+  <g transform="translate(8 41.6) scale(1.2)">
+    <path fill-rule="evenodd" clip-rule="evenodd" fill="#185FA5" d="M60 24h60a60 60 0 010 120H60A60 60 0 0160 24zM164 6a34 34 0 100 68 34 34 0 100-68z"/>
+    <path d="M75 58v52l45-26z" fill="#E6F1FB"/>
+    <circle cx="164" cy="40" r="28" fill="#EF9F27"/>
+    <path d="M153 40l8 8 15-17" fill="none" stroke="#412402" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
-
