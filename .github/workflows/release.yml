@@ -80,6 +80,7 @@ jobs:
           python native/tools/build_installers.py
           --target x86_64-pc-windows-msvc
           --bundles nsis
+          --release
 
       - name: Verify emitted installer versions and file associations
         working-directory: native

@@ -108,13 +108,22 @@ x86-64 NSIS bundle only for a manual dry run or a `vMAJOR.MINOR.PATCH` tag.
 Manual runs retain workflow artifacts; tag runs also publish GitHub Release
 assets after the repository and binary versions match.
 
-For a local release build, use the repository wrapper from the repository root.
-It pins the Tauri CLI, removes only prior generated installer candidates,
-builds NSIS, and exports its stable ignored path:
+For local iteration, use the repository wrapper from the repository root. It
+pins the Tauri CLI, removes only prior generated installer candidates, builds
+NSIS with Cargo's debug profile, and exports its stable ignored path:
 
 ```text
 python native/tools/build_installers.py
+python native/tools/build_installers.py --bundle-only
 ```
+
+The second command packages the existing debug executable without invoking a
+Rust compilation. It fails closed if that executable does not exist, but does
+not establish source freshness; use it only after a successful matching build.
+Use `python native/tools/build_installers.py --release` only for a fully
+optimized full-LTO build. The GitHub release workflow passes `--release`
+explicitly; `--release --bundle-only` can repackage an already-built release
+executable.
 
 The exporter writes `../capsules/sqlite-capsule-host-setup.exe`. MSI packaging
 is opt-in with `python native/tools/build_installers.py --bundles msi` and is

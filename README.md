@@ -80,15 +80,20 @@ capability decision, configure the protected signing environment and run
 `python tools/sign_release.py`. After choosing **Always for this release** once,
 the unchanged valid signed release opens directly on later launches; see
 [Automated release signing](docs/authoring.md#automated-release-signing).
-Build the pinned Tauri CLI and NSIS setup executable with one repository-owned
-command:
+Build a fast local NSIS setup executable with one repository-owned command:
 
 ```powershell
 python native\tools\build_installers.py
 ```
 
-This writes `capsules\sqlite-capsule-host-setup.exe` as an ignored build output.
-MSI packaging is skipped by default; request it explicitly with
+The local default uses Cargo's debug profile and writes
+`capsules\sqlite-capsule-host-setup.exe` as an ignored build output. Repackage
+the existing debug executable without compiling Rust with
+`python native\tools\build_installers.py --bundle-only`. Use `--release` only
+when a fully optimized full-LTO binary is required; the GitHub release workflow
+sets it explicitly. Bundle-only mode does not establish source freshness and is
+intended only after a successful matching build. MSI packaging is skipped by
+default and remains opt-in with
 `python native\tools\build_installers.py --bundles msi`.
 The wrapper accepts only the repository-pinned Tauri CLI version. It reuses an
 exact matching installation or bootstraps it into ignored `native\.tools` on

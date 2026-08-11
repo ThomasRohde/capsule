@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Build and export the pinned Windows NSIS installer (and optional MSI).
+"""Build and export a Windows installer with fast local defaults.
 
 The Tauri CLI is a separate Cargo executable rather than a workspace
 dependency. This wrapper removes reliance on an ambient ``cargo tauri``
 installation by accepting only the pinned CLI version and bootstrapping it
-into an ignored repository-local tool directory when necessary.
+into an ignored repository-local tool directory when necessary. Local builds
+use Cargo's debug profile unless ``--release`` is explicit. ``--bundle-only``
+repackages an already-built executable without invoking Cargo compilation.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ EXPORT_SCRIPT = NATIVE_ROOT / "tools" / "export_installers.py"
 PINNED_TAURI_CLI_VERSION = "2.11.4"
 DEFAULT_TARGET = "x86_64-pc-windows-msvc"
 DEFAULT_BUNDLES = "nsis"
+DEFAULT_RELEASE = False
 TOOL_ROOT = NATIVE_ROOT / ".tools" / f"tauri-cli-{PINNED_TAURI_CLI_VERSION}"
 BUNDLE_PATTERNS = {"msi": "*.msi", "nsis": "*-setup.exe"}
 VERSION_PATTERN = re.compile(r"^tauri-cli\s+(\d+\.\d+\.\d+)$")
@@ -98,8 +101,31 @@ def ensure_pinned_cli() -> Path:
     return installed.resolve()
 
 
-def bundle_root(target: str) -> Path:
-    return NATIVE_ROOT / "target" / target / "release" / "bundle"
+def build_profile(release: bool) -> str:
+    return "release" if release else "debug"
+
+
+def target_profile_root(target: str, release: bool = DEFAULT_RELEASE) -> Path:
+    return NATIVE_ROOT / "target" / target / build_profile(release)
+
+
+def bundle_root(target: str, release: bool = DEFAULT_RELEASE) -> Path:
+    return target_profile_root(target, release) / "bundle"
+
+
+def built_executable(target: str, release: bool = DEFAULT_RELEASE) -> Path:
+    return target_profile_root(target, release) / "sqlite-capsule-desktop.exe"
+
+
+def require_built_executable(path: Path) -> None:
+    if not path.exists():
+        raise RuntimeError(
+            f"bundle-only requires an existing executable: {path}; "
+            "run this command once without --bundle-only"
+        )
+    metadata = path.lstat()
+    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+        raise RuntimeError(f"bundle-only executable must be a regular file: {path}")
 
 
 def clean_generated_installers(root: Path, bundles: tuple[str, ...]) -> list[Path]:
@@ -126,10 +152,17 @@ def clean_generated_installers(root: Path, bundles: tuple[str, ...]) -> list[Pat
     return removed
 
 
-def build_command(cli: Path, target: str, bundles: tuple[str, ...]) -> list[str]:
-    return [
+def build_command(
+    cli: Path,
+    target: str,
+    bundles: tuple[str, ...],
+    *,
+    release: bool = DEFAULT_RELEASE,
+    bundle_only: bool = False,
+) -> list[str]:
+    command = [
         str(cli),
-        "build",
+        "bundle" if bundle_only else "build",
         "--config",
         str(TAURI_CONFIG),
         "--target",
@@ -137,12 +170,37 @@ def build_command(cli: Path, target: str, bundles: tuple[str, ...]) -> list[str]
         "--bundles",
         ",".join(bundles),
     ]
+    if not release:
+        command.append("--debug")
+    return command
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", default=DEFAULT_TARGET)
     parser.add_argument("--bundles", default=DEFAULT_BUNDLES)
+    profile = parser.add_mutually_exclusive_group()
+    profile.add_argument(
+        "--debug",
+        dest="release",
+        action="store_false",
+        help="Use the fast debug profile (default).",
+    )
+    profile.add_argument(
+        "--release",
+        dest="release",
+        action="store_true",
+        help="Use the fully optimized release profile with full LTO.",
+    )
+    parser.set_defaults(release=DEFAULT_RELEASE)
+    parser.add_argument(
+        "--bundle-only",
+        action="store_true",
+        help=(
+            "Package an existing profile executable without compiling Rust; "
+            "does not verify source freshness."
+        ),
+    )
     parser.add_argument(
         "--no-export",
         action="store_true",
@@ -159,12 +217,32 @@ def main() -> int:
         return 2
     try:
         cli = ensure_pinned_cli()
-        root = bundle_root(args.target)
+        root = bundle_root(args.target, args.release)
+        if args.bundle_only:
+            require_built_executable(built_executable(args.target, args.release))
         removed = clean_generated_installers(root, bundles)
         for path in removed:
             print(f"Removed stale generated installer: {path}")
         print(f"Using tauri-cli {PINNED_TAURI_CLI_VERSION}: {cli}", flush=True)
-        subprocess.run(build_command(cli, args.target, bundles), cwd=NATIVE_ROOT, check=True)
+        mode = f"{build_profile(args.release)} {'bundle-only' if args.bundle_only else 'build'}"
+        print(f"Installer mode: {mode}", flush=True)
+        if args.bundle_only:
+            print(
+                "Bundle-only mode uses the existing executable; source freshness "
+                "is the caller's responsibility.",
+                flush=True,
+            )
+        subprocess.run(
+            build_command(
+                cli,
+                args.target,
+                bundles,
+                release=args.release,
+                bundle_only=args.bundle_only,
+            ),
+            cwd=NATIVE_ROOT,
+            check=True,
+        )
         if not args.no_export:
             subprocess.run(
                 [

@@ -25,8 +25,43 @@ class NativeInstallerBuildTests(unittest.TestCase):
         self.assertIsNotNone(other)
         self.assertNotEqual(other.group(1), MODULE.PINNED_TAURI_CLI_VERSION)
 
-    def test_default_build_is_nsis_only(self) -> None:
+    def test_default_build_is_debug_and_nsis_only(self) -> None:
         self.assertEqual(MODULE.DEFAULT_BUNDLES, "nsis")
+        self.assertFalse(MODULE.DEFAULT_RELEASE)
+        self.assertEqual(
+            MODULE.bundle_root("x86_64-pc-windows-msvc"),
+            MODULE.NATIVE_ROOT / "target/x86_64-pc-windows-msvc/debug/bundle",
+        )
+        self.assertEqual(
+            MODULE.bundle_root("x86_64-pc-windows-msvc", release=True),
+            MODULE.NATIVE_ROOT / "target/x86_64-pc-windows-msvc/release/bundle",
+        )
+
+    def test_commands_separate_build_bundle_and_profile_modes(self) -> None:
+        cli = Path("cargo-tauri.exe")
+        debug_build = MODULE.build_command(cli, "target", ("nsis",))
+        self.assertEqual(debug_build[1], "build")
+        self.assertIn("--debug", debug_build)
+
+        debug_bundle = MODULE.build_command(
+            cli, "target", ("nsis",), bundle_only=True
+        )
+        self.assertEqual(debug_bundle[1], "bundle")
+        self.assertIn("--debug", debug_bundle)
+
+        release_build = MODULE.build_command(
+            cli, "target", ("nsis",), release=True
+        )
+        self.assertEqual(release_build[1], "build")
+        self.assertNotIn("--debug", release_build)
+
+    def test_bundle_only_requires_a_regular_existing_executable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            executable = Path(temporary) / "host.exe"
+            with self.assertRaisesRegex(RuntimeError, "requires an existing executable"):
+                MODULE.require_built_executable(executable)
+            executable.write_bytes(b"built host")
+            MODULE.require_built_executable(executable)
 
     def test_cleanup_removes_only_generated_installer_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -53,8 +88,14 @@ class NativeInstallerBuildTests(unittest.TestCase):
     def test_documentation_uses_the_reproducible_wrapper(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         native_readme = (ROOT / "native" / "README.md").read_text(encoding="utf-8")
+        release_workflow = (ROOT / ".github/workflows/release.yml").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("python native\\tools\\build_installers.py", readme)
         self.assertIn("python native/tools/build_installers.py", native_readme)
+        self.assertIn("--bundle-only", readme)
+        self.assertIn("--release", native_readme)
+        self.assertIn("--release", release_workflow)
 
 
 if __name__ == "__main__":
