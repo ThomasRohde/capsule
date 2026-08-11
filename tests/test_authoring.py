@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -117,6 +118,55 @@ class AuthoringRoundTripTests(unittest.TestCase):
             with self.assertRaises(AuthoringError):
                 pack_capsule(bundle, output)
             self.assertEqual(output.read_text(encoding="utf-8"), "unrelated")
+
+    def test_unpack_rejects_tables_that_depend_on_implicit_rowid_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            capsule = root / "implicit-rowid.capsule.sqlite"
+            capsule.write_bytes(self.base_capsule.read_bytes())
+            connection = sqlite3.connect(capsule)
+            connection.execute("CREATE TABLE implicit_identity (value TEXT NOT NULL)")
+            connection.execute("INSERT INTO implicit_identity(value) VALUES ('one'), ('two')")
+            connection.commit()
+            connection.close()
+            with self.assertRaisesRegex(AuthoringError, "no explicit primary key"):
+                unpack_capsule(capsule, root / "bundle")
+
+    def test_pack_rejects_triggers_and_virtual_tables_before_building(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            unpack_capsule(self.base_capsule, bundle)
+            metadata_path = bundle / "capsule-unpack.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+            trigger = dict(metadata)
+            trigger["schema"] = [
+                *metadata["schema"],
+                {
+                    "type": "trigger",
+                    "name": "hidden_side_effect",
+                    "table": "diagram_node",
+                    "sql": "CREATE TRIGGER hidden_side_effect AFTER UPDATE ON diagram_node BEGIN SELECT 1; END",
+                },
+            ]
+            metadata_path.write_text(json.dumps(trigger), encoding="utf-8")
+            with self.assertRaisesRegex(AuthoringError, "Triggers are forbidden"):
+                pack_capsule(bundle, root / "trigger.sqlite")
+
+            virtual = dict(metadata)
+            virtual["schema"] = [
+                *metadata["schema"],
+                {
+                    "type": "table",
+                    "name": "search_index",
+                    "table": "search_index",
+                    "sql": "CREATE VIRTUAL TABLE search_index USING fts5(content)",
+                },
+            ]
+            metadata_path.write_text(json.dumps(virtual), encoding="utf-8")
+            with self.assertRaisesRegex(AuthoringError, "Virtual tables are forbidden"):
+                pack_capsule(bundle, root / "virtual.sqlite")
 
     def test_repository_help_discovers_runtime_and_authoring_commands(self) -> None:
         result = subprocess.run(

@@ -5,8 +5,8 @@
       "name": "format-v0.2",
       "schema": "format/capsule-v0.2.sql",
       "data": "compatibility/signed-app-v0.2/fixture-v0.2.sql",
-      "application_digest_sha256": "59b05ec04f3cab5c18b1c2914d533114b1be79eb8989f9ff37386d340878761b",
-      "canonical_stream_bytes": 1062210
+      "application_digest_sha256": "2e8878b8550021003c27b0878f3802ef37ec9fd743e5a95c028ca93767ae9b06",
+      "canonical_stream_bytes": 1062207
     }
   ]
 }

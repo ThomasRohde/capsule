@@ -9,6 +9,7 @@ import collections
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import tempfile
@@ -206,6 +207,11 @@ def unpack_capsule(capsule_path: Path, output_directory: Path) -> dict[str, Any]
             table_specs: list[dict[str, Any]] = []
             for index, table in enumerate(tables):
                 columns = _table_columns(connection, table)
+                if not any(column["primary_key"] for column in columns):
+                    raise AuthoringError(
+                        f"Table {table!r} has no explicit primary key; "
+                        "deterministic unpack/pack cannot preserve implicit rowid identity"
+                    )
                 rows = _read_table_rows(connection, table, columns)
                 if table == "capsule_asset":
                     rows = [_externalise_asset_content(row, staging) for row in rows]
@@ -299,11 +305,18 @@ def _validate_schema_object(item: Mapping[str, Any]) -> tuple[str, str]:
     name = item.get("name")
     sql_text = item.get("sql")
     allowed_prefixes = {
-        "table": ("CREATE TABLE", "CREATE VIRTUAL TABLE"),
+        "table": ("CREATE TABLE",),
         "index": ("CREATE INDEX", "CREATE UNIQUE INDEX"),
         "view": ("CREATE VIEW",),
-        "trigger": ("CREATE TRIGGER",),
     }
+    if kind == "trigger":
+        raise AuthoringError("Triggers are forbidden by the portable capsule contract")
+    if isinstance(sql_text, str) and re.search(
+        r"\bCREATE\s+(?:/\*.*?\*/\s*)*VIRTUAL\s+(?:/\*.*?\*/\s*)*TABLE\b",
+        sql_text,
+        flags=re.IGNORECASE | re.DOTALL,
+    ):
+        raise AuthoringError("Virtual tables are forbidden by the portable capsule contract")
     if kind not in allowed_prefixes or not isinstance(name, str) or not name:
         raise AuthoringError(f"Invalid schema object declaration: {item!r}")
     if not isinstance(sql_text, str) or not sql_text.lstrip().upper().startswith(

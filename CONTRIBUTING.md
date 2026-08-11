@@ -92,7 +92,7 @@ qualified MSI, NSIS setup, checksums, evidence, SBOM, and license inventory as
 GitHub Release assets. Verify a proposed tag locally before pushing it:
 
 ```text
-python native/tools/check_release_version.py --tag v0.2.0
+python native/tools/check_release_version.py --tag v0.3.0
 ```
 
 ## Pull requests

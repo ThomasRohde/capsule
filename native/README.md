@@ -139,7 +139,7 @@ and therefore requires Cargo registry access.
 Before creating a tag, verify every package version with:
 
 ```text
-python native/tools/check_release_version.py --tag v0.2.0
+python native/tools/check_release_version.py --tag v0.3.0
 ```
 
 ## Current limits

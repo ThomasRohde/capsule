@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-platform"
-version = "0.2.0"
+version = "0.3.0"
 description = "Platform package-signature verification adapters for the SQLite Capsule host"
 edition.workspace = true
 license.workspace = true

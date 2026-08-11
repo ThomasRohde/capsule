@@ -10168,7 +10168,7 @@
       "version": "0.8.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-cli@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-cli@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10178,12 +10178,12 @@
         }
       ],
       "name": "sqlite-capsule-cli",
-      "purl": "pkg:cargo/sqlite-capsule-cli@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-cli@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-core@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-core@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10193,12 +10193,12 @@
         }
       ],
       "name": "sqlite-capsule-core",
-      "purl": "pkg:cargo/sqlite-capsule-core@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-core@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-crypto@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-crypto@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10208,12 +10208,12 @@
         }
       ],
       "name": "sqlite-capsule-crypto",
-      "purl": "pkg:cargo/sqlite-capsule-crypto@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-crypto@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-desktop@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-desktop@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10223,12 +10223,12 @@
         }
       ],
       "name": "sqlite-capsule-desktop",
-      "purl": "pkg:cargo/sqlite-capsule-desktop@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-desktop@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-distribution@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-distribution@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10238,12 +10238,12 @@
         }
       ],
       "name": "sqlite-capsule-distribution",
-      "purl": "pkg:cargo/sqlite-capsule-distribution@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-distribution@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-installer@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-installer@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10253,12 +10253,12 @@
         }
       ],
       "name": "sqlite-capsule-installer",
-      "purl": "pkg:cargo/sqlite-capsule-installer@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-installer@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-launch@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-launch@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10268,12 +10268,12 @@
         }
       ],
       "name": "sqlite-capsule-launch",
-      "purl": "pkg:cargo/sqlite-capsule-launch@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-launch@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10283,12 +10283,12 @@
         }
       ],
       "name": "sqlite-capsule-lifecycle",
-      "purl": "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-platform@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-platform@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10298,12 +10298,12 @@
         }
       ],
       "name": "sqlite-capsule-platform",
-      "purl": "pkg:cargo/sqlite-capsule-platform@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-platform@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-policy@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-policy@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10313,12 +10313,12 @@
         }
       ],
       "name": "sqlite-capsule-policy",
-      "purl": "pkg:cargo/sqlite-capsule-policy@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-policy@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-runtime@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-runtime@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10328,12 +10328,12 @@
         }
       ],
       "name": "sqlite-capsule-runtime",
-      "purl": "pkg:cargo/sqlite-capsule-runtime@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-runtime@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-signing@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-signing@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10343,12 +10343,12 @@
         }
       ],
       "name": "sqlite-capsule-signing",
-      "purl": "pkg:cargo/sqlite-capsule-signing@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-signing@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-sigstore@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10358,12 +10358,12 @@
         }
       ],
       "name": "sqlite-capsule-sigstore",
-      "purl": "pkg:cargo/sqlite-capsule-sigstore@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
-      "bom-ref": "pkg:cargo/sqlite-capsule-update@0.2.0",
+      "bom-ref": "pkg:cargo/sqlite-capsule-update@0.3.0",
       "group": "sqlite-capsule",
       "licenses": [
         {
@@ -10373,9 +10373,9 @@
         }
       ],
       "name": "sqlite-capsule-update",
-      "purl": "pkg:cargo/sqlite-capsule-update@0.2.0",
+      "purl": "pkg:cargo/sqlite-capsule-update@0.3.0",
       "type": "library",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
       "bom-ref": "pkg:cargo/sqlite-wasm-rs@0.5.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18314,22 +18314,23 @@
       "dependsOn": [
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-crypto@0.2.0",
-        "pkg:cargo/sqlite-capsule-launch@0.2.0",
-        "pkg:cargo/sqlite-capsule-policy@0.2.0",
-        "pkg:cargo/sqlite-capsule-signing@0.2.0"
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
+        "pkg:cargo/sqlite-capsule-policy@0.3.0",
+        "pkg:cargo/sqlite-capsule-signing@0.3.0"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-cli@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-cli@0.3.0"
     },
     {
       "dependsOn": [
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/subtle@2.6.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-core@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-core@0.3.0"
     },
     {
       "dependsOn": [
@@ -18341,7 +18342,7 @@
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-crypto@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-crypto@0.3.0"
     },
     {
       "dependsOn": [
@@ -18355,18 +18356,18 @@
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json_canonicalizer@0.3.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-crypto@0.2.0",
-        "pkg:cargo/sqlite-capsule-distribution@0.2.0",
-        "pkg:cargo/sqlite-capsule-installer@0.2.0",
-        "pkg:cargo/sqlite-capsule-launch@0.2.0",
-        "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
-        "pkg:cargo/sqlite-capsule-platform@0.2.0",
-        "pkg:cargo/sqlite-capsule-policy@0.2.0",
-        "pkg:cargo/sqlite-capsule-runtime@0.2.0",
-        "pkg:cargo/sqlite-capsule-signing@0.2.0",
-        "pkg:cargo/sqlite-capsule-sigstore@0.2.0",
-        "pkg:cargo/sqlite-capsule-update@0.2.0",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-distribution@0.3.0",
+        "pkg:cargo/sqlite-capsule-installer@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
+        "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
+        "pkg:cargo/sqlite-capsule-platform@0.3.0",
+        "pkg:cargo/sqlite-capsule-policy@0.3.0",
+        "pkg:cargo/sqlite-capsule-runtime@0.3.0",
+        "pkg:cargo/sqlite-capsule-signing@0.3.0",
+        "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
+        "pkg:cargo/sqlite-capsule-update@0.3.0",
         "pkg:cargo/tauri-build@2.6.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/tauri-plugin-dialog@2.7.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/tauri-plugin-single-instance@2.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18374,7 +18375,7 @@
         "pkg:cargo/tauri@2.11.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/wry@0.55.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-desktop@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-desktop@0.3.0"
     },
     {
       "dependsOn": [
@@ -18383,11 +18384,11 @@
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json_canonicalizer@0.3.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-platform@0.2.0",
-        "pkg:cargo/sqlite-capsule-sigstore@0.2.0",
+        "pkg:cargo/sqlite-capsule-platform@0.3.0",
+        "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-distribution@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-distribution@0.3.0"
     },
     {
       "dependsOn": [
@@ -18395,25 +18396,25 @@
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json_canonicalizer@0.3.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-distribution@0.2.0",
-        "pkg:cargo/sqlite-capsule-platform@0.2.0",
-        "pkg:cargo/sqlite-capsule-update@0.2.0",
+        "pkg:cargo/sqlite-capsule-distribution@0.3.0",
+        "pkg:cargo/sqlite-capsule-platform@0.3.0",
+        "pkg:cargo/sqlite-capsule-update@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/windows-sys@0.61.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-installer@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-installer@0.3.0"
     },
     {
       "dependsOn": [
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-crypto@0.2.0",
-        "pkg:cargo/sqlite-capsule-policy@0.2.0",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-policy@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-launch@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-launch@0.3.0"
     },
     {
       "dependsOn": [
@@ -18423,7 +18424,7 @@
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/windows-sys@0.61.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-lifecycle@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-lifecycle@0.3.0"
     },
     {
       "dependsOn": [
@@ -18432,7 +18433,7 @@
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/windows-sys@0.61.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-platform@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-platform@0.3.0"
     },
     {
       "dependsOn": [
@@ -18442,11 +18443,11 @@
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json_canonicalizer@0.3.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-distribution@0.2.0",
+        "pkg:cargo/sqlite-capsule-distribution@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/windows-sys@0.61.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-policy@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-policy@0.3.0"
     },
     {
       "dependsOn": [
@@ -18454,13 +18455,13 @@
         "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-launch@0.2.0",
-        "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
-        "pkg:cargo/sqlite-capsule-policy@0.2.0",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
+        "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
+        "pkg:cargo/sqlite-capsule-policy@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-runtime@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-runtime@0.3.0"
     },
     {
       "dependsOn": [
@@ -18468,13 +18469,13 @@
         "pkg:cargo/pkcs8@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-crypto@0.2.0",
-        "pkg:cargo/sqlite-capsule-launch@0.2.0",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
         "pkg:cargo/tempfile@3.27.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-signing@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-signing@0.3.0"
     },
     {
       "dependsOn": [
@@ -18483,7 +18484,7 @@
         "pkg:cargo/sigstore-verify@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-sigstore@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-sigstore@0.3.0"
     },
     {
       "dependsOn": [
@@ -18492,12 +18493,12 @@
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json_canonicalizer@0.3.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
-        "pkg:cargo/sqlite-capsule-distribution@0.2.0",
-        "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
-        "pkg:cargo/sqlite-capsule-platform@0.2.0",
+        "pkg:cargo/sqlite-capsule-distribution@0.3.0",
+        "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
+        "pkg:cargo/sqlite-capsule-platform@0.3.0",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
-      "ref": "pkg:cargo/sqlite-capsule-update@0.2.0"
+      "ref": "pkg:cargo/sqlite-capsule-update@0.3.0"
     },
     {
       "dependsOn": [
@@ -20103,30 +20104,30 @@
     },
     {
       "dependsOn": [
-        "pkg:cargo/sqlite-capsule-cli@0.2.0",
-        "pkg:cargo/sqlite-capsule-core@0.2.0",
-        "pkg:cargo/sqlite-capsule-crypto@0.2.0",
-        "pkg:cargo/sqlite-capsule-desktop@0.2.0",
-        "pkg:cargo/sqlite-capsule-distribution@0.2.0",
-        "pkg:cargo/sqlite-capsule-installer@0.2.0",
-        "pkg:cargo/sqlite-capsule-launch@0.2.0",
-        "pkg:cargo/sqlite-capsule-lifecycle@0.2.0",
-        "pkg:cargo/sqlite-capsule-platform@0.2.0",
-        "pkg:cargo/sqlite-capsule-policy@0.2.0",
-        "pkg:cargo/sqlite-capsule-runtime@0.2.0",
-        "pkg:cargo/sqlite-capsule-signing@0.2.0",
-        "pkg:cargo/sqlite-capsule-sigstore@0.2.0",
-        "pkg:cargo/sqlite-capsule-update@0.2.0"
+        "pkg:cargo/sqlite-capsule-cli@0.3.0",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-desktop@0.3.0",
+        "pkg:cargo/sqlite-capsule-distribution@0.3.0",
+        "pkg:cargo/sqlite-capsule-installer@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
+        "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
+        "pkg:cargo/sqlite-capsule-platform@0.3.0",
+        "pkg:cargo/sqlite-capsule-policy@0.3.0",
+        "pkg:cargo/sqlite-capsule-runtime@0.3.0",
+        "pkg:cargo/sqlite-capsule-signing@0.3.0",
+        "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
+        "pkg:cargo/sqlite-capsule-update@0.3.0"
       ],
-      "ref": "pkg:generic/sqlite-capsule-native-workspace@0.2.0"
+      "ref": "pkg:generic/sqlite-capsule-native-workspace@0.3.0"
     }
   ],
   "metadata": {
     "component": {
-      "bom-ref": "pkg:generic/sqlite-capsule-native-workspace@0.2.0",
+      "bom-ref": "pkg:generic/sqlite-capsule-native-workspace@0.3.0",
       "name": "sqlite-capsule-native-workspace",
       "type": "application",
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     "properties": [
       {
@@ -20139,7 +20140,7 @@
       }
     ]
   },
-  "serialNumber": "urn:uuid:a2d37272-f38e-58af-be28-d6f3ff058087",
+  "serialNumber": "urn:uuid:71e010c0-9e89-5612-9653-40376522e88c",
   "specVersion": "1.5",
   "version": 1
 }

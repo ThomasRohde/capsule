@@ -20,9 +20,9 @@ CREATE TABLE capsule_manifest (
 
 CREATE TABLE capsule_grant (
     capability          TEXT PRIMARY KEY NOT NULL,
-    decision             TEXT NOT NULL CHECK (decision IN ('allow', 'deny', 'prompt')),
-    reason               TEXT NOT NULL,
-    granted_at           TEXT
+    decision            TEXT NOT NULL CHECK (decision IN ('allow', 'deny', 'prompt')),
+    reason              TEXT NOT NULL,
+    granted_at          TEXT
 );
 
 CREATE TABLE capsule_asset (

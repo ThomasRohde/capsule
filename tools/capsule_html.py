@@ -356,9 +356,18 @@ def export_html(
     capsule_bytes = capsule_path.read_bytes()
     if not 0 < len(capsule_bytes) <= MAX_CAPSULE_BYTES:
         raise HtmlExportError("Capsule size is outside the HTML export limit")
-    with CapsuleDatabase(capsule_path, read_only=True) as capsule:
-        verification = capsule.verify()
-        exportability = _exportability_report(capsule, verification["manifest"]) if verification["ok"] else None
+    # Verify the exact immutable byte snapshot that will be embedded. The source
+    # path may be replaced concurrently after read_bytes() returns.
+    with tempfile.TemporaryDirectory(prefix="sqlite-capsule-export-") as directory:
+        snapshot = Path(directory) / "source.capsule.sqlite"
+        snapshot.write_bytes(capsule_bytes)
+        with CapsuleDatabase(snapshot, read_only=True) as capsule:
+            verification = capsule.verify()
+            exportability = (
+                _exportability_report(capsule, verification["manifest"])
+                if verification["ok"]
+                else None
+            )
     if not verification["ok"]:
         raise HtmlExportError("Source capsule verification failed: " + "; ".join(verification["errors"]))
     runtime = _runtime_inputs()

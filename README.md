@@ -148,6 +148,22 @@ client, pinned SQLite WASM, quality references, and Fluent Capsule Inspector.
 It can be copied away from this repository; the authoring and launch path never
 invokes the Tauri client:
 
+From the repository root, register its local Codex marketplace and install the
+plugin once:
+
+```bash
+codex plugin marketplace add .
+codex plugin add capsule-creator@sqlite-capsule
+```
+
+Start a new Codex task after installation so its bundled skill is discovered.
+The package also targets the vendor-neutral
+[Agent Plugins 1.0 format](https://agent-plugins.org/) through its root
+`plugin.json` and standards-compliant `skills/` layout. The richer
+`.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json` files retain
+Codex-specific presentation and local distribution metadata; installation and
+marketplaces are intentionally outside the portable Agent Plugins core.
+
 ```bash
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite

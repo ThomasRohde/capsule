@@ -143,7 +143,7 @@ def render(metadata: dict[str, object]) -> str:
             }
         )
 
-    root_ref = "pkg:generic/sqlite-capsule-native-workspace@0.2.0"
+    root_ref = "pkg:generic/sqlite-capsule-native-workspace@0.3.0"
     dependency_rows.append(
         {
             "ref": root_ref,
@@ -162,7 +162,7 @@ def render(metadata: dict[str, object]) -> str:
                 "type": "application",
                 "bom-ref": root_ref,
                 "name": "sqlite-capsule-native-workspace",
-                "version": "0.2.0",
+                "version": "0.3.0",
             },
             "properties": [
                 {"name": "sqlite-capsule:cargo-locked", "value": "true"},

@@ -315,7 +315,12 @@ def connect_database(path: Path, *, read_only: bool = False) -> sqlite3.Connecti
 
 
 def safe_asset_path(path: str) -> bool:
-    if not path or path.startswith("/") or "\\" in path:
+    if (
+        not path
+        or path.startswith("/")
+        or "\\" in path
+        or any(ord(char) < 32 or ord(char) == 127 for char in path)
+    ):
         return False
     parts = path.split("/")
     return all(part not in {"", ".", ".."} for part in parts)
@@ -403,23 +408,71 @@ def endpoint_probe_values(spec: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def statement_kind(sql_text: str) -> str:
-    stripped = sql_text.lstrip()
-    while stripped.startswith("--"):
-        _, _, stripped = stripped.partition("\n")
-        stripped = stripped.lstrip()
+    index = 0
+    while index < len(sql_text):
+        while index < len(sql_text) and sql_text[index].isspace():
+            index += 1
+        if sql_text.startswith("--", index):
+            newline = sql_text.find("\n", index + 2)
+            index = len(sql_text) if newline < 0 else newline + 1
+            continue
+        if sql_text.startswith("/*", index):
+            end = sql_text.find("*/", index + 2)
+            index = len(sql_text) if end < 0 else end + 2
+            continue
+        break
+    stripped = sql_text[index:]
     token = stripped.split(None, 1)[0].upper() if stripped else ""
     return token
 
 
 def looks_like_single_statement(sql_text: str) -> bool:
-    # SQLite's execute() enforces this at runtime. This conservative check catches
-    # obvious multi-statement declarations while permitting one trailing semicolon.
-    text = sql_text.strip()
-    if not text:
-        return False
-    if text.endswith(";"):
-        text = text[:-1].rstrip()
-    return ";" not in text
+    # SQLite's execute() is still the parser of record. This lexical pass rejects
+    # additional statements without mistaking quoted semicolons for separators.
+    index = 0
+    has_content = False
+    terminated = False
+    while index < len(sql_text):
+        char = sql_text[index]
+        next_char = sql_text[index + 1] if index + 1 < len(sql_text) else ""
+        if char.isspace():
+            index += 1
+            continue
+        if char == "-" and next_char == "-":
+            newline = sql_text.find("\n", index + 2)
+            index = len(sql_text) if newline < 0 else newline + 1
+            continue
+        if char == "/" and next_char == "*":
+            end = sql_text.find("*/", index + 2)
+            index = len(sql_text) if end < 0 else end + 2
+            continue
+        if terminated:
+            return False
+        if char == ";":
+            if not has_content:
+                return False
+            terminated = True
+            index += 1
+            continue
+        has_content = True
+        if char in {"'", '"', "`"}:
+            quote = char
+            index += 1
+            while index < len(sql_text):
+                if sql_text[index] == quote:
+                    if index + 1 < len(sql_text) and sql_text[index + 1] == quote:
+                        index += 2
+                        continue
+                    index += 1
+                    break
+                index += 1
+            continue
+        if char == "[":
+            end = sql_text.find("]", index + 1)
+            index = len(sql_text) if end < 0 else end + 1
+            continue
+        index += 1
+    return has_content
 
 
 def json_value(value: Any) -> Any:
@@ -674,6 +727,20 @@ class CapsuleDatabase:
                 "Triggers are not permitted by the supported endpoint contracts: "
                 + ", ".join(sorted(triggers))
             )
+        try:
+            virtual_tables = sorted(
+                str(row["name"])
+                for row in self._connection.execute("PRAGMA table_list").fetchall()
+                if str(row["type"]).casefold() == "virtual"
+            )
+        except sqlite3.DatabaseError as exc:
+            errors.append(f"Could not inspect virtual-table declarations: {exc}")
+        else:
+            if virtual_tables:
+                errors.append(
+                    "Virtual tables are not permitted by the portable capsule contract: "
+                    + ", ".join(virtual_tables)
+                )
 
         for table in sorted(required_tables & tables):
             try:
@@ -1201,7 +1268,7 @@ class CapsuleDatabase:
             self._connection.execute("BEGIN IMMEDIATE")
             self._connection.set_authorizer(_authorizer_for("write"))
             cursor = self._connection.execute(sql_text, bound)
-            result = encode_cursor_result(cursor, endpoint["result_mode"])
+            result = encode_cursor_result(cursor, endpoint["result_mode"], drain=True)
             changed_rows = int(self._connection.execute("SELECT changes()").fetchone()[0])
             self._connection.set_authorizer(None)
             self._connection.execute(
@@ -1240,8 +1307,8 @@ class CapsuleDatabase:
             lastrowid: int | None = None
             for step in steps:
                 cursor = self._connection.execute(str(step["sql_text"]), bound)
+                _drain_cursor(cursor)
                 changed_rows = int(self._connection.execute("SELECT changes()").fetchone()[0])
-                cursor.fetchall()
                 required_changes = step["required_changes"]
                 if required_changes is not None and changed_rows != int(required_changes):
                     raise EndpointError(
@@ -1339,8 +1406,11 @@ def _coerce_value(name: str, value: Any, kind: str) -> Any:
                 return integer
             raise EndpointError(f"Parameter {name!r} is outside SQLite integer range")
         if isinstance(value, str):
+            text = value.strip()
             try:
-                integer = int(value)
+                if not re.fullmatch(r"[+-]?\d+", text):
+                    raise ValueError
+                integer = int(text)
                 if -(2**63) <= integer <= 2**63 - 1:
                     return integer
             except ValueError:
@@ -1388,7 +1458,14 @@ def validate_parameters(spec: Mapping[str, Any], parameters: Mapping[str, Any]) 
     return bound
 
 
-def encode_cursor_result(cursor: sqlite3.Cursor, result_mode: str) -> Any:
+def _drain_cursor(cursor: sqlite3.Cursor) -> None:
+    while cursor.fetchmany(128):
+        pass
+
+
+def encode_cursor_result(
+    cursor: sqlite3.Cursor, result_mode: str, *, drain: bool = False
+) -> Any:
     if result_mode == "rows":
         result: list[dict[str, Any]] = []
         encoded_size = 2
@@ -1410,6 +1487,8 @@ def encode_cursor_result(cursor: sqlite3.Cursor, result_mode: str) -> Any:
         result = decode_row(row)
         if len(_json_dump(result).encode("utf-8")) > MAX_RESULT_BYTES:
             raise EndpointError(f"Result exceeds the {MAX_RESULT_BYTES}-byte limit")
+        if drain:
+            _drain_cursor(cursor)
         return result
     if result_mode == "scalar":
         row = cursor.fetchone()
@@ -1418,8 +1497,11 @@ def encode_cursor_result(cursor: sqlite3.Cursor, result_mode: str) -> Any:
         result = json_value(row[0])
         if len(_json_dump(result).encode("utf-8")) > MAX_RESULT_BYTES:
             raise EndpointError(f"Result exceeds the {MAX_RESULT_BYTES}-byte limit")
+        if drain:
+            _drain_cursor(cursor)
         return result
     if result_mode == "changes":
+        _drain_cursor(cursor)
         return {"changes": max(cursor.rowcount, 0), "lastrowid": cursor.lastrowid}
     raise EndpointError(f"Unsupported result mode: {result_mode}")
 
@@ -1482,7 +1564,12 @@ def _authorizer_for(operation: str):
 
 class CapsuleHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
-    allow_reuse_address = True
+    allow_reuse_address = os.name != "nt"
+
+    def server_bind(self) -> None:
+        if os.name == "nt" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
     def __init__(
         self,
@@ -1582,32 +1669,38 @@ class CapsuleRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path
 
         if path == "/__capsule/health":
-            manifest = self.server.capsule.manifest()
-            self._send_json(
-                HTTPStatus.OK,
-                {
-                    "ok": True,
-                    "capsule_id": manifest["capsule_id"],
-                    "app_id": manifest["app_id"],
-                    "runtime_protocol": manifest["runtime_protocol"],
-                },
-            )
+            try:
+                manifest = self.server.capsule.manifest()
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "capsule_id": manifest["capsule_id"],
+                        "app_id": manifest["app_id"],
+                        "runtime_protocol": manifest["runtime_protocol"],
+                    },
+                )
+            except (CapsuleError, sqlite3.DatabaseError) as exc:
+                self._send_error_json(HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
             return
 
         if path == "/__capsule/manifest":
-            manifest = self.server.capsule.manifest()
-            self._send_json(
-                HTTPStatus.OK,
-                {
-                    "ok": True,
-                    "manifest": manifest,
-                    "session_token": self.server.session_token,
-                    "api": {
-                        "read": "/__capsule/read/{name}",
-                        "write": "/__capsule/write/{name}",
+            try:
+                manifest = self.server.capsule.manifest()
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "manifest": manifest,
+                        "session_token": self.server.session_token,
+                        "api": {
+                            "read": "/__capsule/read/{name}",
+                            "write": "/__capsule/write/{name}",
+                        },
                     },
-                },
-            )
+                )
+            except (CapsuleError, sqlite3.DatabaseError) as exc:
+                self._send_error_json(HTTPStatus.INTERNAL_SERVER_ERROR, str(exc))
             return
 
         if path == "/__capsule/permissions":
@@ -1785,9 +1878,13 @@ def read_state(capsule_path: Path) -> dict[str, Any] | None:
         return None
     if Path(value["capsule"]).resolve() != capsule_path.resolve():
         return None
-    if value["host"] != "127.0.0.1" or not isinstance(value.get("port"), int):
+    if value["host"] not in {"127.0.0.1", "localhost"} or not isinstance(
+        value.get("port"), int
+    ):
         return None
-    if not 1 <= value["port"] <= 65535 or value["url"] != f"http://127.0.0.1:{value['port']}":
+    if not 1 <= value["port"] <= 65535 or value["url"] != (
+        f"http://{value['host']}:{value['port']}"
+    ):
         return None
     if not local_http_url(value["url"]):
         return None
@@ -1873,7 +1970,10 @@ def health(
 ) -> dict[str, Any] | None:
     try:
         with _open_local(f"{url}/__capsule/health", timeout=timeout) as response:
-            value = json.loads(response.read().decode("utf-8"))
+            body = response.read(65_537)
+            if len(body) > 65_536:
+                return None
+            value = json.loads(body.decode("utf-8"))
         if not isinstance(value, dict) or value.get("ok") is not True:
             return None
         runtime_protocol = value.get("runtime_protocol")

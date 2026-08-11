@@ -29,6 +29,15 @@ def _readonly_connection(path: Path) -> sqlite3.Connection:
     uri = f"file:{resolved.as_posix()}?mode=ro"
     connection = sqlite3.connect(uri, uri=True, timeout=5.0)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA query_only = ON")
+    try:
+        connection.execute("PRAGMA trusted_schema = OFF")
+    except sqlite3.DatabaseError:
+        pass
+    try:
+        connection.enable_load_extension(False)
+    except (AttributeError, sqlite3.DatabaseError):
+        pass
     return connection
 
 
@@ -58,6 +67,14 @@ def _object_names(connection: sqlite3.Connection) -> dict[str, str]:
             "SELECT name, type FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'"
         )
     }
+
+
+def _safe_asset_path(path: Any) -> bool:
+    if not isinstance(path, str) or not path or path.startswith("/") or "\\" in path:
+        return False
+    if any(ord(char) < 32 or ord(char) == 127 for char in path):
+        return False
+    return all(part not in {"", ".", ".."} for part in path.split("/"))
 
 
 def _check_columns(
@@ -138,6 +155,19 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
             errors.append(f"user_version: expected {identity.get('user_version')}, got {user_version}")
 
         names = _object_names(connection)
+        forbidden = set(spec.get("forbidden_schema_objects", []))
+        if "trigger" in forbidden:
+            triggers = sorted(name for name, kind in names.items() if kind == "trigger")
+            if triggers:
+                errors.append("forbidden triggers: " + ", ".join(triggers))
+        if "virtual_table" in forbidden:
+            virtual_tables = sorted(
+                str(row["name"])
+                for row in connection.execute("PRAGMA table_list").fetchall()
+                if str(row["type"]).casefold() == "virtual"
+            )
+            if virtual_tables:
+                errors.append("forbidden virtual tables: " + ", ".join(virtual_tables))
         for table, declaration in tables.items():
             if names.get(table) != "table":
                 errors.append(f"missing required table {table!r}")
@@ -185,6 +215,11 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
                 expected = identity.get(column)
                 if manifest[column] != expected:
                     errors.append(f"capsule_manifest.{column}: expected {expected!r}, got {manifest[column]!r}")
+
+        if spec.get("asset_path_policy"):
+            for row in connection.execute("SELECT path FROM capsule_asset ORDER BY path"):
+                if not _safe_asset_path(row["path"]):
+                    errors.append(f"capsule_asset.path: unsafe path {row['path']!r}")
 
         return {
             "capsule": str(capsule.resolve()),

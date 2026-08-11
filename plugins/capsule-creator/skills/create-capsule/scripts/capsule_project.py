@@ -226,6 +226,18 @@ def _project_config(project: Path) -> dict[str, Any]:
     network = permissions.get("network")
     if not isinstance(network, dict) or network.get("value") != "none":
         raise ProjectError("permissions_json network.value must be 'none'")
+    non_executable_assets = config.get("non_executable_assets", [])
+    if not isinstance(non_executable_assets, list) or not all(
+        isinstance(path, str)
+        and path.startswith("app/")
+        and all(part not in {"", ".", ".."} for part in path.split("/"))
+        for path in non_executable_assets
+    ):
+        raise ProjectError("non_executable_assets must contain safe app/ asset paths")
+    if len(non_executable_assets) != len(set(non_executable_assets)):
+        raise ProjectError("non_executable_assets must not contain duplicates")
+    if config["entry_asset"] in non_executable_assets:
+        raise ProjectError("entry_asset cannot be declared non-executable")
     return config
 
 
@@ -393,6 +405,7 @@ def init_project(
         "app_id": app_id,
         "app_version": app_version,
         "entry_asset": "app/index.html",
+        "non_executable_assets": [],
         "permissions_json": {
             "database.read": {
                 "required": True,
@@ -686,6 +699,26 @@ def _domain_sql(project: Path) -> str:
     return sql_text
 
 
+def _validate_domain_schema(connection: sqlite3.Connection) -> None:
+    triggers = [
+        str(row[0])
+        for row in connection.execute(
+            "SELECT name FROM sqlite_schema WHERE type = 'trigger' ORDER BY name"
+        ).fetchall()
+    ]
+    if triggers:
+        raise ProjectError("domain.sql created forbidden triggers: " + ", ".join(triggers))
+    virtual_tables = sorted(
+        str(row[1])
+        for row in connection.execute("PRAGMA table_list").fetchall()
+        if str(row[2]).casefold() == "virtual"
+    )
+    if virtual_tables:
+        raise ProjectError(
+            "domain.sql created forbidden virtual tables: " + ", ".join(virtual_tables)
+        )
+
+
 def _seed_domain(connection: sqlite3.Connection, project: Path) -> int:
     seed = _load_json(project / "source" / "data" / "seed.json")
     if not isinstance(seed, dict):
@@ -784,6 +817,16 @@ def _seed_platform(
             ),
         ]
     )
+    non_executable_assets = set(config.get("non_executable_assets", []))
+    user_asset_paths = {
+        f"app/{path.relative_to(app_root).as_posix()}" for path in asset_paths
+    }
+    unknown_overrides = sorted(non_executable_assets - user_asset_paths)
+    if unknown_overrides:
+        raise ProjectError(
+            "non_executable_assets references missing app assets: "
+            + ", ".join(unknown_overrides)
+        )
     for asset_path, source_path, media_type in asset_specs:
         content = source_path.read_bytes()
         _insert_mapping(
@@ -795,7 +838,8 @@ def _seed_platform(
                 "content": content,
                 "sha256": _sha256(content),
                 "executable": int(
-                    source_path.suffix.lower() in {".html", ".js", ".mjs", ".py", ".wasm"}
+                    asset_path not in non_executable_assets
+                    and source_path.suffix.lower() in {".html", ".js", ".mjs", ".py", ".wasm"}
                 ),
                 "cache_policy": "no-store",
                 "description": f"Embedded source for {asset_path}.",
@@ -886,6 +930,7 @@ def build_project(
                 (resources / "format" / "capsule-v0.2.sql").read_text(encoding="utf-8")
             )
             connection.executescript(_domain_sql(project))
+            _validate_domain_schema(connection)
             inventory = _seed_platform(connection, project, resources, config)
             inventory["seed_rows"] = _seed_domain(connection, project)
             connection.commit()

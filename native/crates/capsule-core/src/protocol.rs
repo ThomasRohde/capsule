@@ -7,6 +7,7 @@ use std::collections::HashSet;
 
 use serde::Deserialize;
 use serde_json::{Map, Value};
+use subtle::ConstantTimeEq;
 use thiserror::Error;
 
 pub const PROTOCOL_VERSION: u8 = 1;
@@ -115,7 +116,9 @@ impl ProtocolSession {
         if wire.version != PROTOCOL_VERSION {
             return Err(ProtocolError::Version);
         }
-        if !valid_session_token(&wire.session) || wire.session != self.token {
+        if !valid_session_token(&wire.session)
+            || !bool::from(wire.session.as_bytes().ct_eq(self.token.as_bytes()))
+        {
             return Err(ProtocolError::Session);
         }
         if wire.sequence != self.last_sequence + 1 {

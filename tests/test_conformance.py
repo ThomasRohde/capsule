@@ -83,6 +83,32 @@ class IndependentConformanceTests(unittest.TestCase):
         finally:
             directory.cleanup()
 
+    def test_asset_control_characters_and_virtual_tables_are_rejected_independently(self) -> None:
+        directory, path = self.copy_capsule()
+        try:
+            connection = sqlite3.connect(path)
+            connection.execute(
+                "UPDATE capsule_asset SET path = ? WHERE path = 'app/theme.js'",
+                ("app/theme\n.js",),
+            )
+            connection.execute("CREATE VIRTUAL TABLE app_search USING fts5(content)")
+            connection.commit()
+            connection.close()
+            report = check_conformance(path)
+            self.assertFalse(report["ok"])
+            self.assertTrue(any("unsafe path" in error for error in report["errors"]))
+            self.assertTrue(any("virtual tables" in error for error in report["errors"]))
+        finally:
+            directory.cleanup()
+
+    def test_untrusted_schema_hardening_is_applied_before_inspection(self) -> None:
+        source = (ROOT / "tools" / "capsule_conformance.py").read_text(encoding="utf-8")
+        query_only = source.index('connection.execute("PRAGMA query_only = ON")')
+        trusted_schema = source.index('connection.execute("PRAGMA trusted_schema = OFF")')
+        object_inspection = source.index("def _object_names")
+        self.assertLess(query_only, object_inspection)
+        self.assertLess(trusted_schema, object_inspection)
+
     def test_repository_cli_exposes_independent_conformance_command(self) -> None:
         result = subprocess.run(
             [sys.executable, str(ROOT / "tools" / "capsule.py"), "conformance", str(self.capsule)],

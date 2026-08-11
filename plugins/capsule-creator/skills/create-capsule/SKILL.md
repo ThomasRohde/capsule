@@ -38,6 +38,9 @@ schemas or download a runtime.
 3. Replace the starter with application-specific reviewable source. Keep generic
    builder/runtime code free of product logic. For a sophisticated example,
    inspect `assets/examples/capsule-inspector/`; copy patterns, not its domain.
+   Give every table an explicit primary key, do not use triggers or virtual
+   tables, and list suffix-classified pure-content files in
+   `capsule-project.json` under `non_executable_assets`.
 4. Build to a resolved output. Use `--replace` only when intentionally
    regenerating that exact file:
 
@@ -85,6 +88,8 @@ schemas or download a runtime.
 - Preserve loopback-only binding, explicit trust, default-deny CSP, bounded
   resources, atomic writes, exact asset hashes, and refusal to overwrite
   unspecified targets.
+- Keep schema portable: explicit table primary keys only, with no triggers or
+  virtual tables.
 - Treat internal hashes as integrity evidence, never publisher authentication.
 - Render database/untrusted text with safe DOM text APIs.
 - Do not hand-edit generated capsules for durable changes.

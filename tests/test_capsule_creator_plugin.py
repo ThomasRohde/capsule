@@ -45,6 +45,70 @@ SPEC.loader.exec_module(capsule_project)
 
 
 class CapsuleCreatorPluginTests(unittest.TestCase):
+    def test_plugin_manifests_cover_codex_marketplace_and_agent_plugins_v1(self) -> None:
+        codex_manifest = json.loads(
+            (PLUGIN / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        portable_manifest = json.loads(
+            (PLUGIN / "plugin.json").read_text(encoding="utf-8")
+        )
+        marketplace = json.loads(
+            (ROOT / ".agents" / "plugins" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        portable_fields = {
+            "$schema",
+            "name",
+            "version",
+            "description",
+            "author",
+            "homepage",
+            "repository",
+            "license",
+            "keywords",
+            "extensions",
+        }
+        self.assertEqual(
+            portable_manifest["$schema"],
+            "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+        )
+        self.assertLessEqual(set(portable_manifest), portable_fields)
+        self.assertRegex(
+            portable_manifest["name"],
+            r"^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$",
+        )
+        self.assertLessEqual(len(portable_manifest["name"]), 64)
+        for field in (
+            "name",
+            "version",
+            "description",
+            "author",
+            "homepage",
+            "repository",
+            "license",
+            "keywords",
+        ):
+            self.assertEqual(portable_manifest[field], codex_manifest[field])
+
+        self.assertEqual(marketplace["name"], "sqlite-capsule")
+        self.assertEqual(
+            marketplace["interface"]["displayName"], "SQLite Capsule"
+        )
+        self.assertEqual(len(marketplace["plugins"]), 1)
+        entry = marketplace["plugins"][0]
+        self.assertEqual(entry["name"], portable_manifest["name"])
+        self.assertEqual(entry["source"], {
+            "source": "local",
+            "path": "./plugins/capsule-creator",
+        })
+        self.assertEqual(entry["policy"], {
+            "installation": "AVAILABLE",
+            "authentication": "ON_INSTALL",
+        })
+        self.assertEqual(entry["category"], "Developer Tools")
+
     def test_scaffold_build_and_check_produce_a_verified_capsule(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -158,6 +222,66 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
                     project,
                     root / "unsafe.capsule.sqlite",
                 )
+
+    def test_schema_inspection_catches_comment_obfuscated_trigger_and_virtual_table(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for kind, declaration, message in (
+                (
+                    "trigger",
+                    "CREATE/**/TRIGGER mutate AFTER INSERT ON example BEGIN SELECT 1; END;",
+                    "created forbidden triggers",
+                ),
+                (
+                    "virtual",
+                    "CREATE/**/VIRTUAL/**/TABLE search_index USING fts5(content);",
+                    "created forbidden virtual tables",
+                ),
+            ):
+                with self.subTest(kind=kind):
+                    project = root / kind
+                    capsule_project.init_project(
+                        project,
+                        title=kind.title(),
+                        app_id=f"org.example.{kind}",
+                    )
+                    (project / "domain.sql").write_text(
+                        "CREATE TABLE example (id TEXT PRIMARY KEY);\n" + declaration,
+                        encoding="utf-8",
+                    )
+                    with self.assertRaisesRegex(capsule_project.ProjectError, message):
+                        capsule_project.build_project(project, root / f"{kind}.sqlite")
+
+    def test_project_can_exclude_pure_content_from_executable_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "content-flags"
+            output = root / "content-flags.capsule.sqlite"
+            capsule_project.init_project(
+                project,
+                title="Content Flags",
+                app_id="org.example.content-flags",
+            )
+            (project / "source" / "app" / "article.html").write_text(
+                "<article>inert content</article>", encoding="utf-8"
+            )
+            config_path = project / "capsule-project.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["non_executable_assets"] = ["app/article.html"]
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+
+            capsule_project.build_project(project, output)
+            connection = sqlite3.connect(output)
+            flags = dict(
+                connection.execute(
+                    "SELECT path, executable FROM capsule_asset "
+                    "WHERE path IN ('app/article.html', 'app/index.html', 'app/app.js')"
+                ).fetchall()
+            )
+            connection.close()
+            self.assertEqual(flags["app/article.html"], 0)
+            self.assertEqual(flags["app/index.html"], 1)
+            self.assertEqual(flags["app/app.js"], 1)
 
     def test_seed_tables_follow_foreign_key_dependency_order(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -182,24 +182,77 @@ function sqlParameters(sqlText) {
 }
 
 function statementKind(sqlText) {
-  let text = sqlText.trimStart();
-  while (text.startsWith("--")) {
-    const newline = text.indexOf("\n");
-    text = newline < 0 ? "" : text.slice(newline + 1).trimStart();
+  let index = 0;
+  while (index < sqlText.length) {
+    while (index < sqlText.length && /\s/.test(sqlText[index])) index += 1;
+    if (sqlText.startsWith("--", index)) {
+      const newline = sqlText.indexOf("\n", index + 2);
+      index = newline < 0 ? sqlText.length : newline + 1;
+      continue;
+    }
+    if (sqlText.startsWith("/*", index)) {
+      const end = sqlText.indexOf("*/", index + 2);
+      index = end < 0 ? sqlText.length : end + 2;
+      continue;
+    }
+    break;
   }
+  const text = sqlText.slice(index);
   return (text.split(/\s+/, 1)[0] || "").toUpperCase();
 }
 
 function looksLikeSingleStatement(sqlText) {
-  let text = sqlText.trim();
-  if (!text) return false;
-  if (text.endsWith(";")) text = text.slice(0, -1).trimEnd();
-  return !text.includes(";");
+  let index = 0;
+  let hasContent = false;
+  let terminated = false;
+  while (index < sqlText.length) {
+    const char = sqlText[index];
+    const next = sqlText[index + 1] || "";
+    if (/\s/.test(char)) { index += 1; continue; }
+    if (char === "-" && next === "-") {
+      const newline = sqlText.indexOf("\n", index + 2);
+      index = newline < 0 ? sqlText.length : newline + 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      const end = sqlText.indexOf("*/", index + 2);
+      index = end < 0 ? sqlText.length : end + 2;
+      continue;
+    }
+    if (terminated) return false;
+    if (char === ";") {
+      if (!hasContent) return false;
+      terminated = true;
+      index += 1;
+      continue;
+    }
+    hasContent = true;
+    if (["'", '"', "`"].includes(char)) {
+      const quote = char;
+      index += 1;
+      while (index < sqlText.length) {
+        if (sqlText[index] === quote) {
+          if (sqlText[index + 1] === quote) { index += 2; continue; }
+          index += 1;
+          break;
+        }
+        index += 1;
+      }
+      continue;
+    }
+    if (char === "[") {
+      const end = sqlText.indexOf("]", index + 1);
+      index = end < 0 ? sqlText.length : end + 1;
+      continue;
+    }
+    index += 1;
+  }
+  return hasContent;
 }
 
 function safeAssetPath(path) {
   if (typeof path !== "string" || !path || path.length > 1024) return false;
-  if (path.startsWith("/") || path.includes("\\") || path.includes("\0")) return false;
+  if (path.startsWith("/") || path.includes("\\") || Array.from(path).some((char) => char.codePointAt(0) < 32 || char.codePointAt(0) === 127)) return false;
   const parts = path.split("/");
   return !parts.some((part) => !part || part === "." || part === "..");
 }
@@ -381,6 +434,8 @@ async function verifyCapsule(expectedDatabaseSha256) {
     if (!views.has("START_HERE")) addError("Missing START_HERE view");
     const triggers = objects.filter((row) => row.type === "trigger");
     if (triggers.length) addError("Capsule triggers are not permitted");
+    const virtualTables = executeRows("PRAGMA table_list").filter((row) => row.type === "virtual");
+    if (virtualTables.length) addError("Capsule virtual tables are not permitted");
     for (const [table, required] of Object.entries(REQUIRED_COLUMNS)) {
       if (!tables.has(table)) continue;
       const columns = new Set(executeRows(`PRAGMA table_info('${table.replaceAll("'", "''")}')`).map((row) => row.name));
@@ -396,13 +451,30 @@ async function verifyCapsule(expectedDatabaseSha256) {
       if (!safeAssetPath(manifestCache.entry_asset)) addError("Manifest entry_asset is unsafe");
     }
     if (manifestCache && typeof manifestCache.permissions_json !== "object") addError("Manifest permissions_json must decode to an object");
+    if (manifestCache && manifestCache.permissions_json && typeof manifestCache.permissions_json === "object") {
+      const enabledOperations = new Set(executeRows("SELECT DISTINCT operation FROM capsule_endpoint WHERE enabled = 1").map((row) => row.operation));
+      for (const [operation, capability] of [["read", "database.read"], ["write", "database.write"]]) {
+        if (enabledOperations.has(operation) && manifestCache.permissions_json[capability]?.required !== true) {
+          addError(`Enabled ${operation} endpoints require permission '${capability}'`);
+        }
+      }
+      if (manifestCache.permissions_json.network?.value !== "none") addError("Manifest network permission must be 'none'");
+    }
     const assets = db.exec({
       sql: "SELECT path, media_type, content, sha256, executable, cache_policy, description FROM capsule_asset ORDER BY path",
       rowMode: "object",
       returnValue: "resultRows",
     });
+    const caseInsensitivePaths = new Map();
     for (const asset of assets) {
       if (!safeAssetPath(asset.path)) { addError(`Unsafe asset path: ${asset.path}`); continue; }
+      const foldedPath = asset.path.toLowerCase();
+      if (caseInsensitivePaths.has(foldedPath) && caseInsensitivePaths.get(foldedPath) !== asset.path) {
+        addError(`Case-insensitive asset collision: ${caseInsensitivePaths.get(foldedPath)} and ${asset.path}`);
+      }
+      caseInsensitivePaths.set(foldedPath, asset.path);
+      if (typeof asset.media_type !== "string" || !/^[A-Za-z0-9!#$&^_.+-]+\/[A-Za-z0-9!#$&^_.+-]+(?:\s*;\s*[A-Za-z0-9!#$&^_.+-]+\s*=\s*[A-Za-z0-9!#$&^_.+'-]+)*$/.test(asset.media_type)) addError(`Asset ${asset.path} has an unsafe media type`);
+      if (asset.cache_policy !== "no-store") addError(`Asset ${asset.path} has an unsafe cache policy`);
       if (!(asset.content instanceof Uint8Array)) { addError(`Asset ${asset.path} content is not a blob`); continue; }
       if (asset.content.byteLength > MAX_ASSET_BYTES) addError(`Asset ${asset.path} exceeds size limit`);
       const digest = await sha256Hex(asset.content);
@@ -545,6 +617,28 @@ function executeEndpoint(name, operation, parameters) {
   validateParameterSpec(spec);
   const bound = validateParameters(spec, parameters);
   const steps = executeRows("SELECT sequence, sql_text, required_changes FROM capsule_endpoint_step WHERE endpoint_name = :name ORDER BY sequence", { ":name": name });
+  const statements = steps.length ? steps : [{ sequence: 1, sql_text: endpoint.sql_text, required_changes: null }];
+  if (steps.length) {
+    if (operation !== "write" || endpoint.result_mode !== "changes") fail("Compound endpoint must be a write/changes endpoint");
+    if (steps.length < 2 || steps.length > MAX_ENDPOINT_STEPS) fail("Compound endpoint has an invalid step count");
+    if (steps[0].sql_text !== endpoint.sql_text) fail("Compound endpoint step 1 differs from sql_text");
+    if (steps.some((step, index) => Number(step.sequence) !== index + 1)) fail("Compound endpoint steps are not contiguous");
+  }
+  const usedParameters = new Set();
+  const unsupportedParameters = new Set();
+  for (const statement of statements) {
+    if (!looksLikeSingleStatement(statement.sql_text)) fail("Endpoint contains multiple statements in one step");
+    const kind = statementKind(statement.sql_text);
+    const allowed = operation === "read" ? ["SELECT", "WITH"] : ["INSERT", "UPDATE", "DELETE", "REPLACE", "WITH"];
+    if (!allowed.includes(kind)) fail(`Endpoint statement begins with disallowed ${kind}`);
+    const sqlParameterSet = sqlParameters(statement.sql_text);
+    for (const used of sqlParameterSet.named) usedParameters.add(used);
+    for (const marker of sqlParameterSet.unsupported) unsupportedParameters.add(marker);
+  }
+  if (unsupportedParameters.size) fail("Endpoint contains unsupported parameter markers");
+  if (Object.keys(spec).some((declared) => !usedParameters.has(declared)) || Array.from(usedParameters).some((used) => !(used in spec))) {
+    fail("Endpoint parameters do not match SQL placeholders");
+  }
 
   if (operation === "read") {
     db.exec("PRAGMA query_only = ON");
@@ -556,8 +650,6 @@ function executeEndpoint(name, operation, parameters) {
     }
   }
 
-  const statements = steps.length ? steps : [{ sequence: 1, sql_text: endpoint.sql_text, required_changes: null }];
-  if (steps.length && (steps.length < 2 || steps.length > MAX_ENDPOINT_STEPS)) fail("Compound endpoint has an invalid step count");
   db.exec("BEGIN IMMEDIATE");
   const stepChanges = [];
   let lastrowid = null;

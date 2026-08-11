@@ -8,7 +8,7 @@ Capsule repository checkout is not required.
 
 | Path | Ownership |
 | --- | --- |
-| `capsule-project.json` | Stable identity, version, summary, entry asset, UTC timestamps, permissions |
+| `capsule-project.json` | Stable identity, version, summary, entry asset, UTC timestamps, permissions, executable-asset overrides |
 | `domain.sql` | Application tables, indexes, and views |
 | `source/data/seed.json` | Deterministic seed rows keyed by domain table |
 | `source/app/` | Offline HTML, CSS, JavaScript, images, JSON, fonts, and WASM |
@@ -42,7 +42,9 @@ Omit `database.write` for read-only applications. `network.value` must remain
 
 ## Domain model
 
-Use ordinary SQLite tables, indexes, and views. Prefer text IDs that the UI can
+Use ordinary SQLite tables, indexes, and views. Every table must declare an
+explicit primary key; implicit `rowid` identity is not a portable authoring
+contract. Prefer text IDs that the UI can
 create with `crypto.randomUUID()`, explicit UTC timestamps, foreign keys, and
 `CHECK` constraints that preserve domain invariants. Add indexes for every
 stable sort/filter path. Treat JSON columns as text with `json_valid(...)`.
@@ -50,6 +52,11 @@ stable sort/filter path. Treat JSON columns as text with `json_valid(...)`.
 `domain.sql` must not create `capsule_` objects, triggers, virtual tables,
 attached databases, extension calls, or PRAGMA changes. Platform structure is
 owned by the bundled format snapshot.
+
+App files ending in `.html`, `.js`, `.mjs`, `.py`, or `.wasm` are marked
+executable by default. If such a file is pure content, list its `app/...` path in
+the optional `non_executable_assets` array in `capsule-project.json`. Overrides
+must name existing project assets and cannot include the entry asset.
 
 `seed.json` contains complete rows. The builder deterministically orders seeded
 tables so referenced parents are inserted before children. Put a self-referenced

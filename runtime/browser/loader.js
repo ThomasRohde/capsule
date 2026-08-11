@@ -12,7 +12,6 @@
   let nextWorkerId = 1;
   let worker;
   let workerUrl;
-  let appUrl;
   let appNonce;
   let metadata;
   let runtimeState;
@@ -304,7 +303,9 @@
       if ((link.getAttribute("rel") || "").toLowerCase() !== "stylesheet") throw new Error(`Unsupported local link relation for ${path}`);
       const style = parsed.createElement("style");
       style.dataset.capsuleAsset = path;
-      style.textContent = assetText(asset);
+      const source = assetText(asset);
+      if (/<\/style/i.test(source)) throw new Error(`Stylesheet ${path} cannot be safely materialised inline`);
+      style.textContent = source;
       link.replaceWith(style);
     }
     for (const script of Array.from(parsed.querySelectorAll("script[src]"))) {
@@ -557,7 +558,6 @@
   window.addEventListener("unload", () => {
     try { worker?.terminate(); } catch (_) {}
     if (workerUrl) URL.revokeObjectURL(workerUrl);
-    if (appUrl) URL.revokeObjectURL(appUrl);
   });
 
   void boot().catch(showError);

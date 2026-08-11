@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-policy"
-version = "0.2.0"
+version = "0.3.0"
 description = "Host-local publisher trust and capability policy for SQLite Capsules"
 edition.workspace = true
 license.workspace = true

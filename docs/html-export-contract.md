@@ -82,16 +82,26 @@ The worker imports the database bytes and performs at least:
 
 - application ID and user version checks;
 - `PRAGMA integrity_check` and foreign-key checks;
-- required table/view/column checks;
+- required table/view/column-presence checks;
 - one compatible manifest and validated entry asset;
-- asset path, size, and SHA-256 verification;
+- asset path, case-collision, media-type, cache-policy, size, and SHA-256 verification;
 - endpoint parameter/result declarations and statement compilation;
-- trigger policy checks;
+- trigger and virtual-table policy checks;
+- enabled-endpoint to permission consistency checks;
 - capsule application checks.
 
 The entry asset is not returned or executed until verification succeeds. Endpoint
 execution applies the same parameter, authoriser, transaction, change-log, result,
 and resource limits as the compatible Python host.
+
+This browser profile intentionally does not duplicate the full Python/native
+shape checker: it does not re-check every declared column's SQLite type,
+`NOT NULL`/primary-key ordinal, foreign-key declaration, or the exact
+`START_HERE` projection. The exporter verifies the source with the full Python
+profile before creating revision 1, and sanctioned endpoints cannot mutate
+platform schema. `verify-html` again performs full Python verification over the
+embedded database. The reduced in-browser pass is a fail-closed execution gate,
+not a claim that all hosts implement byte-for-byte identical verification code.
 
 The exporter resolves only static capsule-local script, stylesheet, image/media,
 and poster references from the entry document. Missing, escaping, or remote
@@ -125,6 +135,11 @@ digest. A saved editable revision retains that immutable source digest, incremen
 `revision`, records the previous revision's database digest as
 `parent_database_sha256`, and records the new current and compressed payload
 digests.
+
+For deterministic initial exports, metadata `created_at` is the source
+manifest's `updated_at`: it identifies the release snapshot rather than the wall
+clock time of export. Browser-saved revisions replace it with their actual save
+time.
 
 The in-document hashes are component integrity evidence. The exporter and saved
 revision writer may report an external whole-HTML digest, but the document does

@@ -15,16 +15,16 @@ SPEC.loader.exec_module(MODULE)
 
 class ReleaseVersionTests(unittest.TestCase):
     def test_current_package_versions_and_tag_match(self) -> None:
-        version, sources = MODULE.verify_release_version("v0.2.0")
-        self.assertEqual(version, "0.2.0")
+        version, sources = MODULE.verify_release_version("v0.3.0")
+        self.assertEqual(version, "0.3.0")
         self.assertGreaterEqual(len(sources), 18)
-        self.assertEqual(set(sources.values()), {"0.2.0"})
+        self.assertEqual(set(sources.values()), {"0.3.0"})
 
     def test_mismatched_or_noncanonical_tag_is_rejected(self) -> None:
         with self.assertRaises(MODULE.ReleaseVersionError):
-            MODULE.verify_release_version("v0.2.1")
+            MODULE.verify_release_version("v0.3.1")
         with self.assertRaises(MODULE.ReleaseVersionError):
-            MODULE.verify_release_version("0.2.0")
+            MODULE.verify_release_version("0.3.0")
 
 
 if __name__ == "__main__":

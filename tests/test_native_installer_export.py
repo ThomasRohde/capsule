@@ -17,8 +17,8 @@ SPEC.loader.exec_module(MODULE)
 class NativeInstallerExportTests(unittest.TestCase):
     def bundle_fixture(self, directory: Path) -> Path:
         bundle_root = directory / "bundle"
-        nsis = bundle_root / "nsis" / "SQLite Capsule Host_0.2.0_x64-setup.exe"
-        msi = bundle_root / "msi" / "SQLite Capsule Host_0.2.0_x64_en-US.msi"
+        nsis = bundle_root / "nsis" / "SQLite Capsule Host_0.3.0_x64-setup.exe"
+        msi = bundle_root / "msi" / "SQLite Capsule Host_0.3.0_x64_en-US.msi"
         nsis.parent.mkdir(parents=True)
         msi.parent.mkdir(parents=True)
         nsis.write_bytes(b"nsis fixture")

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "capsule-creator",
+  "version": "0.2.6",
+  "description": "Create, build, verify, run, and black-box test exceptional offline SQLite Capsule applications without a repository checkout or native client.",
+  "author": {
+    "name": "SQLite Capsule contributors"
+  },
+  "homepage": "https://github.com/ThomasRohde/capsule",
+  "repository": "https://github.com/ThomasRohde/capsule",
+  "license": "MIT",
+  "keywords": [
+    "sqlite",
+    "capsule",
+    "offline",
+    "application",
+    "authoring"
+  ]
+}

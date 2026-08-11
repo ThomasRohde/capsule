@@ -100,7 +100,7 @@ pub(crate) fn verify(
 
     let contract: Contract = serde_json::from_str(V02_CONFORMANCE)?;
     let mut errors = Vec::new();
-    verify_no_triggers(connection, &mut errors)?;
+    verify_forbidden_schema_objects(connection, &mut errors)?;
     for (name, table) in &contract.required_objects.tables {
         verify_table(connection, name, table, true, &mut errors)?;
     }
@@ -132,7 +132,7 @@ pub(crate) fn verify(
     Ok(VerificationReport { check_results })
 }
 
-fn verify_no_triggers(
+fn verify_forbidden_schema_objects(
     connection: &Connection,
     errors: &mut Vec<String>,
 ) -> Result<(), RuntimeError> {
@@ -142,6 +142,23 @@ fn verify_no_triggers(
         .collect::<Result<Vec<_>, _>>()?;
     if !triggers.is_empty() {
         errors.push(format!("triggers are forbidden: {}", triggers.join(", ")));
+    }
+    let virtual_tables = connection
+        .prepare("PRAGMA table_list")?
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(1)?, row.get::<_, String>(2)?))
+        })?
+        .filter_map(|row| match row {
+            Ok((name, kind)) if kind.eq_ignore_ascii_case("virtual") => Some(Ok(name)),
+            Ok(_) => None,
+            Err(error) => Some(Err(error)),
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if !virtual_tables.is_empty() {
+        errors.push(format!(
+            "virtual tables are forbidden: {}",
+            virtual_tables.join(", ")
+        ));
     }
     Ok(())
 }

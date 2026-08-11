@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -12,7 +13,9 @@ import unittest
 import urllib.parse
 import urllib.error
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -29,6 +32,12 @@ from runtime.capsule_host import (  # noqa: E402
     MAX_REQUEST_BYTES,
     MAX_RESULT_ROWS,
     encode_cursor_result,
+    health,
+    looks_like_single_statement,
+    read_state,
+    safe_asset_path,
+    statement_kind,
+    validate_parameters,
     windows_current_principal,
     windows_state_identity_key,
 )
@@ -137,6 +146,24 @@ class CapsuleBuildTests(CapsuleFixture):
         with self.assertRaises(EndpointError):
             encode_cursor_result(cursor, "rows")
         connection.close()
+
+    def test_sql_lexing_accepts_quoted_semicolons_and_leading_block_comments(self) -> None:
+        statement = "/* generated endpoint */ SELECT ';' AS punctuation; -- trailing"
+        self.assertTrue(looks_like_single_statement(statement))
+        self.assertEqual(statement_kind(statement), "SELECT")
+        self.assertFalse(looks_like_single_statement("SELECT 1; SELECT 2"))
+
+    def test_asset_paths_reject_all_ascii_control_characters(self) -> None:
+        self.assertTrue(safe_asset_path("app/naïve.json"))
+        for codepoint in (*range(32), 127):
+            with self.subTest(codepoint=codepoint):
+                self.assertFalse(safe_asset_path(f"app/bad{chr(codepoint)}path.json"))
+
+    def test_integer_parameter_coercion_matches_browser_grammar(self) -> None:
+        spec = {"value": {"type": "integer", "required": True}}
+        self.assertEqual(validate_parameters(spec, {"value": " +5 "}), {"value": 5})
+        with self.assertRaises(EndpointError):
+            validate_parameters(spec, {"value": "1_000"})
 
     def test_fine_grained_permission_grants_are_optional_and_inspectable(self) -> None:
         directory, path = self.writable_copy()
@@ -314,6 +341,17 @@ class VerificationAdversarialTests(CapsuleFixture):
             "BEGIN UPDATE diagram_document SET updated_at = CURRENT_TIMESTAMP; END"
         )
         self.assert_verification_error(path, "Triggers are not permitted")
+
+    def test_virtual_tables_are_rejected(self) -> None:
+        path = self.mutate("CREATE VIRTUAL TABLE app_search USING fts5(content)")
+        self.assert_verification_error(path, "Virtual tables are not permitted")
+
+    def test_control_characters_in_asset_paths_are_rejected(self) -> None:
+        path = self.mutate(
+            "UPDATE capsule_asset SET path = ? WHERE path = 'app/theme.js'",
+            ("app/theme\n.js",),
+        )
+        self.assert_verification_error(path, "Unsafe asset path")
 
     def test_unsafe_asset_header_is_rejected_and_csp_survives(self) -> None:
         path = self.mutate(
@@ -1294,6 +1332,52 @@ class EndpointTests(CapsuleFixture):
                 capsule.execute_endpoint("malicious.control-delete", "write", {})
             self.assertEqual(capsule.manifest()["id"], 1)
 
+    def test_write_returning_is_fully_drained_before_changes_and_commit(self) -> None:
+        directory, path = self.writable_copy()
+        self.addCleanup(directory.cleanup)
+        connection = sqlite3.connect(path)
+        connection.execute("CREATE TABLE returning_item (id INTEGER PRIMARY KEY, value TEXT)")
+        connection.executemany(
+            "INSERT INTO capsule_endpoint "
+            "(name, operation, sql_text, parameters_json, result_mode, description, enabled) "
+            "VALUES (?, 'write', ?, '{}', ?, 'RETURNING regression fixture.', 1)",
+            (
+                (
+                    "returning.row",
+                    "INSERT INTO returning_item(value) VALUES ('a'), ('b'), ('c') RETURNING id, value",
+                    "row",
+                ),
+                (
+                    "returning.changes",
+                    "UPDATE returning_item SET value = upper(value) RETURNING id",
+                    "changes",
+                ),
+            ),
+        )
+        connection.commit()
+        connection.close()
+
+        with CapsuleDatabase(path) as capsule:
+            report = capsule.verify()
+            self.assertTrue(report["ok"], report)
+            first = capsule.execute_endpoint("returning.row", "write", {})
+            changed = capsule.execute_endpoint("returning.changes", "write", {})
+            rows = capsule._connection.execute(
+                "SELECT id, value FROM returning_item ORDER BY id"
+            ).fetchall()
+            log = capsule._connection.execute(
+                "SELECT endpoint_name, changed_rows FROM capsule_change_log "
+                "WHERE endpoint_name LIKE 'returning.%' ORDER BY id"
+            ).fetchall()
+
+        self.assertEqual(first, {"id": 1, "value": "a"})
+        self.assertEqual(changed["changes"], 3)
+        self.assertEqual([tuple(row) for row in rows], [(1, "A"), (2, "B"), (3, "C")])
+        self.assertEqual(
+            [tuple(row) for row in log],
+            [("returning.row", 3), ("returning.changes", 3)],
+        )
+
 
 class CompoundEndpointTests(CapsuleFixture):
     def add_compound_fixture(self, path: Path, *, failing: bool = False) -> str:
@@ -1367,6 +1451,42 @@ class CompoundEndpointTests(CapsuleFixture):
         self.assertEqual(counter, 3)
         self.assertEqual([tuple(row) for row in audit], [("audit-3", 3)])
         self.assertEqual([tuple(row) for row in log], [(endpoint_name, 2)])
+
+    def test_compound_returning_steps_are_drained_before_required_changes(self) -> None:
+        directory, path = self.writable_copy()
+        self.addCleanup(directory.cleanup)
+        endpoint_name = self.add_compound_fixture(path)
+        connection = sqlite3.connect(path)
+        connection.execute(
+            "UPDATE capsule_endpoint SET sql_text = sql_text || ' RETURNING value' WHERE name = ?",
+            (endpoint_name,),
+        )
+        connection.execute(
+            "UPDATE capsule_endpoint_step SET sql_text = sql_text || "
+            "CASE sequence WHEN 1 THEN ' RETURNING value' ELSE ' RETURNING amount' END "
+            "WHERE endpoint_name = ?",
+            (endpoint_name,),
+        )
+        first = connection.execute(
+            "SELECT sql_text FROM capsule_endpoint_step WHERE endpoint_name = ? AND sequence = 1",
+            (endpoint_name,),
+        ).fetchone()[0]
+        connection.execute(
+            "UPDATE capsule_endpoint SET sql_text = ? WHERE name = ?", (first, endpoint_name)
+        )
+        connection.commit()
+        connection.close()
+
+        with CapsuleDatabase(path) as capsule:
+            report = capsule.verify()
+            self.assertTrue(report["ok"], report)
+            result = capsule.execute_endpoint(endpoint_name, "write", {"amount": 2})
+            counter = capsule._connection.execute(
+                "SELECT value FROM test_counter WHERE id = 'main'"
+            ).fetchone()[0]
+
+        self.assertEqual(result["step_changes"], [1, 1])
+        self.assertEqual(counter, 2)
 
     def test_compound_endpoint_rolls_back_on_row_count_mismatch(self) -> None:
         directory, path = self.writable_copy()
@@ -1458,6 +1578,76 @@ class DetachedLifecycleTests(CapsuleFixture):
 
 
 class HttpSmokeTests(CapsuleFixture):
+    def test_windows_server_uses_exclusive_port_semantics(self) -> None:
+        self.assertEqual(CapsuleHTTPServer.allow_reuse_address, os.name != "nt")
+
+    def test_health_and_manifest_fail_with_bounded_json_errors(self) -> None:
+        class BrokenCapsule:
+            @staticmethod
+            def manifest() -> dict[str, object]:
+                raise CapsuleError("manifest unavailable")
+
+        server = CapsuleHTTPServer(
+            ("127.0.0.1", 0), BrokenCapsule(), "shutdown-test-token", quiet=True
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            for route in ("/__capsule/health", "/__capsule/manifest"):
+                with self.subTest(route=route):
+                    with self.assertRaises(urllib.error.HTTPError) as caught:
+                        urllib.request.urlopen(base + route, timeout=2)
+                    self.assertEqual(caught.exception.code, 500)
+                    payload = json.loads(caught.exception.read().decode("utf-8"))
+                    self.assertEqual(payload, {"ok": False, "error": "manifest unavailable"})
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_localhost_lifecycle_state_round_trips(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            capsule = Path(directory) / "fixture.capsule.sqlite"
+            capsule.touch()
+            state_file = Path(directory) / "state.json"
+            state = {
+                "capsule": str(capsule.resolve()),
+                "capsule_id": "fixture",
+                "host": "localhost",
+                "url": "http://localhost:4321",
+                "shutdown_token": "x" * 32,
+                "log": str(Path(directory) / "host.log"),
+                "port": 4321,
+                "pid": 1234,
+            }
+            state_file.write_text(json.dumps(state), encoding="utf-8")
+            with mock.patch("runtime.capsule_host.state_path", return_value=state_file):
+                self.assertEqual(read_state(capsule), state)
+
+    def test_health_rejects_oversized_loopback_responses(self) -> None:
+        class OversizedHandler(BaseHTTPRequestHandler):
+            def do_GET(self) -> None:  # noqa: N802
+                payload = b"{" + b" " * 65_536
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def log_message(self, format: str, *args: object) -> None:
+                del format, args
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), OversizedHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_address[1]}"
+            self.assertIsNone(health(url, timeout=2))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
     def test_concurrency_limit_returns_service_unavailable(self) -> None:
         directory, path = self.writable_copy()
         self.addCleanup(directory.cleanup)

@@ -9,6 +9,17 @@
     "format_version": "0.2",
     "runtime_protocol": "capsule-http/0.2"
   },
+  "forbidden_schema_objects": [
+    "trigger",
+    "virtual_table"
+  ],
+  "asset_path_policy": {
+    "relative": true,
+    "separator": "/",
+    "forbid_backslash": true,
+    "forbid_empty_or_dot_segments": true,
+    "forbid_ascii_control_characters": true
+  },
   "required_objects": {
     "tables": {
       "capsule_manifest": {

@@ -194,7 +194,7 @@ pub(crate) fn run_declared_checks(
             }
             let expected: Value = serde_json::from_str(&expected_json)?;
             install_runtime_guards(connection, false)?;
-            let actual = run_query(connection, &sql, &BTreeMap::new(), &mode);
+            let actual = run_query(connection, &sql, &BTreeMap::new(), &mode, false);
             clear_runtime_guards(connection);
             let actual = actual?;
             let (actual, passed) = if mode == "empty" {
@@ -385,7 +385,13 @@ fn execute_read(
         connection.pragma_query_value(None, "query_only", |row| row.get(0))?;
     connection.pragma_update(None, "query_only", true)?;
     install_runtime_guards(connection, false)?;
-    let result = run_query(connection, &endpoint.sql_text, bound, &endpoint.result_mode);
+    let result = run_query(
+        connection,
+        &endpoint.sql_text,
+        bound,
+        &endpoint.result_mode,
+        false,
+    );
     clear_runtime_guards(connection);
     connection.pragma_update(None, "query_only", previous_query_only)?;
     result.map_err(|error| RuntimeError::Endpoint(format!("read {}: {error}", endpoint.name)))
@@ -412,7 +418,7 @@ fn execute_write(
         let mut lastrowid = 0_i64;
         let mut result = Value::Null;
         for (index, (sql, required_changes)) in statements.into_iter().enumerate() {
-            result = run_query(connection, sql, bound, &endpoint.result_mode)?;
+            result = run_query(connection, sql, bound, &endpoint.result_mode, true)?;
             let changes =
                 i64::try_from(connection.changes()).map_err(|_| RuntimeError::ResultPolicy)?;
             if required_changes.is_some_and(|required| required != changes) {
@@ -470,6 +476,7 @@ fn run_query(
     sql: &str,
     bound: &BTreeMap<String, BoundValue>,
     result_mode: &str,
+    drain_remaining: bool,
 ) -> Result<Value, RuntimeError> {
     let mut statement = connection.prepare(sql)?;
     bind_statement(&mut statement, bound)?;
@@ -507,6 +514,9 @@ fn run_query(
                 .transpose()?
                 .unwrap_or(Value::Null);
             ensure_result_size(&value)?;
+            if drain_remaining {
+                while rows.next()?.is_some() {}
+            }
             Ok(value)
         }
         "scalar" => {
@@ -516,6 +526,9 @@ fn run_query(
                 .transpose()?
                 .unwrap_or(Value::Null);
             ensure_result_size(&value)?;
+            if drain_remaining {
+                while rows.next()?.is_some() {}
+            }
             Ok(value)
         }
         "changes" => {
@@ -934,4 +947,33 @@ fn sql_parameters(sql: &str) -> (BTreeSet<String>, BTreeSet<char>) {
         index += 1;
     }
     (named, unsupported)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn write_returning_drains_rows_before_changes_are_observed() {
+        let connection = Connection::open_in_memory().expect("open fixture");
+        connection
+            .execute_batch("CREATE TABLE item (id INTEGER PRIMARY KEY, value TEXT NOT NULL)")
+            .expect("create fixture");
+        let result = run_query(
+            &connection,
+            "INSERT INTO item(value) VALUES ('a'), ('b'), ('c') RETURNING id, value",
+            &BTreeMap::new(),
+            "row",
+            true,
+        )
+        .expect("execute RETURNING write");
+        assert_eq!(result, json!({"id": 1, "value": "a"}));
+        assert_eq!(connection.changes(), 3);
+        assert_eq!(
+            connection
+                .query_row("SELECT count(*) FROM item", [], |row| row.get::<_, i64>(0))
+                .expect("count statement rows"),
+            3
+        );
+    }
 }

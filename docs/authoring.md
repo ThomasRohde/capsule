@@ -45,6 +45,11 @@ The generated source separates stable identity, domain SQL, seed rows, offline
 browser assets, named endpoints, application checks, prompts, documents, and
 runbooks. The builder embeds its bundled generic Python host and browser client,
 publishes atomically after full verification, and refuses implicit replacement.
+All `.html`, `.js`, `.mjs`, `.py`, and `.wasm` app files are executable by
+default. Pure-content files with one of those suffixes can be removed from the
+signed executable surface by listing their `app/...` paths in
+`capsule-project.json` under `non_executable_assets`; the entry asset cannot be
+excluded.
 After reviewing the result and making an explicit trust decision, exercise it
 through `capsule_project.py host start ... --trust-capsule` and confirm the real
 loopback application and write persistence before distribution.
@@ -70,9 +75,14 @@ The semantic diff identifies changed keys without dumping unbounded row content.
 
 ## Generic unpack and pack
 
-`unpack` is read-only with respect to the capsule and refuses an existing output path. It writes deterministic metadata, schema objects, JSONL table rows, typed BLOB values, and content-addressed assets.
+`unpack` is read-only with respect to the capsule and refuses an existing output path. It writes deterministic metadata, schema objects, JSONL table rows, typed BLOB values, and content-addressed assets. It also refuses tables without an explicit primary key, because implicit `rowid` identity cannot be round-tripped without silently renumbering rows.
 
-`pack` treats the bundle as untrusted input. It validates schema-object declarations, prevents bundle path escape, verifies referenced file sizes and hashes, reconstructs into a temporary database, checks foreign keys, runs the complete capsule verifier, and publishes only on success. It refuses an existing output unless `--replace` is explicit.
+`pack` treats the bundle as untrusted input. It rejects triggers and virtual
+tables before reconstruction, validates other schema-object declarations,
+prevents bundle path escape, verifies referenced file sizes and hashes,
+reconstructs into a temporary database, checks foreign keys, runs the complete
+capsule verifier, and publishes only on success. It refuses an existing output
+unless `--replace` is explicit.
 
 Repeated packs from one bundle are deterministic in the supported environment. A semantic round trip is required to compare equal; the output is not required to reproduce the historical page layout of an unrelated source database.
 

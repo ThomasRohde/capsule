@@ -92,7 +92,12 @@ async function installNetworkGuard(page) {
   return unexpected;
 }
 
-async function openExport(page, profile, url = `/diagram-studio-${profile}.html`) {
+async function openExport(
+  page,
+  profile,
+  url = `/diagram-studio-${profile}.html`,
+  expectedNodeCount = 12,
+) {
   const unexpected = await installNetworkGuard(page);
   await page.goto(url);
   await expect(page.locator("#capsule-host-status")).toHaveAttribute("data-state", "ready");
@@ -108,7 +113,7 @@ async function openExport(page, profile, url = `/diagram-studio-${profile}.html`
   expect(diagnostics.wasmHeap).toBeGreaterThan(diagnostics.database);
   const app = page.frameLocator("#capsule-app-frame");
   await expect(app.locator("#app")).toHaveAttribute("aria-busy", "false");
-  await expect(app.locator(".node")).toHaveCount(12);
+  await expect(app.locator(".node")).toHaveCount(expectedNodeCount);
   await expect(app.locator(".edge")).toHaveCount(13);
   const networkDependencies = await page.evaluate(() => performance.getEntriesByType("resource")
     .map((entry) => entry.name)
@@ -495,7 +500,7 @@ test("file URL profiles, write policy, save, and fresh revision reopen", async (
   ));
   expect(report.ok).toBeTruthy();
   expect(report.revision).toBe(2);
-  const reopened = await openExport(page, "editable", pathToFileURL(reopenedPath).href);
+  const reopened = await openExport(page, "editable", pathToFileURL(reopenedPath).href, 13);
   await expect(page.locator("#capsule-host-provenance")).toContainText("revision 2");
   await expect(reopened.locator(".node")).toHaveCount(13);
 });

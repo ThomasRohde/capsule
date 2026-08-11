@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-sigstore"
-version = "0.2.0"
+version = "0.3.0"
 description = "Offline Sigstore identity and transparency verification for SQLite Capsule host updates"
 edition.workspace = true
 license.workspace = true

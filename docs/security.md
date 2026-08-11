@@ -77,6 +77,18 @@ This is deliberately inconvenient enough to make the boundary visible. Repositor
 ### Loopback binding
 
 The server binds only to `127.0.0.1`. Loopback is enforced inside the serving function as well as every command path, so the internal detached-child command cannot expose itself to the LAN.
+On Windows the listener uses exclusive-address semantics instead of
+`SO_REUSEADDR`, preventing another local process from sharing or stealing the
+active capsule port.
+
+### Host, origin, and bearer-token checks
+
+The server accepts only loopback `Host` values. When a state-changing HTTP
+request carries `Origin`, it must be an HTTP loopback origin; all private API
+calls require the per-process random capsule token in `X-Capsule-Token`. Fixed
+`/__capsule/*` routes are therefore protected by origin validation plus an
+unguessable bearer secret, not by an unguessable route. `Sec-Fetch-*` metadata is
+not currently part of the decision.
 
 ### Default-deny Content Security Policy
 
@@ -156,7 +168,7 @@ A detached host uses a random token for its local shutdown endpoint. State is st
 
 ### Strong structural verification
 
-The verifier runs full SQLite integrity and foreign-key checks, validates runtime-required columns and keys before reading them, checks the exact discovery view, rejects unsupported versions and triggers, and runs declared application checks under the read authoriser. These checks establish internal consistency only; they do not authenticate the publisher.
+The verifier runs full SQLite integrity and foreign-key checks, validates runtime-required columns and keys before reading them, checks the exact discovery view, rejects unsupported versions, triggers, and virtual tables, and runs declared application checks under the read authoriser. These checks establish internal consistency only; they do not authenticate the publisher.
 
 The independent structural signal lives in
 `format/capsule-v0.2.conformance.json`, checked by
@@ -379,9 +391,13 @@ mode, exact parameter reconciliation, progress deadlines for endpoints/checks,
 an eight-request application bound, a serial browser worker, and a trigger-free
 contract, but does not claim complete SQL sandboxing.
 
-### Origin and CSRF controls
+### Additional origin and CSRF controls
 
-A production local server should use a random high-entropy origin path or token, validate `Origin` and `Host`, set strict SameSite cookies or bearer tokens where appropriate, and resist DNS rebinding and cross-origin local attacks.
+The current bootstrap validates loopback `Host`, validates `Origin` for writes,
+and requires a random bearer token as described above. A production local server
+could additionally validate `Sec-Fetch-*`, randomise the route prefix, and use
+strict SameSite cookies if it ever adopts cookie authentication. Those are
+defence-in-depth additions, not descriptions of controls already present.
 
 ### Prompt-injection handling
 

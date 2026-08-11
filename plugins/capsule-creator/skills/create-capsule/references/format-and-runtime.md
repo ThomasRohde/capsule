@@ -53,7 +53,7 @@ It does not expose arbitrary SQL, files, subprocesses, environment variables,
 native IPC, Tauri, or the network. Reads run under SQLite query-only mode and
 an authorizer. Writes may insert/update/delete domain tables only; DDL, PRAGMA,
 attach/detach, virtual tables, platform-table mutations, and extension loading
-are denied.
+are denied. Portable capsule schema is trigger-free and virtual-table-free.
 
 ## Resource ceilings
 

@@ -5,7 +5,10 @@ Status: **current repository contract**. The repository supports this format onl
 The normative schema is [`../format/capsule-v0.2.sql`](../format/capsule-v0.2.sql).
 The independent machine-readable contract is
 [`../format/capsule-v0.2.conformance.json`](../format/capsule-v0.2.conformance.json).
-The Python, browser, and native hosts require the exact same identity.
+The Python, browser, and native hosts require the exact same format identity.
+The Python and native hosts perform the full structural profile. The browser
+export host performs the reduced verification profile documented in
+[`html-export-contract.md`](html-export-contract.md) before executing assets.
 
 ## Identity
 
@@ -51,8 +54,13 @@ shape before reading application content. All platform content tables except
 `capsule_grant`, `capsule_endpoint_step`, and `capsule_change_log` must be
 non-empty.
 
-Triggers are not permitted. Platform tables and SQLite's internal namespace are
-host-protected from application endpoints.
+Triggers and virtual tables are not permitted anywhere in a portable capsule.
+Platform tables and SQLite's internal namespace are host-protected from
+application endpoints.
+
+`capsule_change_log.endpoint_name` deliberately has no foreign key to
+`capsule_endpoint`: audit rows survive endpoint removal or renaming and remain
+historical evidence rather than live endpoint declarations.
 
 ## Manifest and permissions
 
@@ -116,10 +124,11 @@ parameters must exactly match the declared schema. PRAGMA, transaction control,
 attachment, schema changes, virtual tables, extension loading, platform-table
 writes, and other host-controlled operations are denied.
 
-A write runs in one immediate transaction. Compound steps commit together or
-roll back together. After success the host appends one `capsule_change_log`
-row containing the endpoint name, canonical parameters, total changed rows, and
-a UTC timestamp.
+A write runs in one immediate transaction. Every result cursor, including a
+`RETURNING` cursor, is stepped to completion before affected rows are counted
+or the transaction commits. Compound steps commit together or roll back
+together. After success the host appends one `capsule_change_log` row containing
+the endpoint name, canonical parameters, total changed rows, and a UTC timestamp.
 
 ## Checks, documents, and prompts
 
@@ -132,10 +141,14 @@ privileged instructions; the host security boundary still applies.
 
 ## Runtime protocol
 
-The loopback host binds only to `127.0.0.1`, uses an unguessable route and
-shutdown secret, validates origin and fetch metadata, and applies the
-default-deny CSP. The browser-facing surface exposes manifest, permissions,
-assets, named reads, and named writes only.
+The loopback host binds only to loopback (canonically `127.0.0.1`), validates the
+`Host` header, requires any supplied `Origin` on a state-changing request to be
+an HTTP loopback origin, and requires a
+per-process random bearer token for the fixed `/__capsule/*` API routes. A
+separate random shutdown secret protects lifecycle control. The host does not
+currently use a random route prefix or `Sec-Fetch-*` metadata. It applies the
+default-deny CSP, and exposes manifest, permissions, assets, named reads, and
+named writes only.
 
 The self-contained HTML host implements the same named-endpoint boundary in a
 dedicated worker. Its derivative envelope is specified separately in
@@ -166,6 +179,10 @@ Repository tooling can unpack a capsule to
 objects, canonical JSONL rows, typed BLOB wrappers, and content-addressed assets.
 Packing reconstructs a temporary database, checks foreign keys, performs full
 verification, and publishes only on success.
+
+Every table must declare an explicit primary key. Generic unpack refuses a
+PK-less table because an implicit SQLite `rowid` is not represented as a declared
+column and silently renumbering it would corrupt row identity.
 
 The independent conformance checker consumes the current JSON description using
 ordinary SQLite inspection and does not import the runtime verifier:

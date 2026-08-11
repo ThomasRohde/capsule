@@ -8,7 +8,7 @@ use std::{
     fmt,
 };
 
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use rusqlite::{Connection, OptionalExtension, types::ValueRef};
 use serde::{Deserialize, Deserializer, de};
 use serde_json::{Map, Number, Value};
@@ -175,7 +175,7 @@ pub fn verify_envelope(envelope: &SignatureEnvelope) -> Result<(), CryptoError> 
     let signature = Signature::from_bytes(&envelope.signature);
     let message = signature_message(&envelope.application_digest, &envelope.signed_at)?;
     verifying_key
-        .verify(&message, &signature)
+        .verify_strict(&message, &signature)
         .map_err(|_| CryptoError::Signature)
 }
 

@@ -1231,6 +1231,7 @@ pub(crate) fn safe_asset_path(path: &str) -> bool {
     !path.is_empty()
         && !path.starts_with('/')
         && !path.contains('\\')
+        && !path.chars().any(|character| character.is_control())
         && path
             .split('/')
             .all(|component| !matches!(component, "" | "." | ".."))
@@ -1305,6 +1306,17 @@ mod tests {
     use sqlite_capsule_policy::{EvaluationContext, TrustStore};
 
     use super::*;
+
+    #[test]
+    fn asset_paths_reject_control_characters() {
+        assert!(safe_asset_path("app/naïve.json"));
+        for character in (0_u8..=31).chain([127]) {
+            assert!(!safe_asset_path(&format!(
+                "app/bad{}path",
+                char::from(character)
+            )));
+        }
+    }
 
     static NEXT_DIRECTORY: AtomicUsize = AtomicUsize::new(0);
 

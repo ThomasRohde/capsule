@@ -5439,7 +5439,7 @@ mod tests {
         assert!(!bundle.content_policy.selected_file_contents_included);
         assert!(!bundle.content_policy.shutdown_tokens_included);
         assert!(!bundle.content_policy.private_keys_included);
-        assert_eq!(bundle.update.current_version, "0.2.0");
+        assert_eq!(bundle.update.current_version, "0.3.0");
         assert!(!bundle.update.transport_configured);
         assert!(bundle.update.transport_endpoint_origin.is_none());
         assert!(bundle.update.state.is_none());

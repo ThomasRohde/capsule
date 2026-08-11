@@ -144,7 +144,7 @@ function Assert-InstalledState {
 
     $uninstallValues = Get-ItemProperty -LiteralPath $uninstallKey
     Assert-Condition ($uninstallValues.DisplayName -eq 'SQLite Capsule Host') 'The uninstall display name differs.'
-    Assert-Condition ($uninstallValues.DisplayVersion -eq '0.2.0') 'The uninstall display version differs.'
+    Assert-Condition ($uninstallValues.DisplayVersion -eq '0.3.0') 'The uninstall display version differs.'
     Assert-Condition ($uninstallValues.Publisher -eq 'sqlite-capsule') 'The uninstall publisher differs.'
     Assert-Condition ($uninstallValues.NoModify -eq 1) 'The package unexpectedly advertises Modify.'
     Assert-Condition ($uninstallValues.NoRepair -eq 1) 'The package unexpectedly advertises Repair.'

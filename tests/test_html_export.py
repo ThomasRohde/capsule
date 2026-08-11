@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -91,6 +92,35 @@ class HtmlExportTests(unittest.TestCase):
                 export_html(self.capsule, first, profile=profile, check=True)
         self.assertEqual(self.capsule.read_bytes(), source_before)
 
+    def test_export_verifies_the_exact_snapshot_read_before_a_source_race(self) -> None:
+        source = self.root / "racing-source.capsule.sqlite"
+        target = self.root / "racing-source.html"
+        shutil.copyfile(self.capsule, source)
+        original_read_bytes = Path.read_bytes
+        raced = False
+
+        def racing_read_bytes(path: Path) -> bytes:
+            nonlocal raced
+            data = original_read_bytes(path)
+            if path.resolve() == source.resolve() and not raced:
+                raced = True
+                connection = sqlite3.connect(source)
+                connection.execute(
+                    "UPDATE capsule_asset SET sha256 = ? WHERE path = 'app/index.html'",
+                    ("0" * 64,),
+                )
+                connection.commit()
+                connection.close()
+            return data
+
+        with mock.patch.object(Path, "read_bytes", new=racing_read_bytes):
+            result = export_html(source, target, profile="view")
+        self.assertTrue(raced)
+        self.assertTrue(result["ok"])
+        self.assertTrue(verify_html(target)["ok"])
+        with self.assertRaisesRegex(HtmlExportError, "verification failed"):
+            export_html(source, self.root / "racing-invalid.html", profile="view")
+
     def test_inspection_is_non_executing_and_reports_exact_blocks(self) -> None:
         report = inspect_html(self.export)
         self.assertTrue(report["ok"])
@@ -99,6 +129,12 @@ class HtmlExportTests(unittest.TestCase):
         self.assertGreater(report["metadata"]["runtime"]["notices_bytes"], 10_000)
         self.assertEqual(report["metadata"]["profile"], "view")
         self.assertEqual(report["metadata"]["runtime"]["sqlite_version"], SQLITE_VERSION)
+        connection = sqlite3.connect(self.capsule)
+        updated_at = connection.execute(
+            "SELECT updated_at FROM capsule_manifest WHERE id = 1"
+        ).fetchone()[0]
+        connection.close()
+        self.assertEqual(report["metadata"]["created_at"], updated_at)
 
     def test_exportability_report_resolves_static_assets_without_following_dynamic_code(self) -> None:
         target = self.root / "exportability.html"
@@ -237,6 +273,17 @@ class HtmlExportTests(unittest.TestCase):
         self.assertIn('if (importMetaCount !== 4 || exportFooterCount !== 1)', loader)
         self.assertIn('worker = new Worker(workerUrl, { name: "sqlite-capsule-browser-host" })', loader)
         self.assertNotIn('worker = new Worker(workerUrl, { type: "module"', loader)
+        self.assertIn("/<\\/style/i.test(source)", loader)
+        self.assertNotIn("appUrl", loader)
+
+    def test_browser_worker_revalidates_endpoint_declarations_at_call_time(self) -> None:
+        worker = (ROOT / "runtime" / "browser" / "worker-host.js").read_text(
+            encoding="utf-8"
+        )
+        execute = worker[worker.index("function executeEndpoint") : worker.index("async function initialise")]
+        self.assertIn("looksLikeSingleStatement(statement.sql_text)", execute)
+        self.assertIn("statementKind(statement.sql_text)", execute)
+        self.assertIn("Endpoint parameters do not match SQL placeholders", execute)
 
 
 if __name__ == "__main__":
