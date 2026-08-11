@@ -358,19 +358,32 @@ async function openFile(file) {
   finally { $("#capsule-file").value = ""; }
 }
 
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  const next = theme === "dark" ? "light" : "dark";
-  $("#theme-toggle").setAttribute("aria-label", `Use ${next} theme`);
-  try { localStorage.setItem("capsule-inspector-theme", theme); } catch (_) {}
+const themeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
+let selectedTheme = "light";
+
+function resolveTheme(mode) {
+  return mode === "system" ? (themeQuery.matches ? "dark" : "light") : mode;
 }
 
-try {
-  const saved = localStorage.getItem("capsule-inspector-theme");
-  applyTheme(saved === "light" ? "light" : "dark");
-} catch (_) { applyTheme("dark"); }
+function applyTheme(mode) {
+  selectedTheme = ["light", "dark", "system"].includes(mode) ? mode : "light";
+  document.documentElement.dataset.theme = resolveTheme(selectedTheme);
+  $$('[data-theme-option]').forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeOption === selectedTheme));
+  });
+  try { localStorage.setItem("capsule-inspector-theme", selectedTheme); } catch (_) {}
+}
 
-$("#theme-toggle").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+try { selectedTheme = localStorage.getItem("capsule-inspector-theme") || "light"; } catch (_) { selectedTheme = "light"; }
+applyTheme(selectedTheme);
+
+$(".theme-options").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-theme-option]");
+  if (button) applyTheme(button.dataset.themeOption);
+});
+themeQuery.addEventListener("change", () => {
+  if (selectedTheme === "system") applyTheme("system");
+});
 $("#capsule-file").addEventListener("change", (event) => openFile(event.target.files?.[0]));
 $$('.nav-item').forEach((button) => button.addEventListener("click", () => setPage(button.dataset.page)));
 

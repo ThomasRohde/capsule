@@ -265,6 +265,17 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
         self.assertIn("app/legal/sqlite-wasm/LICENSE.Apache-2.0.txt", assets)
         self.assertIn("app/legal/sqlite-wasm/THIRD_PARTY.md", assets)
 
+        source = INSPECTOR.parent / "capsule-inspector" / "source" / "app"
+        index = (source / "index.html").read_text(encoding="utf-8")
+        app = (source / "app.js").read_text(encoding="utf-8")
+        styles = (source / "styles.css").read_text(encoding="utf-8")
+        self.assertIn('<html lang="en" data-theme="light">', index)
+        for mode in ("light", "dark", "system"):
+            self.assertIn(f'data-theme-option="{mode}"', index)
+        self.assertIn('matchMedia("(prefers-color-scheme: dark)")', app)
+        self.assertIn('localStorage.getItem("capsule-inspector-theme") || "light"', app)
+        self.assertIn('.theme-options button[aria-pressed="true"]', styles)
+
     def test_inspector_portable_sha256_matches_standard_vectors(self) -> None:
         module_path = (
             PLUGIN
