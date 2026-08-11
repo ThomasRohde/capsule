@@ -608,6 +608,7 @@ fieldset { display: flex; min-width: 0; margin: 0; padding: 0; flex-direction: c
 
 .status-card { align-items: center; background: var(--card); }
 .update-status-card .primary { flex: 0 0 auto; }
+.signing-status-card .badge { flex: 0 0 auto; }
 
 .action-list {
   overflow: hidden;
@@ -638,6 +639,37 @@ fieldset { display: flex; min-width: 0; margin: 0; padding: 0; flex-direction: c
 .update-consent label { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
 .update-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
 .update-consent > p { grid-column: 1 / -1; margin: -6px 0 0 26px; color: var(--text-tertiary); font-size: 12px; }
+
+.signing-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.signing-fields label { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: var(--text-secondary); font-size: 12px; }
+.signing-fields input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--control-stroke);
+  border-radius: 4px;
+  color: var(--text-primary);
+  background: var(--control);
+  font: 13px/1.3 "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+.signing-fields input::placeholder { color: var(--text-tertiary); opacity: 1; }
+.signing-fields input:disabled { color: var(--text-disabled); }
+.signing-prepare-actions { margin-top: -2px; }
+.signing-consent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--stroke);
+  border-radius: 4px;
+  background: var(--info-bg);
+}
+.signing-consent[hidden] { display: none; }
+.signing-consent label { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 8px; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
+.signing-consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
+.signing-result-wrap pre { max-height: 180px; }
 
 .admin-output-wrap { padding: 0; overflow: hidden; }
 .admin-output-wrap > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 10px 16px; }
@@ -702,6 +734,9 @@ fieldset { display: flex; min-width: 0; margin: 0; padding: 0; flex-direction: c
   .content-surface { padding: 24px 24px 28px; }
   .setting-list dt { flex-basis: 150px; }
   .technical-list dt { flex-basis: 142px; }
+  .signing-fields { grid-template-columns: 1fr; }
+  .signing-consent { grid-template-columns: 1fr; }
+  .signing-consent button { justify-self: end; }
   .application-window-card { grid-template-columns: 1fr; }
   .application-window-preview { min-height: 170px; }
 }

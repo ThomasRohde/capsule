@@ -17,7 +17,8 @@ const application = process.env.SQLITE_CAPSULE_NATIVE_APPLICATION
   || path.join(nativeRoot, "target", "debug", `sqlite-capsule-desktop${executableSuffix}`);
 const capsule = process.env.SQLITE_CAPSULE_NATIVE_E2E_CAPSULE
   || path.join(root, "capsules", "diagram-studio.capsule.sqlite");
-const stateRoot = path.join(root, ".tmp", "native-e2e-state");
+const stateRootBase = path.join(root, ".tmp", "native-e2e-state");
+const stateRoot = `${stateRootBase}-${process.pid}`;
 const cargo = resolveCargo();
 
 let driverProcess;

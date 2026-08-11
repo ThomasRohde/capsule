@@ -21,7 +21,9 @@ standard-library rule in the repository root.
 | serde_json | 1.0.151 | MIT OR Apache-2.0 | bounded manifest decoding |
 | serde_json_canonicalizer | 0.3.2 | MIT | RFC 8785 JSON canonicalisation for signed fields |
 | ed25519-dalek | 3.0.0 | BSD-3-Clause | Ed25519 signing and verification |
+| pkcs8 | 0.11.0 | Apache-2.0 OR MIT | standards-based Ed25519 private-key import for the host-owned use-once signer |
 | sha2 | 0.11.0 | MIT OR Apache-2.0 | application digests and public-key IDs |
+| tempfile | 3.27.0 | MIT OR Apache-2.0 | private same-directory signing copies and no-clobber publication |
 | base64 | 0.22.1 | MIT OR Apache-2.0 | bounded decoding of Tauri-compatible Minisign key and signature documents |
 | minisign-verify | 0.2.5 | MIT | verify bounded downloaded host packages under the pinned updater key |
 | reqwest | 0.13.4 | MIT OR Apache-2.0 | host-only bounded same-origin package and Sigstore-evidence download |

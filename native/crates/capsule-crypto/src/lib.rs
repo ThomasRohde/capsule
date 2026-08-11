@@ -735,7 +735,7 @@ fn signature_message(digest: &[u8; 32], signed_at: &str) -> Result<Vec<u8>, Cryp
     Ok(message)
 }
 
-fn validate_signed_at(value: &str) -> Result<(), CryptoError> {
+pub fn validate_signed_at(value: &str) -> Result<(), CryptoError> {
     let bytes = value.as_bytes();
     let punctuation = matches!(
         bytes,

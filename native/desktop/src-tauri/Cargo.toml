@@ -30,6 +30,7 @@ sqlite-capsule-policy = { path = "../../crates/capsule-policy" }
 sqlite-capsule-platform = { path = "../../crates/capsule-platform" }
 sqlite-capsule-runtime = { path = "../../crates/capsule-runtime", features = ["debug-fault-injection"] }
 sqlite-capsule-sigstore = { path = "../../crates/capsule-sigstore" }
+sqlite-capsule-signing = { path = "../../crates/capsule-signing" }
 sqlite-capsule-update = { path = "../../crates/capsule-update" }
 tauri.workspace = true
 tauri-plugin-dialog.workspace = true

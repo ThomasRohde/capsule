@@ -1,21 +1,18 @@
 use std::{
     collections::BTreeMap,
-    env, fs,
+    env,
     path::{Path, PathBuf},
 };
 
-use ed25519_dalek::SigningKey;
-use rusqlite::{Connection, OpenFlags, OptionalExtension, params};
+use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde_json::{Value, json};
 use sqlite_capsule_core::inspect_metadata;
 use sqlite_capsule_crypto::{
-    ALGORITHM, PROFILE, application_digest, key_id, publisher_identity, sign_digest,
-    signature_inventory, verify_signatures,
+    PROFILE, application_digest, publisher_identity, signature_inventory, verify_signatures,
 };
 use sqlite_capsule_launch::{inspect_launch, verify_structure as verify_launch_structure};
 use sqlite_capsule_policy::{CapabilityDecision, EvaluationContext, LaunchEvidence, TrustStore};
-
-const SIGNED_SCHEMA: &str = include_str!("../../../../format/capsule-signed-app-v0.2.sql");
+use sqlite_capsule_signing::{LoadedSigningKey, SigningReport, sign_capsule_from_file};
 
 fn main() {
     if let Err(error) = run() {
@@ -46,7 +43,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 fn usage() -> &'static str {
     "usage: capsule-native <inspect|verify|digest|verify-signature|key-id|sign|trust> ...\n\
      sign <source> <output> --publisher-id <id> --publisher-name <name> \
-     --key <32-byte-or-hex-seed-file> --signed-at <YYYY-MM-DDTHH:MM:SSZ>\n\
+     --key <raw-seed|hex-seed|pkcs8-key-file> --signed-at <YYYY-MM-DDTHH:MM:SSZ>\n\
      trust <init|inspect|trust-key|trust-release|trust-file|deny-file|grant|\
      revoke-key|audit|export|backup|reset> ..."
 }
@@ -191,14 +188,15 @@ fn verify_signature(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_key_id(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let signing_key = read_signing_key(path)?;
-    let public_key = signing_key.verifying_key().to_bytes();
+    let signing_key = LoadedSigningKey::from_file(path)?;
+    let info = signing_key.info();
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
             "ok": true,
-            "key_id": key_id(&public_key),
-            "public_key_hex": lower_hex(&public_key)
+            "key_id": info.key_id,
+            "public_key_hex": info.public_key_hex,
+            "format": info.format.as_str()
         }))?
     );
     Ok(())
@@ -211,7 +209,7 @@ fn sign_command(arguments: &[std::ffi::OsString]) -> Result<(), Box<dyn std::err
     let source = PathBuf::from(&arguments[0]);
     let output = PathBuf::from(&arguments[1]);
     let options = parse_sign_options(&arguments[2..])?;
-    sign_capsule(
+    let report = sign_capsule(
         &source,
         &output,
         &options.publisher_id,
@@ -227,7 +225,11 @@ fn sign_command(arguments: &[std::ffi::OsString]) -> Result<(), Box<dyn std::err
             "output": output,
             "profile": PROFILE,
             "publisher_id": options.publisher_id,
-            "signed_at": options.signed_at
+            "signed_at": options.signed_at,
+            "key_id": report.key.key_id,
+            "application_digest_sha256": report.preview.application_digest,
+            "signature_valid": report.signature_valid,
+            "publisher_trusted": report.publisher_trusted
         }))?
     );
     Ok(())
@@ -305,99 +307,15 @@ fn sign_capsule(
     publisher_name: &str,
     key_path: &Path,
     signed_at: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    verify_structure(source)?;
-    if output.exists() {
-        return Err("refusing to replace an existing output".into());
-    }
-    let source_canonical = fs::canonicalize(source)?;
-    let parent = output
-        .parent()
-        .ok_or("output must have a parent directory")?;
-    let parent_canonical = fs::canonicalize(parent)?;
-    if source_canonical.parent() == Some(parent_canonical.as_path())
-        && source_canonical.file_name() == output.file_name()
-    {
-        return Err("refusing in-place signing".into());
-    }
-    if publisher_id.is_empty()
-        || publisher_id.len() > 512
-        || publisher_name.is_empty()
-        || publisher_name.len() > 512
-    {
-        return Err("publisher identity is empty or oversized".into());
-    }
-
-    let temporary = parent.join(format!(
-        ".{}.signing-{}.tmp",
-        output
-            .file_name()
-            .and_then(|value| value.to_str())
-            .ok_or("output filename must be UTF-8")?,
-        std::process::id()
-    ));
-    if temporary.exists() {
-        return Err("temporary signing path already exists".into());
-    }
-    let mut guard = TemporaryOutput::new(temporary.clone());
-
-    let source_connection = open_read_only(source)?;
-    source_connection.backup(rusqlite::MAIN_DB, &temporary, None)?;
-    let signing_key = read_signing_key(key_path)?;
-    let mut destination = Connection::open(&temporary)?;
-    destination.execute_batch("PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON;")?;
-    let publisher_present = has_table(&destination, "capsule_publisher")?;
-    let signature_present = has_table(&destination, "capsule_signature")?;
-    if publisher_present != signature_present {
-        return Err("partial signed-app extension is not accepted".into());
-    }
-
-    let transaction = destination.transaction()?;
-    if !publisher_present {
-        transaction.execute_batch(SIGNED_SCHEMA)?;
-        transaction.execute(
-            "INSERT INTO capsule_publisher \
-             (id, profile, publisher_id, publisher_name) VALUES (1, ?1, ?2, ?3)",
-            params![PROFILE, publisher_id, publisher_name],
-        )?;
-    } else {
-        let publisher = publisher_identity(&transaction)?;
-        if publisher.publisher_id != publisher_id || publisher.publisher_name != publisher_name {
-            return Err("existing signed publisher identity does not match".into());
-        }
-    }
-
-    let digest = application_digest(&transaction)?;
-    let envelope = sign_digest(&signing_key, digest, signed_at)?;
-    transaction.execute(
-        "INSERT INTO capsule_signature \
-         (key_id, algorithm, public_key, application_digest, signature, signed_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            envelope.key_id,
-            ALGORITHM,
-            envelope.public_key.as_slice(),
-            envelope.application_digest.as_slice(),
-            envelope.signature.as_slice(),
-            envelope.signed_at,
-        ],
-    )?;
-    transaction.commit()?;
-    drop(destination);
-
-    inspect_metadata(&temporary)?;
-    let finished = open_read_only(&temporary)?;
-    let reports = verify_signatures(&finished)?;
-    if !reports
-        .iter()
-        .any(|report| report.cryptographically_valid && report.digest_matches)
-    {
-        return Err("finished output failed independent signature verification".into());
-    }
-    drop(finished);
-    fs::rename(&temporary, output)?;
-    guard.keep();
-    Ok(())
+) -> Result<SigningReport, Box<dyn std::error::Error>> {
+    Ok(sign_capsule_from_file(
+        source,
+        output,
+        publisher_id,
+        publisher_name,
+        key_path,
+        signed_at,
+    )?)
 }
 
 fn trust_command(arguments: &[std::ffi::OsString]) -> Result<(), Box<dyn std::error::Error>> {
@@ -675,42 +593,6 @@ fn verify_structure(
     Ok(verify_launch_structure(path)?)
 }
 
-fn read_signing_key(path: &Path) -> Result<SigningKey, Box<dyn std::error::Error>> {
-    let mut bytes = fs::read(path)?;
-    let mut seed = if bytes.len() == 32 {
-        <[u8; 32]>::try_from(bytes.as_slice()).map_err(|_| "key must contain 32 bytes")?
-    } else {
-        let text = std::str::from_utf8(&bytes)?.trim();
-        decode_hex_32(text)?
-    };
-    bytes.fill(0);
-    let signing_key = SigningKey::from_bytes(&seed);
-    seed.fill(0);
-    Ok(signing_key)
-}
-
-fn decode_hex_32(value: &str) -> Result<[u8; 32], &'static str> {
-    if value.len() != 64 {
-        return Err("hex key must contain exactly 64 lowercase or uppercase digits");
-    }
-    let mut bytes = [0_u8; 32];
-    for (index, chunk) in value.as_bytes().chunks_exact(2).enumerate() {
-        let high = hex_value(chunk[0]).ok_or("invalid hex key")?;
-        let low = hex_value(chunk[1]).ok_or("invalid hex key")?;
-        bytes[index] = (high << 4) | low;
-    }
-    Ok(bytes)
-}
-
-fn hex_value(value: u8) -> Option<u8> {
-    match value {
-        b'0'..=b'9' => Some(value - b'0'),
-        b'a'..=b'f' => Some(value - b'a' + 10),
-        b'A'..=b'F' => Some(value - b'A' + 10),
-        _ => None,
-    }
-}
-
 fn open_read_only(path: &Path) -> rusqlite::Result<Connection> {
     let connection = Connection::open_with_flags(
         path,
@@ -741,33 +623,11 @@ fn lower_hex(bytes: &[u8]) -> String {
     output
 }
 
-struct TemporaryOutput {
-    path: PathBuf,
-    remove: bool,
-}
-
-impl TemporaryOutput {
-    fn new(path: PathBuf) -> Self {
-        Self { path, remove: true }
-    }
-
-    fn keep(&mut self) {
-        self.remove = false;
-    }
-}
-
-impl Drop for TemporaryOutput {
-    fn drop(&mut self) {
-        if self.remove {
-            let _ = fs::remove_file(&self.path);
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::{
         ffi::OsString,
+        fs,
         sync::atomic::{AtomicUsize, Ordering},
     };
 

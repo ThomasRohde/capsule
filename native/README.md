@@ -19,6 +19,7 @@ The native host currently provides:
 - pinned source identity, one-writer coordination, external-conflict detection,
   verified pre-write backups, bounded checkpoints, and new-path restore;
 - host-owned open, restore, support-export, trust, and capability controls;
+- host-owned use-once publisher signing to a verified new capsule copy;
 - offline host-release, Authenticode, and Sigstore policy verification; and
 - durable update staging and rollback state without exposing installer control
   to capsule content.
@@ -37,6 +38,7 @@ policy is in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 | --- | --- |
 | `crates/capsule-core` | Untrusted metadata inspection and child request grammar |
 | `crates/capsule-crypto` | Signed application canonicalisation and verification |
+| `crates/capsule-signing` | Use-once key import plus safe prepare/sign/verify/publish workflow |
 | `crates/capsule-launch` | Launch decisions and capability evaluation |
 | `crates/capsule-policy` | Protected local trust, grants, audit, and revocation |
 | `crates/capsule-runtime` | Capsule verification and named endpoint execution |
@@ -47,7 +49,7 @@ policy is in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 | `crates/capsule-update` | Verified staging and startup-health/rollback state |
 | `crates/capsule-installer` | Narrow host-only Windows installer handoff |
 | `desktop/src-tauri` | Trusted shell and raw application-window lifecycle |
-| `desktop/ui` | Host identity, trust, recovery, update, and support UI |
+| `desktop/ui` | Host identity, trust, recovery, publisher-signing, update, and support UI |
 
 ## Build and run
 

@@ -76,6 +76,29 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
     expect(reverseActive).toBe("deny");
   });
 
+  it("exposes the host-owned use-once publisher-signing surface", async () => {
+    await $("button[data-page='signing']").click();
+    await expect($("#page-title")).toHaveText("Publisher signing");
+    await expect($("#signing-status")).toHaveText(expect.stringContaining("Rust memory only"));
+    await expect($("#signing-key-button")).toBeEnabled();
+    await expect($("#signing-source-button")).toBeEnabled();
+    await expect($("#signing-output-button")).toBeDisabled();
+    await expect($("#signing-prepare-button")).toBeDisabled();
+    await expect($("#signing-execute-button")).toBeDisabled();
+
+    const publicStatus = await browser.executeAsync((done) => {
+      window.__TAURI__.core.invoke("signing_status").then(done, (error) => done({ error: String(error) }));
+    });
+    expect(publicStatus.error).toBeUndefined();
+    expect(publicStatus.busy).toBe(false);
+    expect(publicStatus.key).toBeNull();
+    expect(publicStatus.source).toBeNull();
+    expect(publicStatus.output).toBeNull();
+    expect(publicStatus.preview).toBeNull();
+    expect(JSON.stringify(publicStatus)).not.toContain("private");
+    expect(JSON.stringify(publicStatus)).not.toContain("keyPath");
+  });
+
   it("denies and forgets only the isolated exact-file decision without granting authority", async () => {
     await $("button[data-page='capabilities']").click();
     await $("button[data-action='deny']").click();

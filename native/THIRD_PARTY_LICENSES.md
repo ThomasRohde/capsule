@@ -6,7 +6,7 @@ all resolved target branches; workspace crates are MIT and are not repeated.
 A package without a Cargo license expression or declared license file makes
 generation fail.
 
-Resolved third-party package records: **576**.
+Resolved third-party package records: **580**.
 
 License expressions/files present:
 
@@ -135,6 +135,7 @@ License expressions/files present:
 | `defmt-macros` | `1.1.1` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `defmt-parser` | `1.0.0` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `der` | `0.7.10` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `der` | `0.8.1` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `der_derive` | `0.7.3` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `deranged` | `0.5.8` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `derive_arbitrary` | `1.4.2` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
@@ -324,6 +325,7 @@ License expressions/files present:
 | `parking_lot_core` | `0.9.12` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `pem` | `3.0.6` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `pem-rfc7468` | `0.7.0` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `pem-rfc7468` | `1.0.0` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `percent-encoding` | `2.3.2` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `phf` | `0.13.1` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `phf_codegen` | `0.13.1` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
@@ -332,6 +334,7 @@ License expressions/files present:
 | `phf_shared` | `0.13.1` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `pin-project-lite` | `0.2.17` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `piper` | `0.2.5` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `pkcs8` | `0.11.0` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `pkg-config` | `0.3.33` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `plist` | `1.10.0` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `png` | `0.17.16` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
@@ -435,6 +438,7 @@ License expressions/files present:
 | `soup3` | `0.5.0` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `soup3-sys` | `0.5.0` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `spki` | `0.7.3` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `spki` | `0.8.0` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `sqlite-wasm-rs` | `0.5.5` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `stable_deref_trait` | `1.2.1` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `string_cache` | `0.9.0` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |

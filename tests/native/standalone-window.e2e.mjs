@@ -17,6 +17,7 @@ const stateRoot = path.join(root, ".tmp", "native-standalone-window-state");
 const evidenceRoot = path.join(root, ".tmp", "native-standalone-window-evidence");
 const hostLightScreenshotPath = path.join(evidenceRoot, "host-shell-light.png");
 const hostDarkScreenshotPath = path.join(evidenceRoot, "host-shell-dark.png");
+const hostSigningScreenshotPath = path.join(evidenceRoot, "publisher-signing.png");
 const screenshotPath = path.join(evidenceRoot, "application-window.png");
 const applicationTitle = "SQLite Capsule — application";
 
@@ -256,6 +257,26 @@ try {
     capabilityViewport.scrollHeight <= capabilityViewport.clientHeight + 1,
     `capabilities page unexpectedly requires vertical scrolling: ${JSON.stringify(capabilityViewport)}`,
   );
+  await parentPage.locator("button[data-page='signing']").click();
+  assert.equal(await parentPage.locator("#page-title").textContent(), "Publisher signing");
+  assert.match(await parentPage.locator("#signing-status").textContent(), /Rust memory only/);
+  assert.equal(await parentPage.locator("#signing-key-button").isEnabled(), true);
+  assert.equal(await parentPage.locator("#signing-source-button").isEnabled(), true);
+  assert.equal(await parentPage.locator("#signing-output-button").isEnabled(), false);
+  assert.equal(await parentPage.locator("#signing-prepare-button").isEnabled(), false);
+  assert.equal(await parentPage.locator("#signing-execute-button").isEnabled(), false);
+  const signingStatus = await parentPage.evaluate(() => globalThis.__TAURI__.core.invoke("signing_status"));
+  assert.deepEqual(signingStatus, {
+    key: null,
+    source: null,
+    output: null,
+    preview: null,
+    busy: false,
+  });
+  assert.equal(JSON.stringify(signingStatus).includes("private"), false);
+  assert.equal(JSON.stringify(signingStatus).includes("keyPath"), false);
+  await parentPage.screenshot({ path: hostSigningScreenshotPath, animations: "disabled" });
+  await parentPage.locator("button[data-page='capabilities']").click();
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
   await rawPage.waitForFunction(() => document.title === "Diagram Studio — SQLite Capsule");
@@ -310,6 +331,7 @@ try {
     closeRequestedThrough: applicationTitle,
     hostLightScreenshot: hostLightScreenshotPath,
     hostDarkScreenshot: hostDarkScreenshotPath,
+    hostSigningScreenshot: hostSigningScreenshotPath,
     screenshot: screenshotPath,
   }, null, 2)}\n`);
 } catch (error) {

@@ -1,21 +1,19 @@
 [package]
-name = "sqlite-capsule-cli"
+name = "sqlite-capsule-signing"
 version = "0.2.0"
-description = "Native inspection and publisher-signature CLI for SQLite Capsules"
+description = "Safe publisher-signing workflow for SQLite Capsules"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
-[[bin]]
-name = "capsule-native"
-path = "src/main.rs"
-
 [dependencies]
+ed25519-dalek.workspace = true
+pkcs8.workspace = true
 rusqlite.workspace = true
-serde_json.workspace = true
+sha2.workspace = true
 sqlite-capsule-core = { path = "../capsule-core" }
 sqlite-capsule-crypto = { path = "../capsule-crypto" }
 sqlite-capsule-launch = { path = "../capsule-launch" }
-sqlite-capsule-policy = { path = "../capsule-policy" }
-sqlite-capsule-signing = { path = "../capsule-signing" }
+tempfile.workspace = true
+thiserror.workspace = true

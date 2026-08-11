@@ -276,6 +276,18 @@ rows. Mutable domain, grant, change-log, and signature-envelope rows are
 excluded, so named data writes preserve provenance. Asset, permission,
 endpoint, publisher, or schema changes produce `modified after signature`.
 
+The native CLI and trusted desktop shell share the product-independent
+`sqlite-capsule-signing` file workflow. The desktop accepts bounded raw-seed,
+hex-seed, and Ed25519 PKCS#8 PEM/DER files through a Rust-owned picker. It keeps
+the parsed private key only in Rust memory, returns only public metadata to the
+bundled WebView, prepares the reviewed digest before signing, consumes the key
+on the signing attempt, verifies the resulting signature and capsule structure,
+and publishes only by a same-directory rename to a new path. Cancellation or
+session clearing removes the prepared copy. No private-key field is included in
+support bundles, host trust records, capsule rows, or frontend messages.
+Encrypted or persistent local keys and hardware/KMS adapters require a separate
+key-lifecycle design and are not silently approximated by this adapter.
+
 The Python CLI inventories rows without authentication and can delegate to the
 independent native verifier. The native CLI and desktop share one fail-closed
 launch-evidence implementation and keep `signature_valid`, `publisher_known`,

@@ -120,16 +120,17 @@ class ReleaseSigningTests(unittest.TestCase):
         self.assertRegex(settings.signed_at, re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"))
 
     def test_end_to_end_signing_when_native_cli_is_built(self) -> None:
-        native = next((path for path in NATIVE_CANDIDATES if path.is_file()), None)
-        if native is None:
+        natives = [path for path in NATIVE_CANDIDATES if path.is_file()]
+        if not natives:
             self.skipTest("capsule-native has not been built")
-        with tempfile.TemporaryDirectory() as raw:
-            environment = self.configuration(Path(raw), native_cli=native)
-            settings = settings_from_args(empty_arguments(), environment)
-            report = sign_release(settings, environment)
-            self.assertTrue(report["ok"])
-            self.assertTrue(report["signature_valid"])
-            self.assertTrue(settings.output.is_file())
+        for native in natives:
+            with self.subTest(native=native), tempfile.TemporaryDirectory() as raw:
+                environment = self.configuration(Path(raw), native_cli=native)
+                settings = settings_from_args(empty_arguments(), environment)
+                report = sign_release(settings, environment)
+                self.assertTrue(report["ok"])
+                self.assertTrue(report["signature_valid"])
+                self.assertTrue(settings.output.is_file())
 
     def test_documentation_names_automation_wrapper_and_secret_policy(self) -> None:
         authoring = (ROOT / "docs" / "authoring.md").read_text(encoding="utf-8")

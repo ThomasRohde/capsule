@@ -28,6 +28,27 @@ const openStatus = document.querySelector("#open-status");
 const reopenButton = document.querySelector("#reopen-button");
 const readOnlyButton = document.querySelector("#read-only-button");
 const restoreButton = document.querySelector("#restore-button");
+const signingStatus = document.querySelector("#signing-status");
+const signingBadge = document.querySelector("#signing-badge");
+const signingNavTag = document.querySelector("#signing-nav-tag");
+const signingKeyStatus = document.querySelector("#signing-key-status");
+const signingSourceStatus = document.querySelector("#signing-source-status");
+const signingOutputStatus = document.querySelector("#signing-output-status");
+const signingKeyButton = document.querySelector("#signing-key-button");
+const signingSourceButton = document.querySelector("#signing-source-button");
+const signingOutputButton = document.querySelector("#signing-output-button");
+const signingPublisherId = document.querySelector("#signing-publisher-id");
+const signingPublisherName = document.querySelector("#signing-publisher-name");
+const signingClearButton = document.querySelector("#signing-clear-button");
+const signingPrepareButton = document.querySelector("#signing-prepare-button");
+const signingReview = document.querySelector("#signing-review");
+const signingPreviewDetails = document.querySelector("#signing-preview-details");
+const signingConsent = document.querySelector("#signing-consent");
+const signingConfirmation = document.querySelector("#signing-confirmation");
+const signingExecuteButton = document.querySelector("#signing-execute-button");
+const signingActionStatus = document.querySelector("#signing-action-status");
+const signingResultWrap = document.querySelector("#signing-result-wrap");
+const signingResult = document.querySelector("#signing-result");
 const promptTitle = document.querySelector("#prompt-title");
 const pageTitle = document.querySelector("#page-title");
 const pageSubtitle = document.querySelector("#page-subtitle");
@@ -39,12 +60,14 @@ const themeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
 let currentBackupId = null;
 let lastFocusKey = null;
 let reviewedUpdateVersion = null;
+let signingSession = null;
 let selectedTheme = "dark";
 
 const pageCopy = {
   trust: ["Trust review", "Host-owned identity for the file that is asking to run. Nothing executes until you decide."],
   capabilities: ["Capabilities", "Host-owned prompt. Capabilities come from the verified manifest."],
   protection: ["Data protection", "Session mode, verified backups, and recovery for the open capsule."],
+  signing: ["Publisher signing", "Host-owned, use-once signing of a verified capsule copy. Private key bytes never enter JavaScript."],
   updates: ["Host updates", "Compiled, pinned host-only updater. Nothing downloads, stages, or installs without consent."],
   admin: ["Local trust controls", "Host-local decision record. Capsule-controlled labels remain untrusted text."],
   boundary: ["Application window", "The untrusted renderer runs in a separate native window behind the named bridge."],
@@ -191,6 +214,80 @@ function renderUpdateStatus(report) {
 
 function shortDigest(value) {
   return value ? `${value.slice(0, 12)}…${value.slice(-10)}` : "Not available";
+}
+
+function signingPublisherValuesMatchPreview() {
+  const preview = signingSession?.preview;
+  return Boolean(preview)
+    && signingPublisherId.value === preview.publisher_id
+    && signingPublisherName.value === preview.publisher_name;
+}
+
+function refreshSigningActions() {
+  const busy = Boolean(signingSession?.busy);
+  const publisherReady = signingPublisherId.value.length > 0 && signingPublisherName.value.length > 0;
+  const selectionsReady = Boolean(signingSession?.key && signingSession?.source && signingSession?.output);
+  const reviewed = signingPublisherValuesMatchPreview();
+  signingPrepareButton.disabled = busy || !publisherReady || !selectionsReady || reviewed;
+  signingConfirmation.disabled = busy || !reviewed;
+  if (!reviewed) signingConfirmation.checked = false;
+  signingExecuteButton.disabled = busy || !reviewed || !signingConfirmation.checked;
+  signingConsent.hidden = !reviewed;
+}
+
+function renderSigningSession(report) {
+  signingSession = report;
+  const busy = Boolean(report.busy);
+  signingKeyButton.disabled = busy;
+  signingSourceButton.disabled = busy;
+  signingOutputButton.disabled = busy || !report.source;
+  signingClearButton.disabled = busy || !(report.key || report.source || report.output || report.preview);
+  signingPublisherId.disabled = busy;
+  signingPublisherName.disabled = busy;
+
+  if (report.key) {
+    signingKeyStatus.textContent = `${report.key.file_name} · ${report.key.format} · ${report.key.key_id}`;
+  } else {
+    signingKeyStatus.textContent = "Select a 32-byte seed, 64-digit hex seed, or Ed25519 PKCS#8 PEM/DER file.";
+  }
+  signingSourceStatus.textContent = report.source
+    ? `${report.source.path} · ${report.source.bytes.toLocaleString()} bytes · SHA-256 ${shortDigest(report.source.sha256)}`
+    : "The source is inspected and verified before any signing copy is prepared.";
+  signingOutputStatus.textContent = report.output
+    ? `${report.output} · new file only`
+    : "Existing files and the source path are never replaced.";
+
+  signingBadge.className = `badge ${report.preview ? "ok" : report.key ? "warn" : ""}`.trim();
+  signingBadge.textContent = report.preview ? "Ready to sign" : report.key ? "Key loaded" : "No key";
+  signingNavTag.textContent = report.preview ? "Ready" : report.key ? "Key" : "Use once";
+  signingStatus.textContent = busy
+    ? "Protected host operation in progress. No capsule application code is executing."
+    : report.preview
+      ? "The exact copy and application digest are prepared for final review. The source remains unchanged."
+      : report.key
+        ? "A use-once private key is held in Rust memory. It will be consumed by signing or forgotten when this session is cleared."
+        : "No private key is loaded. Signing keys are use-once and remain in Rust memory only.";
+
+  if (report.preview) {
+    const preview = report.preview;
+    signingReview.hidden = false;
+    signingReview.open = true;
+    setRows(signingPreviewDetails, [
+      ["Source", preview.source.path],
+      ["Source SHA-256", preview.source.sha256],
+      ["Application digest", preview.application_digest],
+      ["Key fingerprint", report.key?.key_id || "Key unavailable"],
+      ["Publisher ID", preview.publisher_id],
+      ["Publisher name", preview.publisher_name],
+      ["Signed at", preview.signed_at],
+      ["New output", preview.output],
+    ]);
+  } else {
+    signingReview.hidden = true;
+    signingReview.open = false;
+    signingPreviewDetails.replaceChildren();
+  }
+  refreshSigningActions();
 }
 
 function renderCapabilities(capsule) {
@@ -378,6 +475,101 @@ async function invokeHost(command, payload = {}) {
   return invoke(command, payload);
 }
 
+async function startSigningPicker(command, message) {
+  signingActionStatus.textContent = message;
+  signingActionStatus.className = "lifecycle-action-status";
+  signingResultWrap.hidden = true;
+  try {
+    await invokeHost(command);
+  } catch (error) {
+    signingActionStatus.textContent = String(error);
+    signingActionStatus.className = "lifecycle-action-status error";
+  }
+}
+
+signingKeyButton.addEventListener("click", () => {
+  startSigningPicker("select_signing_key_picker", "Choose one local Ed25519 private key. Its bytes stay in Rust memory and are never returned to this page.");
+});
+
+signingSourceButton.addEventListener("click", () => {
+  startSigningPicker("select_signing_source_picker", "Choose one local SQLite Capsule. It will be inspected and verified without executing embedded assets.");
+});
+
+signingOutputButton.addEventListener("click", () => {
+  startSigningPicker("select_signing_output_picker", "Choose a new destination. Existing files and the source path are refused.");
+});
+
+[signingPublisherId, signingPublisherName].forEach((input) => {
+  input.addEventListener("input", () => {
+    if (signingSession?.preview && !signingPublisherValuesMatchPreview()) {
+      signingActionStatus.textContent = "Publisher identity changed. Prepare a new exact review before signing.";
+      signingActionStatus.className = "lifecycle-action-status";
+    }
+    refreshSigningActions();
+  });
+});
+
+signingPrepareButton.addEventListener("click", async () => {
+  if (signingPrepareButton.disabled) return;
+  signingPrepareButton.disabled = true;
+  signingActionStatus.textContent = "Verifying the source and preparing an exact same-directory signing copy…";
+  signingActionStatus.className = "lifecycle-action-status";
+  signingResultWrap.hidden = true;
+  try {
+    const report = await invokeHost("prepare_signing", {
+      request: {
+        publisher_id: signingPublisherId.value,
+        publisher_name: signingPublisherName.value,
+      },
+    });
+    renderSigningSession(report);
+    signingActionStatus.textContent = "Exact application digest prepared. Review every field before enabling the final signature.";
+  } catch (error) {
+    signingActionStatus.textContent = String(error);
+    signingActionStatus.className = "lifecycle-action-status error";
+    try { renderSigningSession(await invokeHost("signing_status")); } catch (_) { /* retain local status */ }
+  }
+});
+
+signingConfirmation.addEventListener("change", refreshSigningActions);
+
+signingExecuteButton.addEventListener("click", async () => {
+  if (signingExecuteButton.disabled || !signingSession?.key || !signingSession?.preview) return;
+  signingExecuteButton.disabled = true;
+  signingActionStatus.textContent = "Signing the reviewed digest, reopening the new file, and verifying the resulting signature…";
+  signingActionStatus.className = "lifecycle-action-status";
+  try {
+    const result = await invokeHost("execute_signing", {
+      request: {
+        confirmation_key_id: signingSession.key.key_id,
+        confirmation_application_digest: signingSession.preview.application_digest,
+      },
+    });
+    signingResult.textContent = JSON.stringify(result, null, 2);
+    signingResultWrap.hidden = false;
+    signingActionStatus.textContent = `Signed and independently verified ${result.output} (${result.output_bytes.toLocaleString()} bytes). Publisher trust remains a separate host-local decision.`;
+    renderSigningSession(await invokeHost("signing_status"));
+    signingResult.focus();
+  } catch (error) {
+    signingActionStatus.textContent = String(error);
+    signingActionStatus.className = "lifecycle-action-status error";
+    try { renderSigningSession(await invokeHost("signing_status")); } catch (_) { /* retain failure */ }
+  }
+});
+
+signingClearButton.addEventListener("click", async () => {
+  if (signingClearButton.disabled) return;
+  signingActionStatus.textContent = "Forgetting the use-once key and removing any prepared temporary copy…";
+  signingActionStatus.className = "lifecycle-action-status";
+  try {
+    renderSigningSession(await invokeHost("clear_signing_session"));
+    signingActionStatus.textContent = "Use-once signing session cleared. No private key is retained by the host.";
+  } catch (error) {
+    signingActionStatus.textContent = String(error);
+    signingActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
 actions.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button || button.disabled) return;
@@ -436,6 +628,14 @@ invokeHost("update_status")
   .catch((error) => {
     updateStatus.textContent = `Host update status unavailable: ${String(error)}`;
     updateStatus.className = "error";
+  });
+
+invokeHost("signing_status")
+  .then(renderSigningSession)
+  .catch((error) => {
+    signingStatus.textContent = `Publisher-signing status unavailable: ${String(error)}`;
+    signingBadge.className = "badge fail";
+    signingBadge.textContent = "Unavailable";
   });
 
 updateCheckButton.addEventListener("click", async () => {
@@ -543,6 +743,13 @@ if (typeof listen === "function") {
       adminOutput.textContent = event.payload.message;
       return;
     }
+    if (event.payload.kind.startsWith("signing-")) {
+      signingActionStatus.textContent = event.payload.message;
+      signingActionStatus.className = event.payload.kind.endsWith("error")
+        ? "lifecycle-action-status error"
+        : "lifecycle-action-status";
+      return;
+    }
     const restoreMessage = event.payload.kind.startsWith("restore-");
     const target = restoreMessage ? lifecycleActionStatus : actionStatus;
     const baseClass = restoreMessage ? "lifecycle-action-status" : "action-status";
@@ -558,6 +765,11 @@ if (typeof listen === "function") {
   }).catch((error) => {
     lifecycleActionStatus.textContent = `Restore report unavailable: ${String(error)}`;
     lifecycleActionStatus.className = "lifecycle-action-status error";
+  });
+  listen("signing-status", (event) => renderSigningSession(event.payload)).catch((error) => {
+    signingStatus.textContent = `Publisher-signing event channel unavailable: ${String(error)}`;
+    signingBadge.className = "badge fail";
+    signingBadge.textContent = "Unavailable";
   });
 }
 

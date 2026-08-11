@@ -72,6 +72,23 @@ protected CI signer. The only repository seed is public, deterministic, clearly
 labelled test material under `compatibility/signed-app-v0.2/`; it confers no
 identity or trust.
 
+The trusted desktop shell also exposes **Publisher signing** for a local,
+use-once key workflow. Its native pickers accept the existing 32-byte seed and
+64-hex-digit seed formats plus interoperable Ed25519 PKCS#8 PEM or DER. The key
+file path and private bytes remain in Rust; the bundled WebView receives only
+the file name, format, public key, and key fingerprint. The shell verifies the
+source without executing embedded assets, selects a new destination, prepares
+the exact same-directory temporary copy and application digest for review, and
+requires a second explicit action to sign. It then consumes the in-memory key,
+reopens and verifies the result, and atomically publishes only to a previously
+absent destination. Clearing the session drops the key and removes any prepared
+temporary copy. Encrypted PKCS#8, persistent key storage, and remote/KMS signing
+are deliberately not part of this use-once adapter.
+
+The CLI and desktop both call `sqlite-capsule-signing`; neither reimplements the
+signed-extension SQL or copy/publish sequence. The Python environment-variable
+wrapper remains the non-interactive CI path.
+
 ### Automated release signing
 
 `tools/sign_release.py` wraps the native signer with source verification,
@@ -83,7 +100,7 @@ environment variables:
 | --- | --- |
 | `SQLITE_CAPSULE_PUBLISHER_ID` | Required stable publisher identifier |
 | `SQLITE_CAPSULE_PUBLISHER_NAME` | Required publisher display name |
-| `SQLITE_CAPSULE_SIGNING_KEY_FILE` | Preferred path to a mounted 32-byte or 64-hex-digit Ed25519 seed file |
+| `SQLITE_CAPSULE_SIGNING_KEY_FILE` | Preferred path to a mounted 32-byte, 64-hex-digit, or Ed25519 PKCS#8 PEM/DER seed file |
 | `SQLITE_CAPSULE_SIGNING_KEY_HEX` | CI-only alternative containing exactly 64 hexadecimal digits |
 | `SQLITE_CAPSULE_SIGN_SOURCE` | Source capsule; defaults to the canonical Diagram Studio capsule |
 | `SQLITE_CAPSULE_SIGN_OUTPUT` | New output path; defaults under ignored `output/` |

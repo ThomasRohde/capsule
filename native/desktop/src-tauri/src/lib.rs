@@ -45,6 +45,10 @@ use sqlite_capsule_runtime::{
     VerifiedCapsule, inspect_backup_inventory, inspect_launch_with_recovery,
     restore_verified_backup,
 };
+use sqlite_capsule_signing::{
+    LoadedSigningKey, PreparedCapsule, SigningPreview, SigningReport as NativeSigningReport,
+    SigningSource, inspect_signing_source, prepare_capsule_signing as prepare_signing_copy,
+};
 use sqlite_capsule_sigstore::verify_sigstore_bundle;
 use sqlite_capsule_update::{
     PreparedInstallation, PreviousInstaller, StageRequest, StagedUpdate, UpdateInventoryReport,
@@ -696,6 +700,150 @@ struct LifecycleStatus {
     mode: String,
     backup: Option<BackupRecord>,
     backup_inventory: BackupInventoryReport,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct SigningKeyReport {
+    file_name: String,
+    format: String,
+    key_id: String,
+    public_key_hex: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct SigningSourceReport {
+    path: String,
+    bytes: u64,
+    sha256: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct SigningPreviewReport {
+    source: SigningSourceReport,
+    output: String,
+    publisher_id: String,
+    publisher_name: String,
+    application_digest: String,
+    signed_at: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct SigningSessionReport {
+    key: Option<SigningKeyReport>,
+    source: Option<SigningSourceReport>,
+    output: Option<String>,
+    preview: Option<SigningPreviewReport>,
+    busy: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct SigningResultReport {
+    source: SigningSourceReport,
+    output: String,
+    output_bytes: u64,
+    output_sha256: String,
+    publisher_id: String,
+    publisher_name: String,
+    key_id: String,
+    public_key_hex: String,
+    application_digest: String,
+    signed_at: String,
+    signature_valid: bool,
+    publisher_trusted: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct PrepareSigningRequest {
+    publisher_id: String,
+    publisher_name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ExecuteSigningRequest {
+    confirmation_key_id: String,
+    confirmation_application_digest: String,
+}
+
+#[derive(Default)]
+struct SigningSession {
+    key: Option<LoadedSigningKey>,
+    key_file_name: Option<String>,
+    source: Option<SigningSource>,
+    output: Option<PathBuf>,
+    prepared: Option<PreparedCapsule>,
+    busy: bool,
+}
+
+#[derive(Clone, Default)]
+struct SigningState(Arc<Mutex<SigningSession>>);
+
+impl SigningSession {
+    fn report(&self) -> SigningSessionReport {
+        SigningSessionReport {
+            key: self.key.as_ref().map(|key| {
+                let info = key.info();
+                SigningKeyReport {
+                    file_name: self
+                        .key_file_name
+                        .clone()
+                        .unwrap_or_else(|| "Selected private key".to_owned()),
+                    format: info.format.as_str().to_owned(),
+                    key_id: info.key_id.clone(),
+                    public_key_hex: info.public_key_hex.clone(),
+                }
+            }),
+            source: self.source.as_ref().map(signing_source_report),
+            output: self
+                .output
+                .as_ref()
+                .map(|path| path.to_string_lossy().into_owned()),
+            preview: self
+                .prepared
+                .as_ref()
+                .map(|prepared| signing_preview_report(prepared.preview())),
+            busy: self.busy,
+        }
+    }
+
+    fn invalidate_preview(&mut self) {
+        self.prepared = None;
+    }
+}
+
+fn signing_source_report(source: &SigningSource) -> SigningSourceReport {
+    SigningSourceReport {
+        path: source.canonical_path.to_string_lossy().into_owned(),
+        bytes: source.bytes,
+        sha256: source.sha256.clone(),
+    }
+}
+
+fn signing_preview_report(preview: &SigningPreview) -> SigningPreviewReport {
+    SigningPreviewReport {
+        source: signing_source_report(&preview.source),
+        output: preview.output.to_string_lossy().into_owned(),
+        publisher_id: preview.publisher_id.clone(),
+        publisher_name: preview.publisher_name.clone(),
+        application_digest: preview.application_digest.clone(),
+        signed_at: preview.signed_at.clone(),
+    }
+}
+
+fn signing_result_report(report: NativeSigningReport) -> SigningResultReport {
+    SigningResultReport {
+        source: signing_source_report(&report.preview.source),
+        output: report.preview.output.to_string_lossy().into_owned(),
+        output_bytes: report.output_bytes,
+        output_sha256: report.output_sha256,
+        publisher_id: report.preview.publisher_id,
+        publisher_name: report.preview.publisher_name,
+        key_id: report.key.key_id,
+        public_key_hex: report.key.public_key_hex,
+        application_digest: report.preview.application_digest,
+        signed_at: report.preview.signed_at,
+        signature_valid: report.signature_valid,
+        publisher_trusted: report.publisher_trusted,
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -3020,6 +3168,352 @@ fn export_support_bundle_picker(
     Ok(())
 }
 
+fn emit_signing_status(app: &AppHandle, state: &Arc<Mutex<SigningSession>>) {
+    let report = state.lock().ok().map(|session| session.report());
+    if let Some(report) = report {
+        let _ = app.emit("signing-status", report);
+    }
+}
+
+fn finish_signing_picker_error(
+    app: &AppHandle,
+    state: &Arc<Mutex<SigningSession>>,
+    kind: &str,
+    message: impl Into<String>,
+) {
+    if let Ok(mut session) = state.lock() {
+        session.busy = false;
+    }
+    emit_signing_status(app, state);
+    emit_host_message(app, kind, message);
+}
+
+fn begin_signing_picker(state: &SigningState) -> Result<Arc<Mutex<SigningSession>>, String> {
+    let shared = state.0.clone();
+    let mut session = shared
+        .lock()
+        .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+    if session.busy {
+        return Err("another publisher-signing operation is still active".to_owned());
+    }
+    session.busy = true;
+    drop(session);
+    Ok(shared)
+}
+
+#[tauri::command]
+fn signing_status(state: State<'_, SigningState>) -> Result<SigningSessionReport, String> {
+    state
+        .0
+        .lock()
+        .map_err(|_| "publisher-signing state is unavailable".to_owned())
+        .map(|session| session.report())
+}
+
+#[tauri::command]
+fn select_signing_key_picker(state: State<'_, SigningState>, app: AppHandle) -> Result<(), String> {
+    let shared = begin_signing_picker(&state)?;
+    emit_signing_status(&app, &shared);
+    let callback_app = app.clone();
+    app.dialog()
+        .file()
+        .add_filter("Ed25519 private key", &["seed", "key", "hex", "pem", "der"])
+        .pick_file(move |selected| match selected {
+            Some(selected) => match selected.into_path() {
+                Ok(path) => {
+                    let file_name = path
+                        .file_name()
+                        .map(|value| value.to_string_lossy().into_owned())
+                        .unwrap_or_else(|| "Selected private key".to_owned());
+                    let worker_state = shared.clone();
+                    let worker_app = callback_app.clone();
+                    let spawn = std::thread::Builder::new()
+                        .name("sqlite-capsule-key-import".to_owned())
+                        .stack_size(RUNTIME_WORKER_STACK_BYTES)
+                        .spawn(move || match LoadedSigningKey::from_file(&path) {
+                            Ok(key) => {
+                                if let Ok(mut session) = worker_state.lock() {
+                                    session.key = Some(key);
+                                    session.key_file_name = Some(file_name);
+                                    session.invalidate_preview();
+                                    session.busy = false;
+                                }
+                                emit_signing_status(&worker_app, &worker_state);
+                                emit_host_message(
+                                    &worker_app,
+                                    "signing-key-selected",
+                                    "Use-once private key loaded into protected host memory.",
+                                );
+                            }
+                            Err(error) => finish_signing_picker_error(
+                                &worker_app,
+                                &worker_state,
+                                "signing-key-error",
+                                format!("private key import was refused: {error}"),
+                            ),
+                        });
+                    if let Err(error) = spawn {
+                        finish_signing_picker_error(
+                            &callback_app,
+                            &shared,
+                            "signing-key-error",
+                            format!("private key worker is unavailable: {error}"),
+                        );
+                    }
+                }
+                Err(error) => finish_signing_picker_error(
+                    &callback_app,
+                    &shared,
+                    "signing-key-error",
+                    format!("the selected private key is not a local path: {error}"),
+                ),
+            },
+            None => finish_signing_picker_error(
+                &callback_app,
+                &shared,
+                "signing-key-cancelled",
+                "Private key selection cancelled.",
+            ),
+        });
+    Ok(())
+}
+
+#[tauri::command]
+fn select_signing_source_picker(
+    state: State<'_, SigningState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    let shared = begin_signing_picker(&state)?;
+    emit_signing_status(&app, &shared);
+    let callback_app = app.clone();
+    app.dialog()
+        .file()
+        .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+        .pick_file(move |selected| match selected {
+            Some(selected) => match selected.into_path() {
+                Ok(path) => {
+                    let worker_state = shared.clone();
+                    let worker_app = callback_app.clone();
+                    let spawn = std::thread::Builder::new()
+                        .name("sqlite-capsule-sign-source".to_owned())
+                        .stack_size(INSPECTION_STACK_BYTES)
+                        .spawn(move || match inspect_signing_source(&path) {
+                            Ok(source) => {
+                                if let Ok(mut session) = worker_state.lock() {
+                                    session.source = Some(source);
+                                    session.output = None;
+                                    session.invalidate_preview();
+                                    session.busy = false;
+                                }
+                                emit_signing_status(&worker_app, &worker_state);
+                                emit_host_message(
+                                    &worker_app,
+                                    "signing-source-selected",
+                                    "Source capsule verified. No embedded application assets were executed.",
+                                );
+                            }
+                            Err(error) => finish_signing_picker_error(
+                                &worker_app,
+                                &worker_state,
+                                "signing-source-error",
+                                format!("source capsule was refused: {error}"),
+                            ),
+                        });
+                    if let Err(error) = spawn {
+                        finish_signing_picker_error(
+                            &callback_app,
+                            &shared,
+                            "signing-source-error",
+                            format!("source inspection worker is unavailable: {error}"),
+                        );
+                    }
+                }
+                Err(error) => finish_signing_picker_error(
+                    &callback_app,
+                    &shared,
+                    "signing-source-error",
+                    format!("the selected source is not a local path: {error}"),
+                ),
+            },
+            None => finish_signing_picker_error(
+                &callback_app,
+                &shared,
+                "signing-source-cancelled",
+                "Source capsule selection cancelled.",
+            ),
+        });
+    Ok(())
+}
+
+#[tauri::command]
+fn select_signing_output_picker(
+    state: State<'_, SigningState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    let shared = begin_signing_picker(&state)?;
+    emit_signing_status(&app, &shared);
+    let callback_app = app.clone();
+    app.dialog()
+        .file()
+        .add_filter("Signed SQLite Capsule", &["sqlitecapsule", "sqlite"])
+        .set_file_name("signed.sqlitecapsule")
+        .save_file(move |selected| match selected {
+            Some(selected) => match selected.into_path() {
+                Ok(path) => {
+                    let error = if path.exists() {
+                        Some("refusing to replace an existing output".to_owned())
+                    } else if !path.parent().is_some_and(Path::is_dir) {
+                        Some("the output parent directory does not exist".to_owned())
+                    } else {
+                        None
+                    };
+                    if let Some(error) = error {
+                        finish_signing_picker_error(
+                            &callback_app,
+                            &shared,
+                            "signing-output-error",
+                            error,
+                        );
+                        return;
+                    }
+                    if let Ok(mut session) = shared.lock() {
+                        session.output = Some(path);
+                        session.invalidate_preview();
+                        session.busy = false;
+                    }
+                    emit_signing_status(&callback_app, &shared);
+                    emit_host_message(
+                        &callback_app,
+                        "signing-output-selected",
+                        "New signed-capsule destination selected. Nothing has been written yet.",
+                    );
+                }
+                Err(error) => finish_signing_picker_error(
+                    &callback_app,
+                    &shared,
+                    "signing-output-error",
+                    format!("the selected output is not a local path: {error}"),
+                ),
+            },
+            None => finish_signing_picker_error(
+                &callback_app,
+                &shared,
+                "signing-output-cancelled",
+                "Signed-capsule destination selection cancelled.",
+            ),
+        });
+    Ok(())
+}
+
+#[tauri::command]
+async fn prepare_signing(
+    state: State<'_, SigningState>,
+    request: PrepareSigningRequest,
+) -> Result<SigningSessionReport, String> {
+    let shared = state.0.clone();
+    let (source, output) = {
+        let mut session = shared
+            .lock()
+            .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+        if session.busy {
+            return Err("another publisher-signing operation is still active".to_owned());
+        }
+        if session.key.is_none() {
+            return Err("select a private key before preparing the signature".to_owned());
+        }
+        let source = session
+            .source
+            .as_ref()
+            .map(|source| source.canonical_path.clone())
+            .ok_or_else(|| "select and verify a source capsule".to_owned())?;
+        let output = session
+            .output
+            .clone()
+            .ok_or_else(|| "select a new output path".to_owned())?;
+        session.invalidate_preview();
+        session.busy = true;
+        (source, output)
+    };
+    let publisher_id = request.publisher_id;
+    let publisher_name = request.publisher_name;
+    let prepared = tauri::async_runtime::spawn_blocking(move || {
+        prepare_signing_copy(&source, &output, &publisher_id, &publisher_name, None)
+    })
+    .await;
+    let mut session = shared
+        .lock()
+        .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+    session.busy = false;
+    match prepared.map_err(|_| "publisher-signing preparation worker failed".to_owned())? {
+        Ok(prepared) => {
+            session.prepared = Some(prepared);
+            Ok(session.report())
+        }
+        Err(error) => Err(format!("signature preparation was refused: {error}")),
+    }
+}
+
+#[tauri::command]
+async fn execute_signing(
+    state: State<'_, SigningState>,
+    request: ExecuteSigningRequest,
+) -> Result<SigningResultReport, String> {
+    let shared = state.0.clone();
+    let (key, prepared) = {
+        let mut session = shared
+            .lock()
+            .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+        if session.busy {
+            return Err("another publisher-signing operation is still active".to_owned());
+        }
+        let key = session
+            .key
+            .as_ref()
+            .ok_or_else(|| "the use-once private key is no longer loaded".to_owned())?;
+        let prepared = session
+            .prepared
+            .as_ref()
+            .ok_or_else(|| "prepare and review the signature before signing".to_owned())?;
+        if request.confirmation_key_id != key.info().key_id
+            || request.confirmation_application_digest != prepared.preview().application_digest
+        {
+            return Err("the reviewed key or application digest confirmation changed".to_owned());
+        }
+        session.busy = true;
+        let key = session.key.take().expect("checked key is present");
+        let prepared = session
+            .prepared
+            .take()
+            .expect("checked prepared capsule is present");
+        (key, prepared)
+    };
+    let result = tauri::async_runtime::spawn_blocking(move || prepared.sign(key)).await;
+    let mut session = shared
+        .lock()
+        .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+    session.busy = false;
+    session.key_file_name = None;
+    session.source = None;
+    session.output = None;
+    match result.map_err(|_| "publisher-signing worker failed".to_owned())? {
+        Ok(report) => Ok(signing_result_report(report)),
+        Err(error) => Err(format!("capsule signing failed closed: {error}")),
+    }
+}
+
+#[tauri::command]
+fn clear_signing_session(state: State<'_, SigningState>) -> Result<SigningSessionReport, String> {
+    let mut session = state
+        .0
+        .lock()
+        .map_err(|_| "publisher-signing state is unavailable".to_owned())?;
+    if session.busy {
+        return Err("the active publisher-signing operation cannot be cleared".to_owned());
+    }
+    *session = SigningSession::default();
+    Ok(session.report())
+}
+
 #[tauri::command]
 fn open_capsule_picker(app: AppHandle) -> Result<(), String> {
     let callback_app = app.clone();
@@ -3901,6 +4395,7 @@ pub fn run() {
             );
             let initial_entry_asset = released_entry_asset(&host_state.report);
             app.manage(Mutex::new(host_state));
+            app.manage(SigningState::default());
             app.manage(UpdateCheckGate(AtomicBool::new(false)));
             app.manage(Mutex::new(HostUpdateFlow::default()));
             let window = app
@@ -3986,6 +4481,13 @@ pub fn run() {
             continue_current_read_only,
             restore_backup_picker,
             export_support_bundle_picker,
+            signing_status,
+            select_signing_key_picker,
+            select_signing_source_picker,
+            select_signing_output_picker,
+            prepare_signing,
+            execute_signing,
+            clear_signing_session,
             first_open_decide,
             trust_admin
         ])
@@ -4966,6 +5468,29 @@ mod tests {
         assert!(!content.contains("SQLite format 3"));
         assert!(serde_json::from_str::<Value>(&content).is_ok());
         assert!(write_support_bundle_on_worker(output, bundle).is_err());
+    }
+
+    #[test]
+    fn signing_session_report_exposes_public_metadata_but_not_key_material_or_path() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+        let key_path = root.join("compatibility/signed-app-v0.2/development-seed.hex");
+        let secret = std::fs::read_to_string(&key_path)
+            .expect("development key fixture")
+            .trim()
+            .to_owned();
+        let key = LoadedSigningKey::from_file(&key_path).expect("load fixture key");
+        let session = SigningSession {
+            key: Some(key),
+            key_file_name: Some("development-seed.hex".to_owned()),
+            ..SigningSession::default()
+        };
+        let content = serde_json::to_string(&session.report()).expect("signing report JSON");
+        assert!(content.contains("development-seed.hex"));
+        assert!(content.contains("ed25519:sha256:"));
+        assert!(content.contains("public_key_hex"));
+        assert!(!content.contains(&secret));
+        assert!(!content.contains(&key_path.to_string_lossy().into_owned()));
+        assert!(!content.contains("private_key"));
     }
 
     #[test]

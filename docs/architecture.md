@@ -255,6 +255,12 @@ commands; the raw child renderer has no Tauri initialization or trust command.
 That raw renderer is mounted in a separate host-owned native window which stays
 hidden until authorisation and opens maximized for application use; the trusted
 shell remains the only Tauri WebView.
+The shell's separate publisher-signing page is also host-owned. It can import a
+bounded use-once Ed25519 key, verify a source, prepare an exact application
+digest, and sign only a new copy through narrow Rust commands. Key paths and
+private bytes never cross into JavaScript, signing never targets the active raw
+renderer, and the result remains untrusted until the ordinary host-local trust
+policy evaluates it.
 The same trusted shell can forget only the exact current file/release decision
 after literal confirmation. That transaction removes current-digest grants,
 retains publisher and revocation state plus other capsules and audit history,

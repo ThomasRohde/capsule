@@ -59,6 +59,12 @@
               <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"></rect><rect x="5.5" y="5.5" width="5" height="5" rx="0.8"></rect></svg>
               <span>Data protection</span>
             </button>
+            <button type="button" class="nav-item" data-page="signing">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5h10M4.5 10.5l6.8-6.8 1 1-6.8 6.8h-1z"></path><path d="M9.8 5.2l1 1"></path></svg>
+              <span>Publisher signing</span>
+              <span class="nav-tag" id="signing-nav-tag">Use once</span>
+            </button>
             <button type="button" class="nav-item" data-page="updates">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M5.4 8.6L8 6l2.6 2.6"></path></svg>
@@ -178,6 +184,73 @@
               </div>
             </div>
             <p id="lifecycle-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="page-panel" data-page-panel="signing" aria-labelledby="signing-title" hidden>
+            <div class="status-card signing-status-card">
+              <span class="status-icon" aria-hidden="true">✎</span>
+              <div>
+                <h2 id="signing-title">Sign a verified capsule copy</h2>
+                <p id="signing-status" role="status" aria-live="polite">No private key is loaded. Signing keys are use-once and remain in Rust memory only.</p>
+              </div>
+              <span class="badge" id="signing-badge">No key</span>
+            </div>
+
+            <div class="action-list signing-selections">
+              <div class="action-row">
+                <div><strong>Private signing key</strong><p id="signing-key-status">Select a 32-byte seed, 64-digit hex seed, or Ed25519 PKCS#8 PEM/DER file.</p></div>
+                <button type="button" id="signing-key-button">Select key…</button>
+              </div>
+              <div class="action-row">
+                <div><strong>Source capsule</strong><p id="signing-source-status">The source is inspected and verified before any signing copy is prepared.</p></div>
+                <button type="button" id="signing-source-button">Select source…</button>
+              </div>
+              <div class="action-row">
+                <div><strong>New signed-capsule destination</strong><p id="signing-output-status">Existing files and the source path are never replaced.</p></div>
+                <button type="button" id="signing-output-button" disabled>Select destination…</button>
+              </div>
+            </div>
+
+            <div class="section-card signing-identity-card">
+              <div class="card-heading">
+                <div>
+                  <h2>Publisher identity</h2>
+                  <p>This identity is signed into the immutable application compartment. It does not make the publisher trusted on this host.</p>
+                </div>
+                <span class="badge">Signed metadata</span>
+              </div>
+              <div class="signing-fields">
+                <label for="signing-publisher-id"><span>Publisher ID</span><input id="signing-publisher-id" type="text" maxlength="512" autocomplete="off" placeholder="org.example.publisher"></label>
+                <label for="signing-publisher-name"><span>Publisher name</span><input id="signing-publisher-name" type="text" maxlength="512" autocomplete="off" placeholder="Example Publisher"></label>
+              </div>
+            </div>
+
+            <div class="actions signing-prepare-actions">
+              <button type="button" class="quiet" id="signing-clear-button">Clear use-once session</button>
+              <button type="button" class="primary" id="signing-prepare-button" disabled>Prepare review</button>
+            </div>
+
+            <details class="technical" id="signing-review" hidden>
+              <summary>
+                <span><strong>Exact signature review</strong><small>Source hash, application digest, key fingerprint, publisher, time, and destination</small></span>
+                <span class="chevron" aria-hidden="true"></span>
+              </summary>
+              <dl id="signing-preview-details" class="technical-list"></dl>
+            </details>
+
+            <div class="signing-consent" id="signing-consent" hidden>
+              <label>
+                <input type="checkbox" id="signing-confirmation">
+                <span>I reviewed the exact application digest, publisher identity, key fingerprint, timestamp, and new output path shown above.</span>
+              </label>
+              <button type="button" class="primary" id="signing-execute-button" disabled>Sign verified copy</button>
+            </div>
+            <p id="signing-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+
+            <div class="admin-output-wrap signing-result-wrap" id="signing-result-wrap" hidden>
+              <div><strong>Verified signed-capsule result</strong><span>Signature valid · publisher trust remains separate</span></div>
+              <pre id="signing-result" tabindex="0" aria-live="polite" aria-label="Verified publisher-signing result"></pre>
+            </div>
           </section>
 
           <section class="page-panel" data-page-panel="updates" aria-labelledby="update-title" hidden>
