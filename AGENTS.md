@@ -32,6 +32,10 @@ When asked to run, inspect, modify, or explain a `.capsule.sqlite` file:
 - Treat internal hashes as integrity checks, not proof of publisher authenticity.
 - Rebuild the example after changing embedded assets or data:
   `python tools/build_example.py`.
+- After completing any feature, rebuild and export the current Windows NSIS
+  installer with `python native/tools/build_installers.py`. The stable artifact
+  must be `capsules/sqlite-capsule-host-setup.exe`; do not substitute an older
+  bundle or a copy from another profile.
 - Run all tests before considering a change complete:
   `python -m unittest discover -s tests -v`.
 - Verify the generated capsule:
@@ -40,3 +44,5 @@ When asked to run, inspect, modify, or explain a `.capsule.sqlite` file:
 ## Definition of done
 
 A change is complete only when the relevant documentation is consistent, the example rebuilds deterministically enough for review, tests pass, the generated capsule verifies, and the one-prompt Codex launch path still works.
+The current NSIS installer must also be rebuilt, exported to
+`capsules/sqlite-capsule-host-setup.exe`, and verified after every feature.
