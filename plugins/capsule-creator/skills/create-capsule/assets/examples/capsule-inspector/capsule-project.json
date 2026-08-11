@@ -1,0 +1,22 @@
+{
+  "app_id": "org.sqlite-capsule.inspector",
+  "app_version": "0.1.1",
+  "capsule_id": "urn:uuid:7e010b23-32e5-5aa7-8bf0-1b33efaec493",
+  "created_at": "2026-08-11T11:16:51Z",
+  "entry_asset": "app/index.html",
+  "permissions_json": {
+    "database.read": {
+      "reason": "Read the inspector's embedded safety profile through one named endpoint.",
+      "required": true
+    },
+    "network": {
+      "reason": "The application is fully offline.",
+      "required": false,
+      "value": "none"
+    }
+  },
+  "project_format": "org.sqlite-capsule.source-project/0.2",
+  "summary": "Inspect SQLite Capsule files locally without executing their embedded application code.",
+  "title": "Capsule Inspector",
+  "updated_at": "2026-08-11T15:00:00Z"
+}

@@ -30,9 +30,10 @@ a compatible fallback host.
   `view`, `interactive`, and `editable`.
 - Generic inspect, verify, conformance, permissions, unpack, pack, diff, signing,
   and export tools.
-- A repository-local Codex plugin that scaffolds and verifies new capsule
-  applications through the Python loopback runtime without requiring the native
-  desktop client.
+- A self-contained Codex plugin that scaffolds, verifies, runs, and black-box
+  tests new capsule applications without a repository checkout or native
+  desktop client. It includes the format/runtime snapshot, authoring references,
+  and a Fluent Capsule Inspector reference app.
 - Diagram Studio 0.3.0 as an offline visual editing example. The generic format
   and hosts contain no Diagram Studio domain logic.
 
@@ -140,17 +141,24 @@ builds a new database and verifies it before publication; it never replaces an
 existing output implicitly. See [`docs/authoring.md`](docs/authoring.md).
 
 To create a new reviewable capsule application with Codex, invoke the
-repository-local `create-capsule` skill from
-[`plugins/capsule-creator`](plugins/capsule-creator). Its standard-library
-scaffolder creates application-specific source, builds against the current
-generic format and Python runtime, and checks byte freshness. The authoring and
-launch path does not invoke the Tauri client:
+self-contained `create-capsule` skill from
+[`plugins/capsule-creator`](plugins/capsule-creator). The plugin carries its own
+standard-library host, format schema, independent conformance spec, browser
+client, pinned SQLite WASM, quality references, and Fluent Capsule Inspector.
+It can be copied away from this repository; the authoring and launch path never
+invokes the Tauri client:
 
 ```bash
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
-python tools/capsule.py verify my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host verify my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py conformance my-app.capsule.sqlite
 ```
+
+The reference Inspector is built at
+[`plugins/capsule-creator/skills/create-capsule/assets/examples/capsule-inspector.capsule.sqlite`](plugins/capsule-creator/skills/create-capsule/assets/examples/capsule-inspector.capsule.sqlite).
+It opens another SQLite file locally, maps its four black-box layers, and never
+executes the target capsule's assets, commands, prompts, or declared checks.
 
 ## Current limitations
 

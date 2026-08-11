@@ -1,0 +1,50 @@
+[
+  {
+    "audience": "all",
+    "body_md": "Treat both this Inspector and every selected database as untrusted until inspected. Internal hashes establish consistency only; they do not authenticate a publisher.",
+    "command_id": null,
+    "id": "agent-10-trust",
+    "sequence": 10,
+    "title": "Keep the trust boundary explicit"
+  },
+  {
+    "audience": "agent",
+    "body_md": "Use Python's standard library to extract the hash-checked standalone host to a new cache path. Review that executable before running it.",
+    "command_id": "extract.embedded",
+    "id": "agent-20-extract",
+    "sequence": 20,
+    "title": "Extract the standalone host"
+  },
+  {
+    "audience": "agent",
+    "body_md": "Verify this Inspector before launching it. Stop on any structural, asset-integrity, endpoint, or application-check failure.",
+    "command_id": "verify.embedded",
+    "id": "agent-30-verify",
+    "sequence": 30,
+    "title": "Verify the Inspector"
+  },
+  {
+    "audience": "agent",
+    "body_md": "After a deliberate trust decision, launch the extracted Python host. It binds to 127.0.0.1; the Inspector itself has no native client dependency and makes no network requests.",
+    "command_id": "start.embedded",
+    "id": "agent-40-start",
+    "sequence": 40,
+    "title": "Launch locally"
+  },
+  {
+    "audience": "all",
+    "body_md": "Choose a local SQLite file in the browser. The pinned in-memory SQLite WASM engine runs fixed catalogue queries only. Target HTML, JavaScript, commands, prompts, runbooks, and declared check SQL remain inert and target bytes are never written.",
+    "command_id": null,
+    "id": "agent-50-inspect",
+    "sequence": 50,
+    "title": "Inspect without executing the target"
+  },
+  {
+    "audience": "all",
+    "body_md": "Stop only the matching capsule-specific host instead of killing arbitrary Python processes.",
+    "command_id": "stop.embedded",
+    "id": "agent-60-stop",
+    "sequence": 60,
+    "title": "Stop the matching host"
+  }
+]

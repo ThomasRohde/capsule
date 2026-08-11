@@ -1,7 +1,7 @@
 {
   "name": "capsule-creator",
-  "version": "0.1.0",
-  "description": "Create, build, verify, and smoke-test offline SQLite Capsule applications from reviewable source.",
+  "version": "0.2.2",
+  "description": "Create, build, verify, run, and black-box test exceptional offline SQLite Capsule applications without a repository checkout or native client.",
   "author": {
     "name": "SQLite Capsule contributors"
   },
@@ -12,15 +12,16 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Capsule Creator",
-    "shortDescription": "Create verified offline applications in SQLite.",
-    "longDescription": "Scaffold reviewable capsule source, implement a bounded browser application, build the SQLite artifact with the Python host, and verify its format, integrity, endpoints, and embedded runbook.",
+    "shortDescription": "Build exceptional self-contained SQLite applications.",
+    "longDescription": "Scaffold reviewable source, design bounded named interfaces and polished offline UI, build with the bundled Python runtime, verify against an independent contract, and black-box inspect the result with the included Fluent Capsule Inspector.",
     "developerName": "SQLite Capsule contributors",
     "category": "Developer Tools",
-    "capabilities": ["Create", "Write", "Verify"],
+    "capabilities": ["Create", "Write", "Verify", "Run", "Inspect"],
     "defaultPrompt": [
       "Create a new offline SQLite Capsule application.",
       "Turn this application brief into a verified capsule.",
-      "Build and smoke-test this capsule project."
+      "Build and smoke-test this capsule project.",
+      "Inspect this capsule as a black box."
     ]
   }
 }

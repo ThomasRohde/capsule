@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import shutil
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import threading
@@ -19,6 +22,15 @@ SCRIPT = (
     / "create-capsule"
     / "scripts"
     / "capsule_project.py"
+)
+PLUGIN = ROOT / "plugins" / "capsule-creator"
+INSPECTOR = (
+    PLUGIN
+    / "skills"
+    / "create-capsule"
+    / "assets"
+    / "examples"
+    / "capsule-inspector.capsule.sqlite"
 )
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -44,11 +56,11 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
                 app_id="org.example.field-notes",
             )
             self.assertTrue(created["ok"])
-            built = capsule_project.build_project(project, output, repo_root=ROOT)
+            built = capsule_project.build_project(project, output)
             self.assertTrue(built["ok"])
             self.assertEqual(built["manifest"]["app_id"], "org.example.field-notes")
             self.assertEqual(built["warnings"], [])
-            self.assertTrue(capsule_project.check_project(project, output, repo_root=ROOT)["ok"])
+            self.assertTrue(capsule_project.check_project(project, output)["ok"])
 
             with CapsuleDatabase(output, read_only=True) as capsule:
                 verification = capsule.verify()
@@ -120,10 +132,10 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
                     app_id="org.example.replacement",
                 )
 
-            capsule_project.build_project(project, output, repo_root=ROOT)
+            capsule_project.build_project(project, output)
             original = output.read_bytes()
             with self.assertRaises(capsule_project.ProjectError):
-                capsule_project.build_project(project, output, repo_root=ROOT)
+                capsule_project.build_project(project, output)
             self.assertEqual(output.read_bytes(), original)
 
     def test_domain_source_cannot_redefine_platform_or_add_triggers(self) -> None:
@@ -144,8 +156,169 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
                 capsule_project.build_project(
                     project,
                     root / "unsafe.capsule.sqlite",
-                    repo_root=ROOT,
                 )
+
+    def test_seed_tables_follow_foreign_key_dependency_order(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "seed-order"
+            output = root / "seed-order.capsule.sqlite"
+            capsule_project.init_project(
+                project,
+                title="Seed Order",
+                app_id="org.example.seed-order",
+            )
+            with (project / "domain.sql").open("a", encoding="utf-8", newline="\n") as target:
+                target.write(
+                    "\nCREATE TABLE z_parent (id TEXT PRIMARY KEY);\n"
+                    "CREATE TABLE a_child (\n"
+                    "  id TEXT PRIMARY KEY,\n"
+                    "  parent_id TEXT NOT NULL REFERENCES z_parent(id)\n"
+                    ");\n"
+                )
+            seed_path = project / "source" / "data" / "seed.json"
+            seed = json.loads(seed_path.read_text(encoding="utf-8"))
+            seed["a_child"] = [{"id": "child-1", "parent_id": "parent-1"}]
+            seed["z_parent"] = [{"id": "parent-1"}]
+            seed_path.write_text(
+                json.dumps(seed, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+
+            capsule_project.build_project(project, output)
+            connection = sqlite3.connect(output)
+            try:
+                child = connection.execute(
+                    "SELECT id, parent_id FROM a_child"
+                ).fetchone()
+            finally:
+                connection.close()
+            self.assertEqual(child, ("child-1", "parent-1"))
+
+    def test_plugin_copy_builds_and_verifies_without_repository_access(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copied_plugin = root / "capsule-creator"
+            shutil.copytree(PLUGIN, copied_plugin)
+            copied_script = (
+                copied_plugin
+                / "skills"
+                / "create-capsule"
+                / "scripts"
+                / "capsule_project.py"
+            )
+            project = root / "outside-project"
+            output = root / "outside.capsule.sqlite"
+
+            commands = [
+                [
+                    sys.executable,
+                    str(copied_script),
+                    "init",
+                    str(project),
+                    "--title",
+                    "Outside Project",
+                    "--app-id",
+                    "org.example.outside-project",
+                ],
+                [sys.executable, str(copied_script), "build", str(project), str(output)],
+                [sys.executable, str(copied_script), "host", "verify", str(output)],
+                [sys.executable, str(copied_script), "conformance", str(output)],
+                [sys.executable, str(copied_script), "check", str(project), str(output)],
+            ]
+            for command in commands:
+                completed = subprocess.run(
+                    command,
+                    cwd=root,
+                    text=True,
+                    capture_output=True,
+                    timeout=30,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+                self.assertNotIn(str(ROOT), completed.stdout + completed.stderr)
+
+            with CapsuleDatabase(output, read_only=True) as capsule:
+                self.assertTrue(capsule.verify()["ok"])
+
+    def test_reference_inspector_is_current_and_carries_local_wasm(self) -> None:
+        self.assertTrue(INSPECTOR.is_file())
+        with CapsuleDatabase(INSPECTOR, read_only=True) as capsule:
+            verification = capsule.verify()
+            self.assertTrue(verification["ok"], verification)
+            self.assertEqual(verification["manifest"]["app_id"], "org.sqlite-capsule.inspector")
+        connection = sqlite3.connect(INSPECTOR)
+        try:
+            assets = {
+                row[0]: (row[1], row[2])
+                for row in connection.execute(
+                    "SELECT path, media_type, length(content) FROM capsule_asset"
+                ).fetchall()
+            }
+        finally:
+            connection.close()
+        self.assertEqual(assets["app/vendor/sqlite-wasm/sqlite3.wasm"][0], "application/wasm")
+        self.assertGreater(assets["app/vendor/sqlite-wasm/sqlite3.wasm"][1], 800_000)
+        self.assertIn("app/vendor/sqlite-wasm/index.mjs", assets)
+        self.assertIn("app/sha256.js", assets)
+        self.assertIn("app/legal/sqlite-wasm/LICENSE.Apache-2.0.txt", assets)
+        self.assertIn("app/legal/sqlite-wasm/THIRD_PARTY.md", assets)
+
+    def test_inspector_portable_sha256_matches_standard_vectors(self) -> None:
+        module_path = (
+            PLUGIN
+            / "skills"
+            / "create-capsule"
+            / "assets"
+            / "examples"
+            / "capsule-inspector"
+            / "source"
+            / "app"
+            / "sha256.js"
+        )
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("Node.js is unavailable")
+        vectors = [b"", b"abc", bytes(range(256)), b"capsule" * 10_000]
+        script = (
+            "import { portableSha256 } from " + json.dumps(module_path.as_uri()) + ";"
+            "const encoder = new TextEncoder();"
+            "const vectors = [new Uint8Array(0), encoder.encode('abc'),"
+            "Uint8Array.from({length: 256}, (_, index) => index),"
+            "encoder.encode('capsule'.repeat(10000))];"
+            "for (const value of vectors) console.log(portableSha256(Uint8Array.from(value)));"
+        )
+        completed = subprocess.run(
+            [node, "--input-type=module", "--eval", script],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(
+            completed.stdout.splitlines(),
+            [hashlib.sha256(value).hexdigest() for value in vectors],
+        )
+
+    def test_skill_routes_to_self_contained_authoring_references(self) -> None:
+        skill = PLUGIN / "skills" / "create-capsule"
+        skill_text = (skill / "SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("tools/capsule.py", skill_text)
+        self.assertNotIn("repository `AGENTS.md`", skill_text)
+        references = (
+            "authoring-contract.md",
+            "format-and-runtime.md",
+            "quality-playbook.md",
+            "fluent-ui.md",
+            "inspector-black-box.md",
+        )
+        for name in references:
+            path = skill / "references" / name
+            self.assertTrue(path.is_file(), name)
+            self.assertGreater(len(path.read_text(encoding="utf-8")), 1_000, name)
+            self.assertIn(f"references/{name}", skill_text)
 
 
 if __name__ == "__main__":

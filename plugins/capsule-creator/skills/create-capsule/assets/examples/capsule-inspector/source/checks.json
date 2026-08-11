@@ -1,0 +1,18 @@
+[
+  {
+    "description": "The inspector is pinned to the current Capsule 0.2 contract and official local SQLite WASM engine.",
+    "expected_json": [],
+    "id": "inspector-reference-current",
+    "result_mode": "empty",
+    "severity": "error",
+    "sql_text": "SELECT id FROM inspector_reference WHERE supported_format <> 'org.sqlite-capsule/0.2' OR engine_package <> '@sqlite.org/sqlite-wasm' OR engine_version <> '3.53.0-build1'"
+  },
+  {
+    "description": "The target boundary stays local, read-only, and catalogue-only.",
+    "expected_json": [],
+    "id": "inspector-boundary-closed",
+    "result_mode": "empty",
+    "severity": "error",
+    "sql_text": "SELECT id FROM inspector_reference WHERE execution_policy <> 'catalogue-only' OR target_write_policy <> 'never' OR network_policy <> 'none' OR max_file_bytes <> 67108864"
+  }
+]

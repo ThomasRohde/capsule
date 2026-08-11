@@ -1,0 +1,14 @@
+{
+  "inspector_reference": [
+    {
+      "engine_package": "@sqlite.org/sqlite-wasm",
+      "engine_version": "3.53.0-build1",
+      "execution_policy": "catalogue-only",
+      "id": 1,
+      "max_file_bytes": 67108864,
+      "network_policy": "none",
+      "supported_format": "org.sqlite-capsule/0.2",
+      "target_write_policy": "never"
+    }
+  ]
+}

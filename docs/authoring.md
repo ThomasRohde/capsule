@@ -25,27 +25,35 @@ The final command rebuilds independently and compares the exact digest. A releas
 
 ## Create a new application with the Codex plugin
 
-The repository-local `plugins/capsule-creator` plugin supplies a
-`create-capsule` skill and a deterministic standard-library project tool. It is
-for new application-specific source trees; it does not add product logic to the
-generic host and does not depend on the native Tauri client.
+The `plugins/capsule-creator` plugin supplies a `create-capsule` skill and a
+deterministic standard-library project tool. The plugin is self-contained: its
+format, host, browser client, conformance description, references, and pinned
+SQLite WASM travel with it. It is for new application-specific source trees;
+it does not add product logic to the generic host, require this repository, or
+depend on the native Tauri client.
 
 ```bash
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
-python tools/capsule.py instructions my-app.capsule.sqlite
-python tools/capsule.py verify my-app.capsule.sqlite
-python tools/capsule.py conformance my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host instructions my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host verify my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py conformance my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py check my-app my-app.capsule.sqlite
 ```
 
 The generated source separates stable identity, domain SQL, seed rows, offline
 browser assets, named endpoints, application checks, prompts, documents, and
-runbooks. The builder embeds the current generic Python host and browser client,
+runbooks. The builder embeds its bundled generic Python host and browser client,
 publishes atomically after full verification, and refuses implicit replacement.
 After reviewing the result and making an explicit trust decision, exercise it
-through `python tools/capsule.py start ... --trust-capsule` and confirm the real
+through `capsule_project.py host start ... --trust-capsule` and confirm the real
 loopback application and write persistence before distribution.
+
+The plugin also carries a reviewable Capsule Inspector project and built
+artifact under `assets/examples/`. It uses a Windows 11 Fluent browser UI and a
+pinned in-memory SQLite engine to inspect another database without mounting or
+executing the target's browser code. Use it as a consumer-side compatibility
+gate for newly authored capsules.
 
 ## Working runtime artefacts
 

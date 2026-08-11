@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Capsule Inspector</title>
+  <link rel="icon" href="/app/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to inspection</a>
+  <div class="app-shell">
+    <header class="titlebar">
+      <div class="titlebar-identity">
+        <svg class="app-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4.5 6.5c0-1.66 3.36-3 7.5-3s7.5 1.34 7.5 3v11c0 1.66-3.36 3-7.5 3s-7.5-1.34-7.5-3z"/>
+          <path d="M4.5 6.5c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3M4.5 12c0 1.66 3.36 3 7.5 3 1.06 0 2.07-.09 2.98-.27"/>
+          <circle cx="17.5" cy="17.5" r="3"/><path d="m19.7 19.7 2 2"/>
+        </svg>
+        <span>Capsule Inspector</span>
+      </div>
+      <div class="titlebar-actions">
+        <span class="offline-pill"><span aria-hidden="true"></span>Local only</span>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="Use light theme" title="Change theme">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"/><circle cx="10" cy="10" r="3.25"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="navigation-rail" aria-label="Inspector pages">
+        <p class="rail-label">Inspection</p>
+        <nav class="page-navigation">
+          <button class="nav-item is-active" type="button" data-page="overview" aria-current="page">
+            <span class="nav-glyph" aria-hidden="true">⌂</span><span>Overview</span>
+          </button>
+          <button class="nav-item" type="button" data-page="assets">
+            <span class="nav-glyph" aria-hidden="true">▦</span><span>Assets</span>
+          </button>
+          <button class="nav-item" type="button" data-page="interfaces">
+            <span class="nav-glyph" aria-hidden="true">⇄</span><span>Interfaces</span>
+          </button>
+          <button class="nav-item" type="button" data-page="guidance">
+            <span class="nav-glyph" aria-hidden="true">≡</span><span>Guidance</span>
+          </button>
+          <button class="nav-item" type="button" data-page="schema">
+            <span class="nav-glyph" aria-hidden="true">◫</span><span>Schema</span>
+          </button>
+        </nav>
+        <div class="rail-note">
+          <span class="shield" aria-hidden="true">✓</span>
+          <div><strong>Safe local inspection</strong><small>Target app code stays inert</small></div>
+        </div>
+      </aside>
+
+      <main id="main-content" class="content-surface" tabindex="-1">
+        <header class="page-heading">
+          <div>
+            <p class="eyebrow">SQLite application forensics</p>
+            <h1 id="page-title">Inspect a capsule</h1>
+            <p id="page-description">Open a local SQLite file to map its identity, contract, assets, interfaces, guidance, and domain schema.</p>
+          </div>
+          <label class="open-button" for="capsule-file">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h5l1.5 2H17v8.5H3z"/><path d="M3 7.5h14"/></svg>
+            <span>Open capsule…</span>
+          </label>
+          <input id="capsule-file" type="file" accept=".sqlite,.sqlite3,.capsule.sqlite,.sqlitecapsule,application/vnd.sqlite3,application/x-sqlite3">
+        </header>
+
+        <section class="empty-state" id="empty-state">
+          <div class="empty-illustration" aria-hidden="true">
+            <span class="database-shape"></span><span class="scan-line"></span><span class="lens-shape"></span>
+          </div>
+          <h2>See what the file says about itself</h2>
+          <p>The inspection happens in memory on this device. Embedded HTML, JavaScript, commands, checks, and prompts are catalogued as data—not executed.</p>
+          <label class="primary-button" for="capsule-file">Choose a SQLite file</label>
+          <dl class="privacy-strip">
+            <div><dt>Network</dt><dd>None</dd></div>
+            <div><dt>Target writes</dt><dd>None</dd></div>
+            <div><dt>Target code</dt><dd>Not executed</dd></div>
+          </dl>
+        </section>
+
+        <section class="loading-state" id="loading-state" hidden aria-live="polite">
+          <span class="progress-ring" aria-hidden="true"></span>
+          <div><strong>Reading the SQLite file</strong><p id="loading-message">Starting the isolated engine…</p></div>
+        </section>
+
+        <section class="inspection" id="inspection" hidden>
+          <div class="file-banner">
+            <div class="file-icon" aria-hidden="true">DB</div>
+            <div class="file-copy"><strong id="file-name">—</strong><span id="file-meta">—</span></div>
+            <span class="verdict-badge" id="verdict-badge">Inspecting</span>
+          </div>
+
+          <ol class="xray-rail" aria-label="Inspection layers">
+            <li data-stage="file"><span class="stage-mark">1</span><div><strong>File</strong><small id="stage-file">Waiting</small></div></li>
+            <li data-stage="sqlite"><span class="stage-mark">2</span><div><strong>SQLite</strong><small id="stage-sqlite">Waiting</small></div></li>
+            <li data-stage="contract"><span class="stage-mark">3</span><div><strong>Contract</strong><small id="stage-contract">Waiting</small></div></li>
+            <li data-stage="application"><span class="stage-mark">4</span><div><strong>Application</strong><small id="stage-application">Waiting</small></div></li>
+          </ol>
+
+          <section class="page-panel" data-page-panel="overview">
+            <div class="verdict" id="verdict-panel">
+              <span class="verdict-mark" aria-hidden="true">i</span>
+              <div><strong id="verdict-title">Inspection complete</strong><p id="verdict-detail"></p></div>
+            </div>
+            <div class="metric-grid" id="metric-grid"></div>
+            <div class="two-column">
+              <section class="card"><h2>Application identity</h2><dl class="property-list" id="identity-list"></dl></section>
+              <section class="card"><h2>Safety observations</h2><ul class="finding-list" id="finding-list"></ul></section>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="assets" hidden>
+            <div class="section-heading"><div><h2>Embedded assets</h2><p>Integrity metadata and executable flags. Contents remain inert.</p></div><span class="count-pill" id="asset-count">0</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Path</th><th>Type</th><th>Bytes</th><th>SHA-256</th><th>Role</th></tr></thead><tbody id="asset-rows"></tbody></table></div>
+          </section>
+
+          <section class="page-panel" data-page-panel="interfaces" hidden>
+            <div class="section-heading"><div><h2>Named interfaces</h2><p>The declared boundary between browser code and SQLite.</p></div><span class="count-pill" id="endpoint-count">0</span></div>
+            <div class="card-list" id="endpoint-list"></div>
+          </section>
+
+          <section class="page-panel" data-page-panel="guidance" hidden>
+            <div class="section-heading"><div><h2>Embedded guidance</h2><p>Runbooks, documents, prompts, and commands are shown as untrusted text.</p></div></div>
+            <div class="guidance-grid" id="guidance-grid"></div>
+          </section>
+
+          <section class="page-panel" data-page-panel="schema" hidden>
+            <div class="section-heading"><div><h2>Database schema</h2><p>Platform objects are separated from application-owned objects.</p></div><span class="count-pill" id="schema-count">0</span></div>
+            <div class="schema-columns"><section class="card"><h2>Application objects</h2><div id="domain-schema"></div></section><section class="card"><h2>Capsule platform</h2><div id="platform-schema"></div></section></div>
+          </section>
+        </section>
+
+        <p class="action-status" id="status" role="status" aria-live="polite"></p>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="/app/app.js"></script>
+</body>
+</html>

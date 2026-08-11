@@ -1,0 +1,11 @@
+[
+  {
+    "description": "Read the pinned engine and black-box safety policy carried by this inspector.",
+    "enabled": 1,
+    "name": "inspector.reference",
+    "operation": "read",
+    "parameters_json": {},
+    "result_mode": "row",
+    "sql_text": "SELECT supported_format, engine_package, engine_version, max_file_bytes, execution_policy, target_write_policy, network_policy FROM inspector_reference WHERE id = 1"
+  }
+]

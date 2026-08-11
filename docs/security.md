@@ -84,7 +84,7 @@ The host sends a restrictive policy broadly equivalent to:
 
 ```text
 default-src 'none';
-script-src 'self';
+script-src 'self' 'wasm-unsafe-eval';
 style-src 'self' 'unsafe-inline';
 img-src 'self' data: blob:;
 font-src 'self' data:;
@@ -97,6 +97,9 @@ form-action 'none';
 ```
 
 No external CDN, analytics endpoint, image host, or API is available to core application assets. Asset media types are syntax-checked, all header values reject control characters, and assets use `Cache-Control: no-store`.
+`wasm-unsafe-eval` permits verified, same-origin WebAssembly assets such as the
+Capsule Inspector's pinned SQLite engine; it does not permit JavaScript
+`eval()` or remote script execution.
 
 ### No generic browser SQL
 
@@ -226,6 +229,11 @@ database bytes, filesystem path, trust/backup/update API, popup, or external
 navigation. Header CSP, Permissions Policy, origin checks, path decoding, and
 incognito renderer settings fail closed. Update-stage fault injection and the
 remaining live Windows installer/routing evidence remain open.
+
+The native child policy includes the same `wasm-unsafe-eval` exception as the
+loopback host so verified capsule-local WebAssembly can compile. JavaScript
+`unsafe-eval`, remote scripts, workers, frames, and external origins remain
+denied.
 
 ### Native file lifecycle and recovery
 

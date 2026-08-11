@@ -1,45 +1,146 @@
-# Capsule authoring contract
+# Reviewable capsule source
 
-Use this reference while designing or editing a project created by `capsule_project.py`.
+Use this reference for every project created by `scripts/capsule_project.py`.
+The builder and all resources it needs live inside this plugin; a SQLite
+Capsule repository checkout is not required.
 
-## Project source
+## Source map
 
-`capsule-project.json` owns stable application identity, version, summary, entry asset, UTC timestamps, and declared capabilities. Builds must not invent changing metadata.
+| Path | Ownership |
+| --- | --- |
+| `capsule-project.json` | Stable identity, version, summary, entry asset, UTC timestamps, permissions |
+| `domain.sql` | Application tables, indexes, and views |
+| `source/data/seed.json` | Deterministic seed rows keyed by domain table |
+| `source/app/` | Offline HTML, CSS, JavaScript, images, JSON, fonts, and WASM |
+| `source/endpoints.json` | Named, parameterised reads and writes |
+| `source/checks.json` | Bounded read-only application invariants |
+| `source/runbooks.json` | Ordered human/agent/runtime instructions |
+| `source/prompts.json` | High-value agent tasks carried with the artifact |
+| `source/docs.json` + `source/docs/` | Embedded human-readable documentation |
 
-`domain.sql` owns application-specific tables, indexes, and views. Do not use triggers, virtual tables, attached databases, extension loading, or `capsule_`-prefixed objects.
+Do not hand-edit a built `.capsule.sqlite`. Change these files and rebuild.
 
-`source/data/seed.json` maps domain table names to arrays of complete row objects. Arrays and objects are stored as canonical compact JSON text.
+## Stable identity
 
-`source/app/` contains offline browser assets. `app/index.html` is the entry asset. Reference embedded assets with root-relative `/app/...` URLs because the host serves the entry document at `/`. Use the embedded `app/capsule-client.js` API:
+Keep `capsule_id`, `app_id`, and `created_at` stable across releases. Increment
+`app_version` and `updated_at` intentionally. `app_id` is lowercase and dotted
+or hyphenated, for example `org.example.field-notes`. `entry_asset` is normally
+`app/index.html`.
 
-- `SQLiteCapsuleClient.manifest()`
-- `SQLiteCapsuleClient.read(name, parameters)`
-- `SQLiteCapsuleClient.write(name, parameters)`
+Declare only capabilities the enabled endpoints require:
 
-The browser receives no SQLite handle and no arbitrary SQL method.
+```json
+{
+  "database.read": {"required": true, "reason": "Read notes through named endpoints."},
+  "database.write": {"required": true, "reason": "Save note edits."},
+  "network": {"required": false, "value": "none", "reason": "Fully offline."}
+}
+```
 
-`source/endpoints.json` declares stable named reads and writes. Every SQL parameter must have one matching rule with type `string`, `number`, `integer`, `boolean`, or `json`. Writes are transactional and logged by the host. Use `steps` only for atomic compound writes.
+Omit `database.write` for read-only applications. `network.value` must remain
+`none`.
 
-`source/checks.json` contains bounded read-only application invariants. Error checks must pass before publication.
+## Domain model
 
-`source/runbooks.json`, `source/prompts.json`, and `source/docs.json` make the result discoverable to agents and humans. The builder adds generic inspect, verify, start, status, stop, and standalone-host commands.
+Use ordinary SQLite tables, indexes, and views. Prefer text IDs that the UI can
+create with `crypto.randomUUID()`, explicit UTC timestamps, foreign keys, and
+`CHECK` constraints that preserve domain invariants. Add indexes for every
+stable sort/filter path. Treat JSON columns as text with `json_valid(...)`.
 
-## Required boundaries
+`domain.sql` must not create `capsule_` objects, triggers, virtual tables,
+attached databases, extension calls, or PRAGMA changes. Platform structure is
+owned by the bundled format snapshot.
 
-- SQLite is the canonical runtime artifact; HTML exports are derivatives.
-- The application stays offline and runs through the loopback Python host.
-- The build embeds the current generic Python host and browser client from this repository.
-- The plugin's authoring path has no native desktop dependency.
-- `database.read` and `database.write` must be explicitly declared when matching endpoints exist; `network.value` remains `none`.
-- Entry HTML, each asset SHA-256, foreign keys, endpoint declarations, and application checks must verify before the output is atomically published.
-- Build into a new path by default. Permit replacement only after resolving the exact generated target.
+`seed.json` contains complete rows. The builder deterministically orders seeded
+tables so referenced parents are inserted before children. Put a self-referenced
+parent earlier in that table's row array. Cross-table cycles require every
+participating foreign key to be `DEFERRABLE INITIALLY DEFERRED`. Keep seed IDs
+and timestamps stable so two builds from unchanged source are byte-identical.
 
-## Completion evidence
+## Named endpoints
 
-For each created capsule, retain:
+The browser never receives a SQLite handle or arbitrary SQL method. Every user
+action maps to a declared name.
 
-1. successful `capsule_project.py check` byte-freshness output;
-2. successful `tools/capsule.py verify` and `conformance` output;
-3. the embedded `START_HERE` instructions;
-4. a real loopback-browser smoke test;
-5. for editable apps, a named write followed by reload and direct SQLite persistence evidence.
+```json
+{
+  "name": "note.list",
+  "operation": "read",
+  "sql_text": "SELECT id, title, updated_at FROM note ORDER BY updated_at DESC, id",
+  "parameters_json": {},
+  "result_mode": "rows",
+  "description": "List notes in deterministic recency order.",
+  "enabled": 1
+}
+```
+
+```json
+{
+  "name": "note.rename",
+  "operation": "write",
+  "sql_text": "UPDATE note SET title = :title, updated_at = :updated_at WHERE id = :id",
+  "parameters_json": {
+    "id": {"type": "string", "required": true},
+    "title": {"type": "string", "required": true},
+    "updated_at": {"type": "string", "required": true}
+  },
+  "result_mode": "changes",
+  "description": "Rename exactly one note.",
+  "enabled": 1
+}
+```
+
+Parameter types are `string`, `number`, `integer`, `boolean`, or `json`.
+Rules may add boolean `required`, boolean `nullable`, and a type-correct
+`default`. Unknown parameters and invalid types are rejected. Add SQL-level
+length, enum, ownership, and range constraints because parameter types alone
+do not express them.
+
+Result modes are `rows`, `row`, `scalar`, and `changes`. A compound write may
+add `steps` with sequences 1–16 and optional `required_changes`; all steps and
+the generated change-log entry share one transaction. Use it for workflows
+that must succeed or roll back as a unit.
+
+## Browser application
+
+Reference assets with root-relative `/app/...` paths. The builder injects
+`/app/capsule-client.js`; do not provide a file with that reserved name.
+
+```js
+const client = globalThis.SQLiteCapsuleClient;
+const manifest = await client.manifest();
+const notes = await client.read("note.list", {});
+await client.write("note.rename", {id, title, updated_at: new Date().toISOString()});
+```
+
+Render database text with `textContent`, not `innerHTML`. Give every write a
+visible pending, success, and failure state. After a successful write, reload
+authoritative data from the named read rather than assuming the optimistic
+state is canonical.
+
+## Checks and embedded guidance
+
+Every important invariant deserves a check. `result_mode: "empty"` with
+`expected_json: []` is clearest for violation queries. Error checks block
+verification; warnings and info retain review evidence.
+
+Write `START_HERE` runbooks as an ordered trust-to-stop path. Prompts should
+describe useful tasks grounded in the actual domain, not generic marketing.
+Docs should explain the product, data vocabulary, safe operations, limitations,
+and recovery behavior. The built artifact already carries standalone extract,
+inspect, verify, start, status, and stop commands.
+
+## Build lifecycle
+
+```text
+python <skill>/scripts/capsule_project.py init <project> --title "…" --app-id org.example.app
+python <skill>/scripts/capsule_project.py build <project> <app.capsule.sqlite>
+python <skill>/scripts/capsule_project.py host instructions <app.capsule.sqlite>
+python <skill>/scripts/capsule_project.py host verify <app.capsule.sqlite>
+python <skill>/scripts/capsule_project.py conformance <app.capsule.sqlite>
+python <skill>/scripts/capsule_project.py check <project> <app.capsule.sqlite>
+```
+
+Use `--replace` only after resolving the exact generated target. Use `host
+start … --trust-capsule` only after inspecting executable assets and making an
+explicit trust decision.

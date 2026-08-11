@@ -142,6 +142,11 @@ entry document and its reviewed same-release assets receive a generated
 default-deny CSP. Browser or operating-system permission prompts never replace
 host grants.
 
+The script policy admits same-origin scripts plus `wasm-unsafe-eval`. This is
+the narrow WebAssembly compilation exception required by reviewed capsule-local
+engines such as SQLite WASM; it does not admit JavaScript `unsafe-eval`, remote
+scripts, workers, or additional origins.
+
 ## Fail-closed requirements
 
 - No protocol endpoint exists before `runnable`.

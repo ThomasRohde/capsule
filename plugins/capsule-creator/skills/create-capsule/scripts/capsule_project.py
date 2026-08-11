@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import uuid
@@ -32,9 +34,11 @@ MEDIA_TYPES = {
     ".js": "text/javascript; charset=utf-8",
     ".json": "application/json",
     ".md": "text/markdown; charset=utf-8",
+    ".mjs": "text/javascript; charset=utf-8",
     ".png": "image/png",
     ".svg": "image/svg+xml",
     ".txt": "text/plain; charset=utf-8",
+    ".wasm": "application/wasm",
     ".webp": "image/webp",
 }
 REQUIRED_PROJECT_FILES = (
@@ -151,28 +155,44 @@ def _resolve_within(root: Path, relative: str) -> Path:
     return candidate
 
 
-def _repo_root(explicit: Path | None = None) -> Path:
-    candidates: list[Path] = []
+def _resource_root(explicit: Path | None = None) -> Path:
+    """Resolve the plugin-owned format/runtime bundle.
+
+    A repository root remains a development-only override so maintainers can
+    compare the bundled snapshot with live sources. Normal plugin use always
+    resolves beside this script and therefore works after the plugin directory
+    is copied away from its source repository.
+    """
+
+    candidates = []
     if explicit is not None:
         candidates.append(explicit.expanduser().resolve())
-    candidates.extend([Path.cwd().resolve(), *Path.cwd().resolve().parents])
-    script = Path(__file__).resolve()
-    candidates.extend([script.parent, *script.parents])
-    seen: set[Path] = set()
+    candidates.append(Path(__file__).resolve().parent.parent / "assets")
     for candidate in candidates:
-        if candidate in seen:
-            continue
-        seen.add(candidate)
         if (
             (candidate / "format" / "capsule-v0.2.sql").is_file()
+            and (candidate / "format" / "capsule-v0.2.conformance.json").is_file()
+            and (candidate / "format" / "capsule_conformance.py").is_file()
             and (candidate / "runtime" / "capsule_host.py").is_file()
             and (candidate / "runtime" / "browser" / "capsule-client.js").is_file()
-            and (candidate / "tools" / "capsule.py").is_file()
         ):
             return candidate
-    raise ProjectError(
-        "Could not locate the SQLite Capsule repository root; pass --repo-root"
-    )
+    raise ProjectError("The plugin's bundled SQLite Capsule resources are incomplete")
+
+
+def _load_capsule_host(resources: Path):
+    host_path = resources / "runtime" / "capsule_host.py"
+    module_name = f"capsule_creator_host_{_sha256(str(host_path).encode())[:12]}"
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+    spec = importlib.util.spec_from_file_location(module_name, host_path)
+    if spec is None or spec.loader is None:
+        raise ProjectError(f"Could not load bundled host: {host_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _project_config(project: Path) -> dict[str, Any]:
@@ -219,22 +239,22 @@ def _starter_index(title: str) -> str:
   <link rel="stylesheet" href="/app/styles.css">
 </head>
 <body>
-  <main class="shell">
-    <header>
-      <p class="eyebrow">SQLite Capsule</p>
-      <h1>{title}</h1>
-      <p id="summary">Loading the embedded application…</p>
-    </header>
-    <form id="new-item-form">
-      <label for="new-item">Add an item</label>
-      <div class="form-row">
-        <input id="new-item" name="title" maxlength="120" required autocomplete="off">
-        <button type="submit">Add</button>
-      </div>
-    </form>
-    <p id="status" role="status" aria-live="polite"></p>
-    <ul id="items" aria-label="Items"></ul>
-  </main>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <div class="app-shell">
+    <header class="titlebar"><span class="app-mark" aria-hidden="true">◉</span><strong>{title}</strong><span class="offline">Local only</span></header>
+    <div class="workspace">
+      <aside class="navigation" aria-label="Application pages"><p>Application</p><button class="nav-item is-active" type="button" aria-current="page"><span aria-hidden="true">☷</span>Items</button><div class="boundary"><strong>SQLite Capsule</strong><small>Offline · named interfaces</small></div></aside>
+      <main id="content" class="content-surface" tabindex="-1">
+        <header class="page-heading"><p class="eyebrow">SQLite Capsule</p><h1>{title}</h1><p id="summary">Loading the embedded application…</p></header>
+        <form id="new-item-form" class="card">
+          <label for="new-item">Add an item</label>
+          <div class="form-row"><input id="new-item" name="title" maxlength="120" required autocomplete="off"><button type="submit">Add</button></div>
+        </form>
+        <p id="status" role="status" aria-live="polite"></p>
+        <ul id="items" aria-label="Items"></ul>
+      </main>
+    </div>
+  </div>
   <script src="/app/capsule-client.js"></script>
   <script src="/app/app.js"></script>
 </body>
@@ -242,31 +262,29 @@ def _starter_index(title: str) -> str:
 
 
 STARTER_STYLES = """:root {
-  color-scheme: light dark;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  background: #10151f;
-  color: #eef2ff;
+  color-scheme: dark;
+  font-family: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --smoke: #0d0d0d; --layer: #202020; --card: rgba(255,255,255,.0512); --card-hover: rgba(255,255,255,.0837);
+  --stroke: rgba(255,255,255,.0698); --text: #fff; --secondary: rgba(255,255,255,.786); --tertiary: rgba(255,255,255,.5442);
+  --accent: #60cdff; --accent-hover: #4cc2ff; --accent-text: #000; --control: rgba(255,255,255,.0605); --ok: #6ccb5f;
 }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #26334b, #10151f 55%); }
-.shell { width: min(720px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
-header { margin-bottom: 32px; }
-.eyebrow { color: #9db8ff; font-size: .78rem; font-weight: 750; letter-spacing: .16em; text-transform: uppercase; }
-h1 { margin: 8px 0; font-size: clamp(2.2rem, 7vw, 4.6rem); line-height: .98; }
-#summary { max-width: 58ch; color: #bdc9df; line-height: 1.6; }
-form, li { border: 1px solid #3a4860; background: #182131; border-radius: 18px; }
-form { padding: 20px; }
-label { display: block; margin-bottom: 10px; font-weight: 700; }
-.form-row { display: flex; gap: 10px; }
-input, button { font: inherit; border-radius: 10px; }
-input { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid #53627a; background: #0f1622; color: inherit; }
-button { padding: 11px 16px; border: 0; background: #90adff; color: #0a1020; font-weight: 800; cursor: pointer; }
-#status { min-height: 24px; color: #f0c674; }
-ul { display: grid; gap: 10px; padding: 0; list-style: none; }
-li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; }
-li.done span { color: #8491a7; text-decoration: line-through; }
-li button { background: #2b3750; color: #dce6ff; }
-@media (max-width: 520px) { .shell { padding: 36px 0; } .form-row { align-items: stretch; flex-direction: column; } }
+body { margin: 0; min-height: 100vh; color: var(--text); background: var(--smoke); font-size: 14px; }
+button, input { font: inherit; } button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.skip-link { position: fixed; z-index: 10; top: 6px; left: 12px; padding: 7px 12px; border-radius: 4px; color: var(--accent-text); background: var(--accent); transform: translateY(-150%); }.skip-link:focus { transform: translateY(0); }
+.app-shell { min-height: 100vh; background: radial-gradient(120% 90% at 82% -20%, rgba(96,205,255,.055), transparent 60%), var(--layer); }
+.titlebar { display: flex; height: 48px; align-items: center; gap: 9px; padding: 0 16px; font-size: 12px; }.app-mark { color: var(--accent); }.offline { margin-left: auto; padding: 4px 9px; border: 1px solid var(--stroke); border-radius: 12px; color: var(--secondary); background: var(--card); font-size: 10px; }
+.workspace { display: grid; min-height: calc(100vh - 48px); grid-template-columns: 210px minmax(0,1fr); }
+.navigation { display: flex; flex-direction: column; padding: 14px 8px; }.navigation > p { margin: 0 11px 9px; color: var(--tertiary); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.nav-item { position: relative; display: flex; min-height: 38px; align-items: center; gap: 10px; padding: 6px 12px; border: 0; border-radius: 4px; color: var(--text); background: var(--card-hover); text-align: left; }.nav-item::before { position: absolute; top: 9px; bottom: 9px; left: 0; width: 3px; border-radius: 2px; background: var(--accent); content: ""; }
+.boundary { margin-top: auto; padding: 11px 12px; border: 1px solid var(--stroke); border-radius: 4px; background: var(--card); }.boundary strong,.boundary small { display: block; }.boundary strong { font-size: 11px; }.boundary small { margin-top: 3px; color: var(--tertiary); font-size: 9px; }
+.content-surface { min-width: 0; padding: 28px 36px 40px; border-top: 1px solid var(--stroke); border-left: 1px solid var(--stroke); border-top-left-radius: 8px; background: rgba(255,255,255,.0326); }
+.page-heading { margin-bottom: 22px; }.eyebrow { margin: 0 0 6px; color: var(--accent); font-size: 11px; font-weight: 650; letter-spacing: .055em; text-transform: uppercase; }h1 { margin: 0 0 7px; font: 600 28px/1.2 "Segoe UI Variable Display","Segoe UI",sans-serif; }#summary { max-width: 68ch; margin: 0; color: var(--tertiary); line-height: 1.45; }
+.card, li { border: 1px solid var(--stroke); border-radius: 4px; background: var(--card); }.card { padding: 15px 16px; }label { display: block; margin-bottom: 9px; font-weight: 600; }.form-row { display: flex; gap: 8px; }
+input { min-width: 0; flex: 1; min-height: 34px; padding: 6px 10px; border: 1px solid var(--stroke); border-radius: 4px; color: var(--text); background: var(--control); }button { min-height: 34px; padding: 6px 14px; border: 1px solid var(--stroke); border-radius: 4px; color: var(--accent-text); background: var(--accent); font-weight: 600; cursor: pointer; }button:hover { background: var(--accent-hover); }
+#status { min-height: 20px; margin: 10px 0; color: var(--secondary); }ul { display: flex; margin: 0; padding: 0; flex-direction: column; gap: 4px; list-style: none; }li { display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 12px; }li:hover { background: var(--card-hover); }li.done span { color: var(--tertiary); text-decoration: line-through; }li button { color: var(--secondary); background: var(--control); font-size: 12px; }
+@media (max-width: 700px) { .workspace { display: flex; flex-direction: column; }.navigation { flex-direction: row; padding: 6px 8px; border-top: 1px solid var(--stroke); }.navigation > p,.boundary { display: none; }.content-surface { padding: 22px 14px 30px; border-left: 0; border-radius: 0; }.form-row { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 """
 
 
@@ -493,9 +511,9 @@ def init_project(
                     "id": "agent-20-inspect",
                     "audience": "agent",
                     "sequence": 20,
-                    "title": "Inspect identity and capabilities",
-                    "body_md": "Confirm the current format identity, requested capabilities, offline design, asset inventory, named endpoints, checks, and embedded documentation.",
-                    "command_id": "inspect.repo",
+                    "title": "Extract the hash-checked standalone host",
+                    "body_md": "Use Python's standard library to extract the embedded host to a new cache path. Review that executable before running it; extraction does not authenticate the publisher.",
+                    "command_id": "extract.embedded",
                 },
                 {
                     "id": "agent-30-verify",
@@ -503,15 +521,15 @@ def init_project(
                     "sequence": 30,
                     "title": "Verify before execution",
                     "body_md": "Run the complete verifier and stop if any structural, integrity, endpoint, asset, or application check fails.",
-                    "command_id": "verify.repo",
+                    "command_id": "verify.embedded",
                 },
                 {
                     "id": "agent-40-start",
                     "audience": "agent",
                     "sequence": 40,
                     "title": "Run with the Python loopback host",
-                    "body_md": "After a deliberate trust decision, start the generic repository host. It binds to 127.0.0.1 and exposes only declared named endpoints.",
-                    "command_id": "start.repo",
+                    "body_md": "After a deliberate trust decision, start the extracted generic host. It binds to 127.0.0.1 and exposes only declared named endpoints.",
+                    "command_id": "start.embedded",
                 },
                 {
                     "id": "agent-50-confirm",
@@ -519,7 +537,7 @@ def init_project(
                     "sequence": 50,
                     "title": "Confirm the matching healthy application",
                     "body_md": f"Status must report capsule {capsule_id} and a healthy capsule-http/0.2 loopback URL.",
-                    "command_id": "status.repo",
+                    "command_id": "status.embedded",
                 },
                 {
                     "id": "agent-60-stop",
@@ -527,7 +545,7 @@ def init_project(
                     "sequence": 60,
                     "title": "Stop only the matching host",
                     "body_md": "Use the recorded capsule-specific stop command instead of killing arbitrary Python processes.",
-                    "command_id": "stop.repo",
+                    "command_id": "stop.embedded",
                 },
             ],
         )
@@ -573,56 +591,6 @@ def _generic_commands() -> list[dict[str, Any]]:
     )
     return [
         {
-            "id": "inspect.repo",
-            "purpose": "Inspect this capsule with the repository host.",
-            "platform": "any",
-            "cwd": "{repo}",
-            "command_template": '{python} tools/capsule.py inspect "{capsule}"',
-            "argv_json": ["{python}", "tools/capsule.py", "inspect", "{capsule}"],
-            "risk_class": "read-only",
-            "success_condition": "JSON reports one current capsule manifest and bounded inventories.",
-        },
-        {
-            "id": "verify.repo",
-            "purpose": "Verify format, integrity, assets, endpoints, and application checks.",
-            "platform": "any",
-            "cwd": "{repo}",
-            "command_template": '{python} tools/capsule.py verify "{capsule}"',
-            "argv_json": ["{python}", "tools/capsule.py", "verify", "{capsule}"],
-            "risk_class": "read-only",
-            "success_condition": "The command exits zero and prints ok true.",
-        },
-        {
-            "id": "start.repo",
-            "purpose": "Launch this capsule with the Python loopback host after explicit trust.",
-            "platform": "any",
-            "cwd": "{repo}",
-            "command_template": '{python} tools/capsule.py start "{capsule}" --trust-capsule',
-            "argv_json": ["{python}", "tools/capsule.py", "start", "{capsule}", "--trust-capsule"],
-            "risk_class": "local-execute",
-            "success_condition": "A healthy http://127.0.0.1 URL is reported.",
-        },
-        {
-            "id": "status.repo",
-            "purpose": "Confirm the matching detached loopback host.",
-            "platform": "any",
-            "cwd": "{repo}",
-            "command_template": '{python} tools/capsule.py status "{capsule}"',
-            "argv_json": ["{python}", "tools/capsule.py", "status", "{capsule}"],
-            "risk_class": "read-only",
-            "success_condition": "Status reports running true and the expected capsule identity.",
-        },
-        {
-            "id": "stop.repo",
-            "purpose": "Stop the matching detached loopback host.",
-            "platform": "any",
-            "cwd": "{repo}",
-            "command_template": '{python} tools/capsule.py stop "{capsule}"',
-            "argv_json": ["{python}", "tools/capsule.py", "stop", "{capsule}"],
-            "risk_class": "local-execute",
-            "success_condition": "Status reports that the matching host is no longer running.",
-        },
-        {
             "id": "extract.embedded",
             "purpose": "Integrity-check and exclusively extract the embedded Python host.",
             "platform": "any",
@@ -631,6 +599,26 @@ def _generic_commands() -> list[dict[str, Any]]:
             "argv_json": ["{python}", "-c", extraction, "{capsule}", "{cache}"],
             "risk_class": "write",
             "success_condition": "A new hash-checked capsule_host.py is written without replacement.",
+        },
+        {
+            "id": "inspect.embedded",
+            "purpose": "Inspect identity and bounded inventories with the reviewed extracted host.",
+            "platform": "any",
+            "cwd": ".",
+            "command_template": '{python} "{cache}/capsule_host.py" inspect "{capsule}"',
+            "argv_json": ["{python}", "{cache}/capsule_host.py", "inspect", "{capsule}"],
+            "risk_class": "read-only",
+            "success_condition": "JSON reports one current manifest and bounded inventories.",
+        },
+        {
+            "id": "instructions.embedded",
+            "purpose": "Read the capsule-owned START_HERE runbook without repository access.",
+            "platform": "any",
+            "cwd": ".",
+            "command_template": '{python} "{cache}/capsule_host.py" instructions "{capsule}"',
+            "argv_json": ["{python}", "{cache}/capsule_host.py", "instructions", "{capsule}"],
+            "risk_class": "read-only",
+            "success_condition": "The capsule identity, runbook, commands, prompts, and documents are printed.",
         },
         {
             "id": "verify.embedded",
@@ -702,14 +690,44 @@ def _seed_domain(connection: sqlite3.Connection, project: Path) -> int:
     seed = _load_json(project / "source" / "data" / "seed.json")
     if not isinstance(seed, dict):
         raise ProjectError("source/data/seed.json must map table names to row arrays")
-    total = 0
-    for table in sorted(seed):
+    for table, rows in seed.items():
         _quote_identifier(table)
         if table.startswith("capsule_"):
             raise ProjectError("Seed data must not target platform tables")
-        rows = seed[table]
         if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
             raise ProjectError(f"Seed table {table!r} must contain an array of row objects")
+
+    # Deterministically seed referenced parents before children. Cycles still
+    # require DEFERRABLE foreign keys, and self-references retain array order.
+    remaining = {
+        table: {
+            str(row[2])
+            for row in connection.execute(
+                f"PRAGMA foreign_key_list({_quote_identifier(table)})"
+            ).fetchall()
+            if str(row[2]) in seed and str(row[2]) != table
+        }
+        for table in seed
+    }
+    table_order: list[str] = []
+    emitted: set[str] = set()
+    while remaining:
+        ready = sorted(
+            table for table, dependencies in remaining.items() if dependencies <= emitted
+        )
+        if not ready:
+            # A cross-table cycle can succeed only when its foreign keys are
+            # deferred. Preserve deterministic ordering and let SQLite enforce
+            # that contract at commit.
+            ready = [min(remaining)]
+        for table in ready:
+            table_order.append(table)
+            emitted.add(table)
+            del remaining[table]
+
+    total = 0
+    for table in table_order:
+        rows = seed[table]
         for row in rows:
             prepared = {
                 key: _json_dump(value) if isinstance(value, (dict, list)) else value
@@ -723,7 +741,7 @@ def _seed_domain(connection: sqlite3.Connection, project: Path) -> int:
 def _seed_platform(
     connection: sqlite3.Connection,
     project: Path,
-    repository: Path,
+    resources: Path,
     config: Mapping[str, Any],
 ) -> dict[str, int]:
     manifest = {
@@ -747,7 +765,7 @@ def _seed_platform(
     asset_paths = sorted(path for path in app_root.rglob("*") if path.is_file())
     reserved = app_root / "capsule-client.js"
     if reserved.is_file():
-        raise ProjectError("source/app/capsule-client.js is reserved for the repository client")
+        raise ProjectError("source/app/capsule-client.js is reserved for the bundled client")
     asset_specs = [
         (f"app/{path.relative_to(app_root).as_posix()}", path, _media_type(path))
         for path in asset_paths
@@ -756,12 +774,12 @@ def _seed_platform(
         [
             (
                 "app/capsule-client.js",
-                repository / "runtime" / "browser" / "capsule-client.js",
+                resources / "runtime" / "browser" / "capsule-client.js",
                 "text/javascript; charset=utf-8",
             ),
             (
                 "bootstrap/capsule_host.py",
-                repository / "runtime" / "capsule_host.py",
+                resources / "runtime" / "capsule_host.py",
                 "text/x-python; charset=utf-8",
             ),
         ]
@@ -776,7 +794,9 @@ def _seed_platform(
                 "media_type": media_type,
                 "content": content,
                 "sha256": _sha256(content),
-                "executable": int(source_path.suffix.lower() in {".html", ".js", ".py"}),
+                "executable": int(
+                    source_path.suffix.lower() in {".html", ".js", ".mjs", ".py", ".wasm"}
+                ),
                 "cache_policy": "no-store",
                 "description": f"Embedded source for {asset_path}.",
             },
@@ -839,13 +859,13 @@ def build_project(
     project: Path,
     output: Path,
     *,
-    repo_root: Path | None = None,
+    resource_root: Path | None = None,
     replace: bool = False,
 ) -> dict[str, Any]:
     project = project.expanduser().resolve()
     output = output.expanduser().resolve()
     config = _project_config(project)
-    repository = _repo_root(repo_root)
+    resources = _resource_root(resource_root)
     if output.exists() and not replace:
         raise ProjectError(f"Refusing to replace existing capsule: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -862,9 +882,11 @@ def build_project(
             connection.execute("PRAGMA journal_mode = DELETE")
             connection.execute("PRAGMA synchronous = FULL")
             connection.execute("PRAGMA foreign_keys = ON")
-            connection.executescript((repository / "format" / "capsule-v0.2.sql").read_text())
+            connection.executescript(
+                (resources / "format" / "capsule-v0.2.sql").read_text(encoding="utf-8")
+            )
             connection.executescript(_domain_sql(project))
-            inventory = _seed_platform(connection, project, repository, config)
+            inventory = _seed_platform(connection, project, resources, config)
             inventory["seed_rows"] = _seed_domain(connection, project)
             connection.commit()
             foreign_keys = connection.execute("PRAGMA foreign_key_check").fetchall()
@@ -874,9 +896,7 @@ def build_project(
         finally:
             connection.close()
 
-        if str(repository) not in sys.path:
-            sys.path.insert(0, str(repository))
-        from runtime.capsule_host import CapsuleDatabase
+        CapsuleDatabase = _load_capsule_host(resources).CapsuleDatabase
 
         with CapsuleDatabase(temporary, read_only=True) as capsule:
             verification = capsule.verify()
@@ -903,7 +923,7 @@ def check_project(
     project: Path,
     output: Path,
     *,
-    repo_root: Path | None = None,
+    resource_root: Path | None = None,
 ) -> dict[str, Any]:
     output = output.expanduser().resolve()
     if not output.is_file():
@@ -911,7 +931,7 @@ def check_project(
     current = _sha256_file(output)
     with tempfile.TemporaryDirectory() as directory:
         expected_path = Path(directory) / output.name
-        expected = build_project(project, expected_path, repo_root=repo_root)
+        expected = build_project(project, expected_path, resource_root=resource_root)
         expected_hash = expected["sha256"]
     return {
         "ok": current == expected_hash,
@@ -920,6 +940,34 @@ def check_project(
         "current_sha256": current,
         "expected_sha256": expected_hash,
     }
+
+
+def run_bundled_host(arguments: Iterable[str], *, resource_root: Path | None = None) -> int:
+    resources = _resource_root(resource_root)
+    host = resources / "runtime" / "capsule_host.py"
+    completed = subprocess.run([sys.executable, str(host), *arguments], check=False)
+    return completed.returncode
+
+
+def run_bundled_conformance(
+    capsule: Path,
+    *,
+    resource_root: Path | None = None,
+) -> int:
+    resources = _resource_root(resource_root)
+    checker = resources / "format" / "capsule_conformance.py"
+    specification = resources / "format" / "capsule-v0.2.conformance.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(checker),
+            str(capsule.expanduser().resolve()),
+            "--spec",
+            str(specification),
+        ],
+        check=False,
+    )
+    return completed.returncode
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -936,19 +984,47 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser = subparsers.add_parser("build", help="Build and verify a capsule project")
     build_parser.add_argument("project", type=Path)
     build_parser.add_argument("output", type=Path)
-    build_parser.add_argument("--repo-root", type=Path)
+    build_parser.add_argument(
+        "--resource-root",
+        type=Path,
+        help="Development override for the plugin's bundled format/runtime resources",
+    )
     build_parser.add_argument("--replace", action="store_true")
 
     check_parser = subparsers.add_parser("check", help="Check generated capsule freshness")
     check_parser.add_argument("project", type=Path)
     check_parser.add_argument("output", type=Path)
-    check_parser.add_argument("--repo-root", type=Path)
+    check_parser.add_argument(
+        "--resource-root",
+        type=Path,
+        help="Development override for the plugin's bundled format/runtime resources",
+    )
+
+    host_parser = subparsers.add_parser(
+        "host",
+        help="Run the bundled inspect, instructions, verify, start, status, or stop host command",
+    )
+    host_parser.add_argument("--resource-root", type=Path)
+    host_parser.add_argument("host_args", nargs=argparse.REMAINDER)
+
+    conformance_parser = subparsers.add_parser(
+        "conformance",
+        help="Check a capsule with the bundled independent conformance specification",
+    )
+    conformance_parser.add_argument("capsule", type=Path)
+    conformance_parser.add_argument("--resource-root", type=Path)
     return parser
 
 
 def main(argv: Iterable[str] | None = None) -> int:
     args = build_parser().parse_args(list(argv) if argv is not None else None)
     try:
+        if args.command == "host":
+            if not args.host_args:
+                raise ProjectError("host requires a bundled host command and its arguments")
+            return run_bundled_host(args.host_args, resource_root=args.resource_root)
+        if args.command == "conformance":
+            return run_bundled_conformance(args.capsule, resource_root=args.resource_root)
         if args.command == "init":
             result = init_project(
                 args.project,
@@ -961,11 +1037,11 @@ def main(argv: Iterable[str] | None = None) -> int:
             result = build_project(
                 args.project,
                 args.output,
-                repo_root=args.repo_root,
+                resource_root=args.resource_root,
                 replace=args.replace,
             )
         elif args.command == "check":
-            result = check_project(args.project, args.output, repo_root=args.repo_root)
+            result = check_project(args.project, args.output, resource_root=args.resource_root)
         else:  # pragma: no cover - argparse prevents this
             raise ProjectError(f"Unknown command: {args.command}")
     except (ProjectError, OSError, sqlite3.DatabaseError, ValueError) as exc:

@@ -82,7 +82,7 @@ const COMPILED_HOST_RELEASE_SEQUENCE: Option<&str> =
 const MAX_SIGSTORE_BUNDLE_BYTES: u64 = 16 * 1024 * 1024;
 const INSPECTION_STACK_BYTES: usize = 8 * 1024 * 1024;
 const RUNTIME_WORKER_STACK_BYTES: usize = 8 * 1024 * 1024;
-const CHILD_CSP: &str = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; child-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; navigate-to 'self'";
+const CHILD_CSP: &str = "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; child-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; navigate-to 'self'";
 const CHILD_PERMISSIONS_POLICY: &str = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), browsing-topics=(), publickey-credentials-get=()";
 
 thread_local! {
@@ -5537,6 +5537,8 @@ mod tests {
         );
         assert_eq!(locked.status(), StatusCode::OK);
         assert_eq!(locked.headers()["Content-Security-Policy"], CHILD_CSP);
+        assert!(CHILD_CSP.contains("script-src 'self' 'wasm-unsafe-eval'"));
+        assert!(!CHILD_CSP.contains("'unsafe-eval'"));
         assert_eq!(
             locked.headers()["Permissions-Policy"],
             CHILD_PERMISSIONS_POLICY
