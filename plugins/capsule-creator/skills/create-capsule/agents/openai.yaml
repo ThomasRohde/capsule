@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Capsule"
+  short_description: "Create verified SQLite Capsule applications"
+  default_prompt: "Use $create-capsule to create a verified offline SQLite Capsule application."

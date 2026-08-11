@@ -23,6 +23,30 @@ python tools/build_example.py --check
 
 The final command rebuilds independently and compares the exact digest. A release capsule with ad hoc runtime edits or a stale embedded host fails that gate.
 
+## Create a new application with the Codex plugin
+
+The repository-local `plugins/capsule-creator` plugin supplies a
+`create-capsule` skill and a deterministic standard-library project tool. It is
+for new application-specific source trees; it does not add product logic to the
+generic host and does not depend on the native Tauri client.
+
+```bash
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
+python tools/capsule.py instructions my-app.capsule.sqlite
+python tools/capsule.py verify my-app.capsule.sqlite
+python tools/capsule.py conformance my-app.capsule.sqlite
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py check my-app my-app.capsule.sqlite
+```
+
+The generated source separates stable identity, domain SQL, seed rows, offline
+browser assets, named endpoints, application checks, prompts, documents, and
+runbooks. The builder embeds the current generic Python host and browser client,
+publishes atomically after full verification, and refuses implicit replacement.
+After reviewing the result and making an explicit trust decision, exercise it
+through `python tools/capsule.py start ... --trust-capsule` and confirm the real
+loopback application and write persistence before distribution.
+
 ## Working runtime artefacts
 
 Named write endpoints deliberately mutate the same capsule file. That working file is authoritative for its own user state. Restarting the host must reproduce the edit.

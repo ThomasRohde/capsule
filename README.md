@@ -30,6 +30,9 @@ a compatible fallback host.
   `view`, `interactive`, and `editable`.
 - Generic inspect, verify, conformance, permissions, unpack, pack, diff, signing,
   and export tools.
+- A repository-local Codex plugin that scaffolds and verifies new capsule
+  applications through the Python loopback runtime without requiring the native
+  desktop client.
 - Diagram Studio 0.3.0 as an offline visual editing example. The generic format
   and hosts contain no Diagram Studio domain logic.
 
@@ -136,6 +139,19 @@ python tools/capsule.py diff capsules/diagram-studio.capsule.sqlite rebuilt.caps
 builds a new database and verifies it before publication; it never replaces an
 existing output implicitly. See [`docs/authoring.md`](docs/authoring.md).
 
+To create a new reviewable capsule application with Codex, invoke the
+repository-local `create-capsule` skill from
+[`plugins/capsule-creator`](plugins/capsule-creator). Its standard-library
+scaffolder creates application-specific source, builds against the current
+generic format and Python runtime, and checks byte freshness. The authoring and
+launch path does not invoke the Tauri client:
+
+```bash
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
+python tools/capsule.py verify my-app.capsule.sqlite
+```
+
 ## Current limitations
 
 - Internal hashes prove integrity, not publisher authenticity. Treat external
@@ -159,6 +175,7 @@ format/                       Current generic schema and conformance records
 runtime/                      Python and browser host implementations
 native/                       Independent Rust/Tauri/Wry Windows host
 tools/                        Generic CLI, build, signing, and export tools
+plugins/capsule-creator/      Codex plugin for creating capsule applications
 examples/diagram-studio/      Example-specific reviewable source
 capsules/                     Generated distributable capsule
 exports/                      Generated self-contained HTML derivatives
