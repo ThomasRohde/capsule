@@ -248,6 +248,14 @@ try {
   );
 
   await parentPage.locator("button[data-page='capabilities']").click();
+  const capabilityViewport = await parentPage.locator(".content-surface").evaluate((surface) => ({
+    clientHeight: surface.clientHeight,
+    scrollHeight: surface.scrollHeight,
+  }));
+  assert.ok(
+    capabilityViewport.scrollHeight <= capabilityViewport.clientHeight + 1,
+    `capabilities page unexpectedly requires vertical scrolling: ${JSON.stringify(capabilityViewport)}`,
+  );
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
   await rawPage.waitForFunction(() => document.title === "Diagram Studio — SQLite Capsule");
@@ -296,6 +304,7 @@ try {
     sourceCapsuleSha256: sourceHashBefore,
     hiddenApplication,
     trustedHost,
+    capabilityViewport,
     visibleApplication,
     rawViewport,
     closeRequestedThrough: applicationTitle,

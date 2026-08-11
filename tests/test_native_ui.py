@@ -144,6 +144,12 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("core:window:allow-close", capability["permissions"])
         self.assertIn("core:window:allow-start-dragging", capability["permissions"])
         window = json.loads(TAURI_CONFIG.read_text(encoding="utf-8"))["app"]["windows"][0]
+        self.assertGreaterEqual(
+            window["height"],
+            900,
+            "the default trust-review window should fit the complete capabilities prompt",
+        )
+        self.assertLessEqual(window["minHeight"], window["height"])
         self.assertFalse(window["decorations"])
         self.assertTrue(window["shadow"])
         native_shell = NATIVE_SHELL.read_text(encoding="utf-8")
