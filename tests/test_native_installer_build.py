@@ -25,6 +25,9 @@ class NativeInstallerBuildTests(unittest.TestCase):
         self.assertIsNotNone(other)
         self.assertNotEqual(other.group(1), MODULE.PINNED_TAURI_CLI_VERSION)
 
+    def test_default_build_is_nsis_only(self) -> None:
+        self.assertEqual(MODULE.DEFAULT_BUNDLES, "nsis")
+
     def test_cleanup_removes_only_generated_installer_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "bundle"

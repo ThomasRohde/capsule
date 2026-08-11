@@ -133,7 +133,7 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn(".visible(false)", native_shell)
         self.assertIn(".build(window)", native_shell)
         self.assertNotIn(".build_as_child(window)", native_shell)
-        self.assertIn("focus_main_window(&app_for_windows)", native_shell)
+        self.assertIn("focus_main_window(app)", native_shell)
         self.assertIn("handle_close_request(&app_for_capsule_close, api)", native_shell)
         self.assertIn("Ok(()) => app.exit(0)", native_shell)
         self.assertIn("schedule_forwarded_launch(app, args, cwd)", native_shell)

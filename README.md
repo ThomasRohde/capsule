@@ -75,15 +75,21 @@ Review the host-owned identity and capabilities before choosing **Allow once**.
 The first write creates a verified backup outside the capsule directory.
 Installers are generated build outputs and are not committed. See
 [`native/README.md`](native/README.md) for build, test, and packaging commands.
-Build the pinned Tauri CLI, MSI, and NSIS outputs and export them to stable
-local names with one repository-owned command:
+To produce a signed application copy whose exact release can receive a durable
+capability decision, configure the protected signing environment and run
+`python tools/sign_release.py`. After choosing **Always for this release** once,
+the unchanged valid signed release opens directly on later launches; see
+[Automated release signing](docs/authoring.md#automated-release-signing).
+Build the pinned Tauri CLI and NSIS setup executable with one repository-owned
+command:
 
 ```powershell
 python native\tools\build_installers.py
 ```
 
-This writes `capsules\sqlite-capsule-host-setup.exe` and
-`capsules\sqlite-capsule-host.msi`; both paths remain ignored build outputs.
+This writes `capsules\sqlite-capsule-host-setup.exe` as an ignored build output.
+MSI packaging is skipped by default; request it explicitly with
+`python native\tools\build_installers.py --bundles msi`.
 The wrapper accepts only the repository-pinned Tauri CLI version. It reuses an
 exact matching installation or bootstraps it into ignored `native\.tools` on
 the first run, which requires Cargo registry access.

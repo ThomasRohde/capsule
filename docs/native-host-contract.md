@@ -52,6 +52,13 @@ assets or create a child-protocol session. Metadata UI receives a bounded copy
 of identity fields, never asset bytes or endpoint SQL. Unknown or unsupported
 format versions remain inspectable only when that can be done safely.
 
+After verification, a complete stored `always` decision for the exact signed
+release moves directly from capability evaluation to `runnable`: the host
+activates the bridge and shows the application window without repeating the
+first-open prompt. A changed capsule/application identity, digest, signing key,
+permission request, missing grant, deny, revocation, or invalid signature stays
+locked and cannot take this path.
+
 Every selected or dropped replacement path first deactivates the prior runtime.
 A drop containing anything other than exactly one path becomes stored
 `drop-rejected` host state, clears the prior inspection, and navigates the raw

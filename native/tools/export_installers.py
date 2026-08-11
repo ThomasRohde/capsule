@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export Windows host installers to the repository's capsules directory.
+"""Export selected Windows host installers to the capsules directory.
 
 Tauri owns the versioned files below its target bundle tree. This script keeps
 that internal layout out of the user-facing workflow by copying exactly one
@@ -50,6 +50,7 @@ INSTALLERS = (
         output_name="sqlite-capsule-host.msi",
     ),
 )
+DEFAULT_BUNDLES = ("nsis",)
 
 
 class ExportError(ValueError):
@@ -67,10 +68,21 @@ def require_directory(path: Path, label: str) -> None:
         raise ExportError(f"{label} must be a regular non-symlink directory: {path}")
 
 
-def discover_installers(bundle_root: Path) -> list[tuple[InstallerSpec, Path]]:
+def select_installers(bundles: tuple[str, ...]) -> tuple[InstallerSpec, ...]:
+    requested = set(bundles)
+    supported = {spec.directory for spec in INSTALLERS}
+    unknown = requested - supported
+    if unknown:
+        raise ExportError(f"unsupported installer bundle: {sorted(unknown)[0]}")
+    return tuple(spec for spec in INSTALLERS if spec.directory in requested)
+
+
+def discover_installers(
+    bundle_root: Path, bundles: tuple[str, ...] = DEFAULT_BUNDLES
+) -> list[tuple[InstallerSpec, Path]]:
     require_directory(bundle_root, "bundle root")
     discovered: list[tuple[InstallerSpec, Path]] = []
-    for spec in INSTALLERS:
+    for spec in select_installers(bundles):
         source_directory = bundle_root / spec.directory
         require_directory(source_directory, f"{spec.kind} bundle directory")
         candidates = sorted(
@@ -118,8 +130,12 @@ def atomic_copy(source: Path, destination: Path) -> None:
             Path(temporary_name).unlink(missing_ok=True)
 
 
-def export_installers(bundle_root: Path, output_directory: Path) -> list[dict[str, object]]:
-    discovered = discover_installers(bundle_root)
+def export_installers(
+    bundle_root: Path,
+    output_directory: Path,
+    bundles: tuple[str, ...] = DEFAULT_BUNDLES,
+) -> list[dict[str, object]]:
+    discovered = discover_installers(bundle_root, bundles)
     output_directory.mkdir(parents=True, exist_ok=True)
     require_directory(output_directory, "output directory")
 
@@ -149,14 +165,28 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle-root", type=Path, default=DEFAULT_BUNDLE_ROOT)
     parser.add_argument("--output-directory", type=Path, default=DEFAULT_OUTPUT_DIRECTORY)
+    parser.add_argument(
+        "--bundles",
+        default=",".join(DEFAULT_BUNDLES),
+        help="comma-separated bundle types to export (default: nsis)",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    bundles = tuple(part.strip() for part in args.bundles.split(",") if part.strip())
+    if not bundles:
+        print(
+            json.dumps({"ok": False, "error": "at least one bundle is required"}),
+            file=sys.stderr,
+        )
+        return 2
     try:
         exported = export_installers(
-            args.bundle_root.resolve(strict=True), args.output_directory.resolve()
+            args.bundle_root.resolve(strict=True),
+            args.output_directory.resolve(),
+            bundles,
         )
         print(
             json.dumps(

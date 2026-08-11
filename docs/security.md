@@ -317,7 +317,11 @@ a separate layer; a declaration or OS prompt is not a silent host grant.
 The host-owned first-open UI explains every verified request and offers
 allow-once, always for this signed application digest and capsule, deny, and
 cancel. Allow-once is not persisted. Always is unavailable without a currently
-valid signature and stores allow/deny for every request. Deny is persisted.
+valid signature and stores allow/deny for every request. A later launch of the
+same valid signed application digest and complete grant set opens the verified
+runtime directly; it does not repeat the first-open prompt. A changed identity,
+digest, key, permission request, or missing grant remains locked and prompts or
+denies. Deny is persisted.
 Unsigned local trust uses an exact-file exception and never resembles a trusted
 publisher. The protected store lives outside capsules with owner-only
 permissions, verified backup/reset behavior, redacted export, and an audit log.

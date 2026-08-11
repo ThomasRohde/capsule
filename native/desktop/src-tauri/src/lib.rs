@@ -1220,8 +1220,35 @@ impl HostState {
                 return;
             }
         };
-        self.report = report_for("first-open", &inspection, decision);
+        let executable_allowed = decision.executable_allowed;
+        if executable_allowed {
+            let activation = self
+                .bridge
+                .lock()
+                .map_err(|_| "runtime bridge is unavailable".to_owned())
+                .and_then(|mut bridge| bridge.activate(&inspection, &decision));
+            if let Err(error) = activation {
+                let mut report = report_for("runtime-rejected", &inspection, decision);
+                report.recovery = recovery;
+                report.error = Some(format!("verified runtime activation: {error}"));
+                self.report = report;
+                self.inspection = Some(inspection);
+                return;
+            }
+        }
+        self.report = report_for(
+            if executable_allowed {
+                "remembered-authorized"
+            } else {
+                "first-open"
+            },
+            &inspection,
+            decision,
+        );
         self.report.recovery = recovery;
+        if let Some(capsule) = self.report.capsule.as_mut() {
+            capsule.assets_released = executable_allowed;
+        }
         self.inspection = Some(inspection);
     }
 
@@ -1582,8 +1609,9 @@ fn reject_host_file_delivery_state(
 }
 
 fn publish_host_report(app: &AppHandle, report: &StartupReport) {
-    if let Err(error) = navigate_sandbox(app, None) {
-        eprintln!("failed to lock raw renderer for a new source: {error}");
+    let entry_asset = released_entry_asset(report);
+    if let Err(error) = navigate_sandbox(app, entry_asset.as_deref()) {
+        eprintln!("failed to apply raw renderer launch state: {error}");
     }
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.emit("host-report", report);
@@ -3661,6 +3689,14 @@ fn report_for(
     }
 }
 
+fn released_entry_asset(report: &StartupReport) -> Option<String> {
+    report
+        .capsule
+        .as_ref()
+        .filter(|capsule| capsule.assets_released && capsule.decision.executable_allowed)
+        .map(|capsule| capsule.identity.entry_asset.clone())
+}
+
 fn lower_hex(bytes: &[u8]) -> String {
     const HEX: &[u8; 16] = b"0123456789abcdef";
     let mut output = String::with_capacity(bytes.len() * 2);
@@ -3725,38 +3761,43 @@ fn install_sandbox_webview(
 }
 
 fn navigate_sandbox(app: &AppHandle, entry_asset: Option<&str>) -> Result<(), String> {
-    let target = entry_asset.map(sandbox_navigation_url);
-    let application_authorized = target.is_some();
+    let entry_asset = entry_asset.map(str::to_owned);
     let app_for_windows = app.clone();
     app.run_on_main_thread(move || {
-        SANDBOX_WEBVIEW.with(|slot| {
-            let borrowed = slot.borrow();
-            let Some(webview) = borrowed.as_ref() else {
-                return;
-            };
-            let locked = sandbox_navigation_url("__host/locked");
-            let result = webview.load_url(target.as_deref().unwrap_or(&locked));
-            if let Err(error) = result {
-                eprintln!("failed to navigate raw sandbox webview: {error}");
-                return;
-            }
-
-            if application_authorized {
-                if let Some(window) = app_for_windows.get_window(CAPSULE_WINDOW_LABEL) {
-                    let _ = window.show();
-                    let _ = window.unminimize();
-                    let _ = window.maximize();
-                    let _ = window.set_focus();
-                }
-            } else {
-                if let Some(window) = app_for_windows.get_window(CAPSULE_WINDOW_LABEL) {
-                    let _ = window.hide();
-                }
-                focus_main_window(&app_for_windows);
-            }
-        });
+        navigate_sandbox_on_main_thread(&app_for_windows, entry_asset.as_deref())
     })
     .map_err(|error| format!("could not schedule raw renderer navigation: {error}"))
+}
+
+fn navigate_sandbox_on_main_thread(app: &AppHandle, entry_asset: Option<&str>) {
+    let target = entry_asset.map(sandbox_navigation_url);
+    let application_authorized = target.is_some();
+    SANDBOX_WEBVIEW.with(|slot| {
+        let borrowed = slot.borrow();
+        let Some(webview) = borrowed.as_ref() else {
+            return;
+        };
+        let locked = sandbox_navigation_url("__host/locked");
+        let result = webview.load_url(target.as_deref().unwrap_or(&locked));
+        if let Err(error) = result {
+            eprintln!("failed to navigate raw sandbox webview: {error}");
+            return;
+        }
+
+        if application_authorized {
+            if let Some(window) = app.get_window(CAPSULE_WINDOW_LABEL) {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.maximize();
+                let _ = window.set_focus();
+            }
+        } else {
+            if let Some(window) = app.get_window(CAPSULE_WINDOW_LABEL) {
+                let _ = window.hide();
+            }
+            focus_main_window(app);
+        }
+    });
 }
 
 fn sandbox_navigation_url(path: &str) -> String {
@@ -3852,12 +3893,14 @@ pub fn run() {
                 app_data.join("capsule-writer-locks"),
                 app_data.join("capsule-backups"),
             )));
-            app.manage(Mutex::new(HostState::from_process(
+            let host_state = HostState::from_process(
                 trust_path,
                 trust_backup_directory,
                 app_data.join("host-updates"),
                 bridge.clone(),
-            )));
+            );
+            let initial_entry_asset = released_entry_asset(&host_state.report);
+            app.manage(Mutex::new(host_state));
             app.manage(UpdateCheckGate(AtomicBool::new(false)));
             app.manage(Mutex::new(HostUpdateFlow::default()));
             let window = app
@@ -3880,10 +3923,13 @@ pub fn run() {
                 // mode remains locked and receives no application assets.
                 let sandbox_window = capsule_window.clone();
                 let sandbox_bridge = bridge.clone();
+                let sandbox_app = app.handle().clone();
                 app.run_on_main_thread(move || {
                     if let Err(error) = install_sandbox_webview(&sandbox_window, sandbox_bridge) {
                         eprintln!("{error}");
+                        return;
                     }
+                    navigate_sandbox_on_main_thread(&sandbox_app, initial_entry_asset.as_deref());
                 })?;
             }
             let app_for_drop = app.handle().clone();
@@ -3952,7 +3998,9 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     use ed25519_dalek::{Signer, SigningKey};
+    use rusqlite::{Connection, params};
     use sha2::{Digest, Sha256};
+    use sqlite_capsule_crypto::{ALGORITHM, PROFILE, application_digest, sign_digest};
     use sqlite_capsule_distribution::{
         RELEASE_PROFILE, ReleaseArtifact, ReleaseManifest, SignedReleaseManifest, key_id,
     };
@@ -4035,6 +4083,53 @@ mod tests {
 
     fn open_store(directory: &TestDirectory) -> TrustStore {
         TrustStore::open(&directory.0.join("state/trust.sqlite")).expect("open trust store")
+    }
+
+    fn signed_example_capsule(directory: &TestDirectory) -> PathBuf {
+        let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+        let capsule = directory.0.join("remembered-release.sqlitecapsule");
+        std::fs::copy(
+            repository.join("capsules/diagram-studio.capsule.sqlite"),
+            &capsule,
+        )
+        .expect("copy example capsule");
+
+        let signing_key = SigningKey::from_bytes(&[0x5a; 32]);
+        let mut connection = Connection::open(&capsule).expect("open signing copy");
+        let transaction = connection.transaction().expect("begin signing transaction");
+        transaction
+            .execute_batch(include_str!(
+                "../../../../format/capsule-signed-app-v0.2.sql"
+            ))
+            .expect("install signed-app extension");
+        transaction
+            .execute(
+                "INSERT INTO capsule_publisher \
+                 (id, profile, publisher_id, publisher_name) VALUES (1, ?1, ?2, ?3)",
+                params![PROFILE, "org.example.desktop", "Desktop Test Publisher"],
+            )
+            .expect("insert publisher");
+        let digest = application_digest(&transaction).expect("application digest");
+        let envelope = sign_digest(&signing_key, digest, "2026-08-11T12:00:00Z")
+            .expect("sign application digest");
+        transaction
+            .execute(
+                "INSERT INTO capsule_signature \
+                 (key_id, algorithm, public_key, application_digest, signature, signed_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    envelope.key_id,
+                    ALGORITHM,
+                    envelope.public_key.as_slice(),
+                    envelope.application_digest.as_slice(),
+                    envelope.signature.as_slice(),
+                    envelope.signed_at,
+                ],
+            )
+            .expect("insert signature");
+        transaction.commit().expect("commit signed capsule");
+        drop(connection);
+        capsule
     }
 
     fn test_lower_hex(bytes: &[u8]) -> String {
@@ -4650,6 +4745,67 @@ mod tests {
                 .unwrap_or_default()
                 .contains("SQLite")
         );
+    }
+
+    #[test]
+    fn remembered_signed_release_reopens_without_another_first_open_decision() {
+        let directory = TestDirectory::new();
+        let capsule = signed_example_capsule(&directory);
+        let inspection =
+            sqlite_capsule_launch::inspect_launch(&capsule).expect("inspect signed capsule");
+        let mut store = open_store(&directory);
+        let persisted = apply_first_open_decision(
+            FirstOpenRequest {
+                action: "always".to_owned(),
+                capabilities: inspection
+                    .evidence
+                    .requested_capabilities
+                    .iter()
+                    .cloned()
+                    .collect(),
+            },
+            &inspection.evidence,
+            &mut store,
+        )
+        .expect("persist exact release decision");
+        assert!(persisted.executable_allowed);
+
+        let bridge = Arc::new(Mutex::new(RuntimeBridge::new(
+            directory.0.join("host/locks"),
+            directory.0.join("host/backups"),
+        )));
+        let mut state = HostState {
+            inspection: None,
+            trust_store: Some(store),
+            trust_backup_directory: directory.0.join("trust-backups"),
+            update_root: directory.0.join("host-updates"),
+            bridge: bridge.clone(),
+            report: StartupReport {
+                stage: "no-capsule".to_owned(),
+                capsule: None,
+                recovery: None,
+                error: None,
+            },
+        };
+
+        state.load_capsule(&capsule);
+
+        assert_eq!(state.report.stage, "remembered-authorized");
+        let report = state.report.capsule.as_ref().expect("capsule report");
+        assert_eq!(
+            report.decision.trust_state,
+            TrustState::LocallyTrustedExactRelease
+        );
+        assert!(report.decision.executable_allowed);
+        assert!(report.assets_released);
+        assert_eq!(
+            released_entry_asset(&state.report).as_deref(),
+            Some(report.identity.entry_asset.as_str())
+        );
+        let bridge = bridge.lock().expect("lock activated bridge");
+        assert!(bridge.runtime.is_some());
+        assert!(bridge.protocol.is_some());
+        assert_eq!(bridge.mode, "writable");
     }
 
     #[test]

@@ -1185,46 +1185,48 @@ mod tests {
             ));
             let nsis_script =
                 native_root.join("target/x86_64-pc-windows-msvc/release/nsis/x64/installer.nsi");
-            if !msi.is_file() || !nsis_installer.is_file() || !nsis_script.is_file() {
+            if !nsis_installer.is_file() || !nsis_script.is_file() {
                 return;
             }
-            assert_eq!(
-                crate::windows::package_version(&msi, InstallerKind::WindowsMsi)
-                    .expect("read bundled MSI ProductVersion"),
-                version
-            );
             assert_eq!(
                 crate::windows::package_version(&nsis_installer, InstallerKind::WindowsNsis)
                     .expect("read bundled NSIS ProductVersion"),
                 version
             );
-            let association = crate::windows::msi_association_metadata(&msi)
-                .expect("inspect bundled MSI association tables");
-            assert_eq!(
-                association.extensions,
-                vec![vec![
-                    "sqlitecapsule".to_owned(),
-                    "Path".to_owned(),
-                    "SQLite Capsule Host.sqlitecapsule".to_owned(),
-                    "ShortcutsFeature".to_owned(),
-                ]]
-            );
-            assert_eq!(
-                association.prog_ids,
-                vec![vec![
-                    "SQLite Capsule Host.sqlitecapsule".to_owned(),
-                    "Self-describing SQLite Capsule application".to_owned(),
-                ]]
-            );
-            assert_eq!(
-                association.verbs,
-                vec![vec![
-                    "sqlitecapsule".to_owned(),
-                    "open".to_owned(),
-                    "Open with SQLite Capsule Host".to_owned(),
-                    "\"%1\"".to_owned(),
-                ]]
-            );
+            if msi.is_file() {
+                assert_eq!(
+                    crate::windows::package_version(&msi, InstallerKind::WindowsMsi)
+                        .expect("read bundled MSI ProductVersion"),
+                    version
+                );
+                let association = crate::windows::msi_association_metadata(&msi)
+                    .expect("inspect bundled MSI association tables");
+                assert_eq!(
+                    association.extensions,
+                    vec![vec![
+                        "sqlitecapsule".to_owned(),
+                        "Path".to_owned(),
+                        "SQLite Capsule Host.sqlitecapsule".to_owned(),
+                        "ShortcutsFeature".to_owned(),
+                    ]]
+                );
+                assert_eq!(
+                    association.prog_ids,
+                    vec![vec![
+                        "SQLite Capsule Host.sqlitecapsule".to_owned(),
+                        "Self-describing SQLite Capsule application".to_owned(),
+                    ]]
+                );
+                assert_eq!(
+                    association.verbs,
+                    vec![vec![
+                        "sqlitecapsule".to_owned(),
+                        "open".to_owned(),
+                        "Open with SQLite Capsule Host".to_owned(),
+                        "\"%1\"".to_owned(),
+                    ]]
+                );
+            }
 
             let nsis = std::fs::read_to_string(nsis_script).expect("read generated NSIS source");
             let registrations = nsis

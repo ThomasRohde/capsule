@@ -75,11 +75,11 @@ jobs:
           npm run test:native
           npm run test:native:raw
 
-      - name: Build and export pinned unsigned installers
+      - name: Build and export pinned unsigned NSIS installer
         run: >-
           python native/tools/build_installers.py
           --target x86_64-pc-windows-msvc
-          --bundles msi,nsis
+          --bundles nsis
 
       - name: Verify emitted installer versions and file associations
         working-directory: native
@@ -113,7 +113,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force release | Out-Null
           Copy-Item capsules/sqlite-capsule-host-setup.exe release/
-          Copy-Item capsules/sqlite-capsule-host.msi release/
           Copy-Item native/release-evidence/windows-x86_64.json release/sqlite-capsule-host-windows-x86_64-evidence.json
           Copy-Item native/sbom.cdx.json release/sqlite-capsule-host-sbom.cdx.json
           Copy-Item native/THIRD_PARTY_LICENSES.md release/THIRD_PARTY_LICENSES.md

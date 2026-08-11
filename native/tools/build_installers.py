@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and export the pinned Windows MSI and NSIS installers.
+"""Build and export the pinned Windows NSIS installer (and optional MSI).
 
 The Tauri CLI is a separate Cargo executable rather than a workspace
 dependency. This wrapper removes reliance on an ambient ``cargo tauri``
@@ -25,7 +25,7 @@ TAURI_CONFIG = NATIVE_ROOT / "desktop" / "src-tauri" / "tauri.conf.json"
 EXPORT_SCRIPT = NATIVE_ROOT / "tools" / "export_installers.py"
 PINNED_TAURI_CLI_VERSION = "2.11.4"
 DEFAULT_TARGET = "x86_64-pc-windows-msvc"
-DEFAULT_BUNDLES = "msi,nsis"
+DEFAULT_BUNDLES = "nsis"
 TOOL_ROOT = NATIVE_ROOT / ".tools" / f"tauri-cli-{PINNED_TAURI_CLI_VERSION}"
 BUNDLE_PATTERNS = {"msi": "*.msi", "nsis": "*-setup.exe"}
 VERSION_PATTERN = re.compile(r"^tauri-cli\s+(\d+\.\d+\.\d+)$")
@@ -172,6 +172,8 @@ def main() -> int:
                     str(EXPORT_SCRIPT),
                     "--bundle-root",
                     str(root),
+                    "--bundles",
+                    ",".join(bundles),
                 ],
                 cwd=REPOSITORY_ROOT,
                 check=True,

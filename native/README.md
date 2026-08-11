@@ -103,22 +103,23 @@ not substitutes for release-specific legal review or signed provenance.
 ## Package the Windows host
 
 Pull requests and main-branch pushes run source and test gates without building
-installers. `.github/workflows/release.yml` builds and qualifies Windows x86-64
-MSI and NSIS bundles only for a manual dry run or a `vMAJOR.MINOR.PATCH` tag.
+installers. `.github/workflows/release.yml` builds and qualifies the Windows
+x86-64 NSIS bundle only for a manual dry run or a `vMAJOR.MINOR.PATCH` tag.
 Manual runs retain workflow artifacts; tag runs also publish GitHub Release
 assets after the repository and binary versions match.
 
 For a local release build, use the repository wrapper from the repository root.
 It pins the Tauri CLI, removes only prior generated installer candidates,
-builds both bundles, and exports stable ignored paths:
+builds NSIS, and exports its stable ignored path:
 
 ```text
 python native/tools/build_installers.py
 ```
 
-The exporter writes `../capsules/sqlite-capsule-host.msi` and
-`../capsules/sqlite-capsule-host-setup.exe`. These generated installers are
-deliberately not committed. An exact matching global `cargo-tauri` is reused;
+The exporter writes `../capsules/sqlite-capsule-host-setup.exe`. MSI packaging
+is opt-in with `python native/tools/build_installers.py --bundles msi` and is
+not part of the default release workflow. Generated installers are deliberately
+not committed. An exact matching global `cargo-tauri` is reused;
 otherwise the first run installs the pinned CLI into ignored `native/.tools`
 and therefore requires Cargo registry access.
 

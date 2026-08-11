@@ -102,6 +102,13 @@ through its allowlisted command:
   exact-file deny otherwise;
 - `cancel` records no trust or capability decision.
 
+On a later launch, a still-valid signature for the same capsule ID,
+application ID, application digest, and public key automatically reuses the
+stored exact-release decision and complete capability grants. The host opens
+the verified runtime and releases the application window without asking for
+the same decision again. Any missing grant or changed identity, digest, key, or
+permission request returns to the locked first-open review.
+
 A changed capsule ID, application ID, signed application digest, public key, or
 permission request does not inherit the previous exact grant. Unsigned local
 trust remains an explicit exact-file exception and is visually distinct from a

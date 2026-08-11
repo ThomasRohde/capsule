@@ -72,6 +72,48 @@ protected CI signer. The only repository seed is public, deterministic, clearly
 labelled test material under `compatibility/signed-app-v0.2/`; it confers no
 identity or trust.
 
+### Automated release signing
+
+`tools/sign_release.py` wraps the native signer with source verification,
+fail-closed output handling, native signature verification, and an independent
+signature inventory. Command-line arguments take precedence over the matching
+environment variables:
+
+| Environment variable | Meaning |
+| --- | --- |
+| `SQLITE_CAPSULE_PUBLISHER_ID` | Required stable publisher identifier |
+| `SQLITE_CAPSULE_PUBLISHER_NAME` | Required publisher display name |
+| `SQLITE_CAPSULE_SIGNING_KEY_FILE` | Preferred path to a mounted 32-byte or 64-hex-digit Ed25519 seed file |
+| `SQLITE_CAPSULE_SIGNING_KEY_HEX` | CI-only alternative containing exactly 64 hexadecimal digits |
+| `SQLITE_CAPSULE_SIGN_SOURCE` | Source capsule; defaults to the canonical Diagram Studio capsule |
+| `SQLITE_CAPSULE_SIGN_OUTPUT` | New output path; defaults under ignored `output/` |
+| `SQLITE_CAPSULE_NATIVE_CLI` | Optional explicit `capsule-native` executable |
+| `SQLITE_CAPSULE_SIGNED_AT` | Optional reproducible exact UTC second; current UTC is used when absent |
+
+Set exactly one key source. A file-backed or CI-mounted secret is preferred
+because ordinary environment variables can be exposed by process inspection,
+crash reporting, or careless logging. When the hex fallback is necessary, the
+wrapper writes it to an exclusive private temporary file, zeroes its decoded
+buffer, removes the file on exit, and ensures the secret variable is not passed to
+child processes. It never prints either key representation.
+
+PowerShell example:
+
+```powershell
+$env:SQLITE_CAPSULE_PUBLISHER_ID = 'com.example'
+$env:SQLITE_CAPSULE_PUBLISHER_NAME = 'Example Publisher'
+$env:SQLITE_CAPSULE_SIGNING_KEY_FILE = 'C:\protected\publisher.seed.hex'
+$env:SQLITE_CAPSULE_SIGN_OUTPUT = 'output\diagram-studio.signed.sqlitecapsule'
+python tools/sign_release.py
+```
+
+For reproducible CI metadata, also set `SQLITE_CAPSULE_SIGNED_AT` to the release
+timestamp in exact `YYYY-MM-DDTHH:MM:SSZ` form. The output path must not already
+exist; the automation intentionally preserves the native signer's no-replacement
+and no-in-place-signing rules. A successful JSON report states
+`signature_valid: true` but keeps publisher trust false because signing and a
+host-local user trust decision are separate operations.
+
 ## Self-contained HTML derivatives
 
 The HTML export contract is independent of the SQLite capsule format. Exporting
