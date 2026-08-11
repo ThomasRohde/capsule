@@ -1,4 +1,4 @@
-![SQLite Capsule](sqlite-capsule-mark-currentcolor.svg)
+![SQLite Capsule](docs/images/brand/sqlite-capsule-mark-currentcolor.svg)
 
 # SQLite Capsule reference implementation
 

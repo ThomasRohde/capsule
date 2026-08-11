@@ -15,6 +15,8 @@ const capsule = process.env.SQLITE_CAPSULE_NATIVE_E2E_CAPSULE
   || path.join(root, "capsules", "diagram-studio.capsule.sqlite");
 const stateRoot = path.join(root, ".tmp", "native-standalone-window-state");
 const evidenceRoot = path.join(root, ".tmp", "native-standalone-window-evidence");
+const hostLightScreenshotPath = path.join(evidenceRoot, "host-shell-light.png");
+const hostDarkScreenshotPath = path.join(evidenceRoot, "host-shell-dark.png");
 const screenshotPath = path.join(evidenceRoot, "application-window.png");
 const applicationTitle = "SQLite Capsule — application";
 
@@ -230,6 +232,7 @@ try {
   await parentPage.locator("#host-state").waitFor({ state: "visible" });
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
   assert.equal(await parentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
+  await parentPage.locator("button[data-page='boundary']").click();
   await parentPage.getByText("Separate application window · hidden until authorised").waitFor();
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
@@ -244,9 +247,20 @@ try {
     () => true,
   );
 
+  await parentPage.locator("button[data-page='capabilities']").click();
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
   await rawPage.waitForFunction(() => document.title === "Diagram Studio — SQLite Capsule");
+
+  await parentPage.locator("button[data-page='boundary']").click();
+  const originalTheme = await parentPage.locator("[data-theme-option][aria-pressed='true']").getAttribute("data-theme-option");
+  await parentPage.locator("button[data-theme-option='light']").click();
+  await parentPage.waitForFunction(() => document.documentElement.dataset.theme === "light");
+  await parentPage.screenshot({ path: hostLightScreenshotPath, animations: "disabled" });
+  await parentPage.locator("button[data-theme-option='dark']").click();
+  await parentPage.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+  await parentPage.screenshot({ path: hostDarkScreenshotPath, animations: "disabled" });
+  await parentPage.locator(`button[data-theme-option='${originalTheme}']`).click();
 
   const visibleApplication = await waitForWindow(
     applicationProcess.pid,
@@ -285,6 +299,8 @@ try {
     visibleApplication,
     rawViewport,
     closeRequestedThrough: applicationTitle,
+    hostLightScreenshot: hostLightScreenshotPath,
+    hostDarkScreenshot: hostDarkScreenshotPath,
     screenshot: screenshotPath,
   }, null, 2)}\n`);
 } catch (error) {

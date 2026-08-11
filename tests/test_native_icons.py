@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ICON_ROOT = ROOT / "native" / "desktop" / "src-tauri" / "icons"
+BRAND_ROOT = ROOT / "docs" / "images" / "brand"
 
 
 def png_dimensions(path: Path) -> tuple[int, int]:
@@ -19,15 +20,17 @@ def png_dimensions(path: Path) -> tuple[int, int]:
 
 class NativeIconTests(unittest.TestCase):
     def test_canonical_svg_variants_preserve_colour_and_cutout_contracts(self) -> None:
-        fixed = (ROOT / "sqlite-capsule-mark.svg").read_text(encoding="utf-8")
-        cutout = (ROOT / "sqlite-capsule-mark-currentcolor.svg").read_text(
+        fixed = (BRAND_ROOT / "sqlite-capsule-mark.svg").read_text(
             encoding="utf-8"
         )
-        verified = (ROOT / "sqlite-capsule-mark-verified.svg").read_text(
+        cutout = (BRAND_ROOT / "sqlite-capsule-mark-currentcolor.svg").read_text(
+            encoding="utf-8"
+        )
+        verified = (BRAND_ROOT / "sqlite-capsule-mark-verified.svg").read_text(
             encoding="utf-8"
         )
         verified_cutout = (
-            ROOT / "sqlite-capsule-mark-verified-currentcolor.svg"
+            BRAND_ROOT / "sqlite-capsule-mark-verified-currentcolor.svg"
         ).read_text(encoding="utf-8")
 
         self.assertIn('fill="#185FA5"', fixed)
@@ -52,13 +55,15 @@ class NativeIconTests(unittest.TestCase):
         host_html = (ROOT / "native/desktop/ui/index.html").read_text(
             encoding="utf-8"
         )
-        self.assertIn('class="host-mark"', host_html)
+        self.assertIn('class="titlebar-mark"', host_html)
         self.assertIn('fill-rule="evenodd"', host_html)
         self.assertIn('fill="currentColor"', host_html)
 
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn(
-            "![SQLite Capsule](sqlite-capsule-mark-currentcolor.svg)", readme
+            "![SQLite Capsule](docs/images/brand/"
+            "sqlite-capsule-mark-currentcolor.svg)",
+            readme,
         )
 
         build_script = (

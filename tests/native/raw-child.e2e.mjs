@@ -391,7 +391,7 @@ try {
   await rawPage.waitForFunction(() => document.title === "Raw child renderer probe");
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
-  await parentPage.locator("#technical-details > summary").click();
+  await parentPage.locator("button[data-page='admin']").click();
   const confirmation = new Promise((resolve, reject) => {
     parentPage.once("dialog", async (dialog) => {
       try {
@@ -410,6 +410,7 @@ try {
   await rawPage.waitForFunction(() => document.title === "Raw child renderer probe");
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
+  await parentPage.locator("button[data-page='capabilities']").click();
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
   assert.match(await parentPage.locator("#verdict").textContent(), /SQLite performed rollback-journal recovery/);
@@ -452,6 +453,7 @@ try {
   checked("python", ["tools/capsule.py", "verify", capsule], root);
 
   assert.equal(existsSync(supportBundlePath), false);
+  await parentPage.locator("button[data-page='admin']").click();
   await parentPage.locator("#support-button").click();
   await waitForPath(supportBundlePath, "redacted support bundle");
   await parentPage.waitForFunction(
@@ -567,6 +569,7 @@ try {
     "Application window · conflict closed · executable assets locked",
   );
   assert.equal(await parentPage.locator("#read-only-button").isEnabled(), true);
+  await parentPage.locator("button[data-page='protection']").click();
   await parentPage.locator("#read-only-button").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent === "Trust decision required · code locked");
   await rawPage.waitForURL(/\/__host\/locked$/, { timeout: 10_000 });
@@ -585,6 +588,7 @@ try {
   assert.equal(await parentPage.locator("#restore-button").isEnabled(), true);
   assert.equal(persistedNodeLabel(capsule, nodeId), externalLabel);
   assert.equal(existsSync(restoredCapsule), false);
+  await parentPage.locator("button[data-page='protection']").click();
   await parentPage.locator("#restore-button").click();
   await waitForPath(restoredCapsule, "verified restore output");
   await parentPage.waitForFunction(() => document.querySelector("#lifecycle-action-status")?.textContent?.includes("Verified copy restored"));

@@ -1,141 +1,250 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
     <title>SQLite Capsule Host — trust review</title>
     <link rel="stylesheet" href="styles.css">
     <script src="app.js" defer></script>
   </head>
   <body>
-    <a class="skip-link" href="#trust-review">Skip to trust review</a>
-    <header class="host-bar" aria-label="Trusted host identity">
-      <div class="host-mark" aria-hidden="true">
-        <svg viewBox="0 0 200 144" focusable="false">
-          <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M60 24h60a60 60 0 010 120H60A60 60 0 0160 24zM75 58v52l45-26zM164 6a34 34 0 100 68 34 34 0 100-68z"/>
-          <circle cx="164" cy="40" r="28" fill="#EF9F27"/>
-          <path d="M153 40l8 8 15-17" fill="none" stroke="#412402" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="host-title">
-        <p class="eyebrow">Trusted desktop host</p>
-        <h1>SQLite Capsule Host</h1>
-      </div>
-      <div class="host-controls">
-        <button type="button" id="open-button">Open capsule…</button>
-        <span class="host-state" id="host-state" role="status" aria-live="polite">Verifying before open</span>
-      </div>
-    </header>
+    <a class="skip-link" href="#page-content">Skip to host controls</a>
 
-    <main id="trust-review" tabindex="-1">
-      <div class="workspace">
-        <section class="panel identity-panel" aria-labelledby="identity-title">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">File and publisher</p>
-              <h2 id="identity-title">What is asking to run?</h2>
-            </div>
+    <div class="app-shell">
+      <header class="titlebar" aria-label="SQLite Capsule Host window" data-tauri-drag-region>
+        <div class="titlebar-identity" data-tauri-drag-region>
+          <svg class="titlebar-mark" viewBox="0 0 200 144" focusable="false" aria-hidden="true">
+            <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M60 24h60a60 60 0 010 120H60A60 60 0 0160 24zM75 58v52l45-26zM164 6a34 34 0 100 68 34 34 0 100-68z"/>
+            <circle cx="164" cy="40" r="28" fill="#EF9F27"/>
+            <path d="M153 40l8 8 15-17" fill="none" stroke="#412402" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span data-tauri-drag-region>SQLite Capsule Host — trust review</span>
+        </div>
+        <div class="caption-controls" aria-label="Window controls">
+          <button type="button" class="caption-button" id="window-minimize" aria-label="Minimize window">
+            <span class="caption-minimize" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="caption-button" id="window-maximize" aria-label="Maximize window">
+            <span class="caption-maximize" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="caption-button caption-close" id="window-close" aria-label="Close window">
+            <span class="caption-close-mark" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="host-layout">
+        <aside class="navigation-rail" aria-label="Host settings">
+          <label class="nav-search">
+            <span class="search-icon" aria-hidden="true"></span>
+            <span class="sr-only">Find a host setting</span>
+            <input id="nav-search" type="search" placeholder="Find a setting" autocomplete="off">
+          </label>
+
+          <nav class="page-navigation" aria-label="Host pages">
+            <button type="button" class="nav-item is-selected" data-page="trust" aria-current="page">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M5.4 8.2l1.8 1.8 3.4-3.8"></path></svg>
+              <span>Trust review</span>
+              <span class="nav-tag" id="trust-nav-tag">Review</span>
+            </button>
+            <button type="button" class="nav-item" data-page="capabilities">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h7"></path></svg>
+              <span>Capabilities</span>
+            </button>
+            <button type="button" class="nav-item" data-page="protection">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"></rect><rect x="5.5" y="5.5" width="5" height="5" rx="0.8"></rect></svg>
+              <span>Data protection</span>
+            </button>
+            <button type="button" class="nav-item" data-page="updates">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M5.4 8.6L8 6l2.6 2.6"></path></svg>
+              <span>Host updates</span>
+              <span class="nav-tag" id="update-nav-tag" hidden>1</span>
+            </button>
+            <button type="button" class="nav-item" data-page="admin">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.6" y="3.6" width="8.8" height="8.8" rx="1" transform="rotate(45 8 8)"></rect></svg>
+              <span>Local trust controls</span>
+            </button>
+            <button type="button" class="nav-item" data-page="boundary">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="1.5"></rect><path d="M2.5 6h11"></path></svg>
+              <span>Application window</span>
+            </button>
+          </nav>
+
+          <div class="rail-status" aria-label="Current host state">
             <span class="badge" id="trust-badge">Checking</span>
+            <span class="host-state" id="host-state" role="status" aria-live="polite">Verifying before open</span>
           </div>
-          <div class="verdict" id="verdict" aria-live="polite" tabindex="-1">
-            <span class="verdict-mark" aria-hidden="true">?</span>
-            <div><strong>Verification in progress</strong><p>No executable assets have been released.</p></div>
-          </div>
-          <dl id="identity-details">
-            <div><dt>Status</dt><dd>Waiting for the trusted host…</dd></div>
-          </dl>
-          <details class="technical" id="technical-details">
-            <summary>Technical identity and signature details</summary>
-            <dl id="crypto-details"></dl>
-            <div class="lifecycle-tools" aria-labelledby="lifecycle-title">
-              <strong id="lifecycle-title">Data protection</strong>
-              <p id="lifecycle-status" role="status" aria-live="polite">Runtime locked. No source write is possible.</p>
-              <div class="lifecycle-actions">
-                <button type="button" id="reopen-button" disabled>Reopen and re-verify</button>
-                <button type="button" id="read-only-button" disabled>Continue read-only</button>
-                <button type="button" id="restore-button" disabled>Restore verified copy…</button>
-              </div>
-              <p id="lifecycle-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+
+          <div class="appearance-control">
+            <span>Appearance</span>
+            <div class="theme-options" role="group" aria-label="Appearance">
+              <button type="button" data-theme-option="light" aria-pressed="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.1"></circle><path d="M8 1.5v1.4M8 13.1v1.4M14.5 8h-1.4M2.9 8H1.5M12.6 3.4l-1 1M4.4 11.6l-1 1M12.6 12.6l-1-1M4.4 4.4l-1-1"></path></svg>
+                <span>Light</span>
+              </button>
+              <button type="button" data-theme-option="dark" aria-pressed="true">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 016.4 2.8a5.6 5.6 0 106.8 6.8z"></path></svg>
+                <span>Dark</span>
+              </button>
+              <button type="button" data-theme-option="system" aria-pressed="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.6" width="12.4" height="8.6" rx="1.2"></rect><path d="M5.8 14h4.4M8 11.2V14"></path></svg>
+                <span>System</span>
+              </button>
             </div>
-            <div class="lifecycle-tools update-tools" aria-labelledby="update-title">
-              <strong id="update-title">Host update health</strong>
-              <p id="update-status" role="status" aria-live="polite">Reading protected host-update state…</p>
-              <div class="lifecycle-actions">
-                <button type="button" id="update-check-button" disabled>Check for host update</button>
+          </div>
+        </aside>
+
+        <main id="page-content" class="content-surface" tabindex="-1">
+          <header class="page-heading">
+            <h1 id="page-title">Trust review</h1>
+            <p id="page-subtitle">Host-owned identity for the file that is asking to run. Nothing executes until you decide.</p>
+          </header>
+
+          <section class="page-panel is-active" data-page-panel="trust" id="trust-review" aria-labelledby="page-title">
+            <div class="verdict" id="verdict" aria-live="polite" tabindex="-1">
+              <span class="verdict-mark" aria-hidden="true">?</span>
+              <div><strong>Verification in progress</strong><p>No executable assets have been released.</p></div>
+            </div>
+
+            <h2 id="identity-title" class="section-title">File and publisher</h2>
+            <dl id="identity-details" class="setting-list">
+              <div><dt>Status</dt><dd>Waiting for the trusted host…</dd></div>
+            </dl>
+
+            <details class="technical" id="technical-details">
+              <summary>
+                <span><strong>Technical identity and signature details</strong><small>Digests, key fingerprint, revocation status</small></span>
+                <span class="chevron" aria-hidden="true"></span>
+              </summary>
+              <dl id="crypto-details" class="technical-list"></dl>
+            </details>
+
+            <div class="page-actions page-actions-end">
+              <p class="action-status" id="open-status" role="status" aria-live="polite"></p>
+              <button type="button" id="open-button">Open capsule…</button>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="capabilities" aria-labelledby="prompt-title" hidden>
+            <div class="section-card">
+              <div class="card-heading">
+                <div>
+                  <h2 id="prompt-title" tabindex="-1">Choose what this release may do</h2>
+                  <p id="prompt-copy">Capabilities come from the verified manifest. Missing or unsupported authority is never inferred.</p>
+                </div>
+                <span class="badge">Host-owned prompt</span>
               </div>
+              <fieldset id="capability-list" aria-describedby="choice-note">
+                <legend class="sr-only">Requested capabilities</legend>
+              </fieldset>
+            </div>
+            <p class="choice-note" id="choice-note">Allow once is memory-only. Always is scoped to this signed application digest and capsule. Deny is saved. Cancel changes nothing.</p>
+            <div class="actions" id="actions">
+              <button type="button" class="primary" data-action="allow_once">Allow once</button>
+              <button type="button" data-action="always" id="always-button">Always for this release</button>
+              <button type="button" data-action="deny">Deny this release</button>
+              <button type="button" class="quiet" data-action="cancel">Cancel</button>
+            </div>
+            <p class="action-status" id="action-status" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="page-panel" data-page-panel="protection" aria-labelledby="lifecycle-title" hidden>
+            <div class="status-card">
+              <span class="status-icon" aria-hidden="true">↻</span>
+              <div>
+                <h2 id="lifecycle-title">Current capsule session</h2>
+                <p id="lifecycle-status" role="status" aria-live="polite">Runtime locked. No source write is possible.</p>
+              </div>
+            </div>
+            <div class="action-list">
+              <div class="action-row">
+                <div><strong>Reopen and re-verify</strong><p>Re-inspects the current path. Application code remains locked.</p></div>
+                <button type="button" id="reopen-button" disabled>Reopen</button>
+              </div>
+              <div class="action-row">
+                <div><strong>Continue read-only</strong><p>Re-inspect and open without source write authority.</p></div>
+                <button type="button" id="read-only-button" disabled>Continue</button>
+              </div>
+              <div class="action-row">
+                <div><strong>Restore verified copy…</strong><p>Choose a new path. Existing files are never replaced.</p></div>
+                <button type="button" id="restore-button" disabled>Restore…</button>
+              </div>
+            </div>
+            <p id="lifecycle-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="page-panel" data-page-panel="updates" aria-labelledby="update-title" hidden>
+            <div class="status-card update-status-card">
+              <span class="status-icon" aria-hidden="true">↑</span>
+              <div>
+                <h2 id="update-title">Host update health</h2>
+                <p id="update-status" role="status" aria-live="polite">Reading protected host-update state…</p>
+              </div>
+              <button type="button" class="primary" id="update-check-button" disabled>Check for host update</button>
+            </div>
+            <div class="section-card update-detail-card">
+              <h2>Release-policy evidence</h2>
+              <p id="update-validation-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
               <div id="update-download-controls" class="update-consent" hidden>
                 <label>
                   <input type="checkbox" id="update-download-consent">
-                  Download the reviewed host package and Sigstore evidence from the compiled update origin. This does not install or close the current capsule.
+                  <span>Download the reviewed host package and Sigstore evidence from the compiled update origin. This does not install or close the current capsule.</span>
                 </label>
-                <div class="lifecycle-actions">
-                  <button type="button" id="update-download-button" disabled>Download reviewed update</button>
-                </div>
+                <button type="button" id="update-download-button" disabled>Download reviewed update</button>
               </div>
               <div id="update-stage-controls" class="update-consent" hidden>
                 <label>
                   <input type="checkbox" id="update-stage-consent">
-                  I want to prepare this verified host update for installation. Any active capsule session will close, and writable capsule state must have a verified recovery point first.
+                  <span>I want to prepare this verified host update for installation. Any active capsule session will close, and writable capsule state must have a verified recovery point first.</span>
                 </label>
-                <div class="lifecycle-actions">
-                  <button type="button" id="update-stage-button" disabled>Authorize and stage verified update</button>
-                </div>
+                <button type="button" id="update-stage-button" disabled>Authorize and stage verified update</button>
                 <p>Staging copies the exact verified package and Sigstore evidence into protected host storage. It does not run the installer.</p>
               </div>
-              <p id="update-validation-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
             </div>
-            <div class="admin-tools" aria-labelledby="admin-title">
-              <strong id="admin-title">Local trust controls</strong>
-              <div class="admin-actions">
-                <button type="button" data-admin-action="audit">View audit</button>
-                <button type="button" data-admin-action="export">Redacted export</button>
-                <button type="button" id="support-button">Export support bundle…</button>
-                <button type="button" class="danger" data-admin-action="forget_current_decision" id="forget-decision-button" disabled>Forget current decision</button>
-                <button type="button" class="danger" data-admin-action="revoke_current_key" id="revoke-button">Revoke current key</button>
-                <button type="button" class="danger" data-admin-action="reset">Backup and reset</button>
-              </div>
-              <p>Host-local record. Capsule-controlled labels remain untrusted text.</p>
+          </section>
+
+          <section class="page-panel" data-page-panel="admin" aria-labelledby="admin-title" hidden>
+            <h2 id="admin-title" class="section-title">Protected host-local record</h2>
+            <div class="admin-actions action-list">
+              <div class="action-row"><div><strong>View audit</strong><p>Read the protected host-local decision record.</p></div><button type="button" data-admin-action="audit">View</button></div>
+              <div class="action-row"><div><strong>Redacted export</strong><p>Export the host-local record with identifiers removed.</p></div><button type="button" data-admin-action="export">Export</button></div>
+              <div class="action-row"><div><strong>Export support bundle…</strong><p>Prepare a redacted host-owned support bundle.</p></div><button type="button" id="support-button">Export…</button></div>
+              <div class="action-row"><div><strong>Forget current decision</strong><p>Removes only the exact current file/release decision and its grants.</p></div><button type="button" class="danger" data-admin-action="forget_current_decision" id="forget-decision-button" disabled>Forget</button></div>
+              <div class="action-row"><div><strong>Revoke current key</strong><p>Revocation requires typing the exact key fingerprint.</p></div><button type="button" class="danger" data-admin-action="revoke_current_key" id="revoke-button">Revoke</button></div>
+              <div class="action-row"><div><strong>Backup and reset</strong><p>A verified host-local backup is created before local decisions are erased.</p></div><button type="button" class="danger" data-admin-action="reset">Reset</button></div>
+            </div>
+            <div class="admin-output-wrap">
+              <div><strong>Local trust and support output</strong><span>Host-local record · capsule labels remain untrusted text</span></div>
               <pre id="admin-output" tabindex="0" aria-live="polite" aria-label="Local trust and support output"></pre>
             </div>
-          </details>
-        </section>
+          </section>
 
-        <section class="panel prompt-panel" aria-labelledby="prompt-title">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Capability decision</p>
-              <h2 id="prompt-title" tabindex="-1">Choose what this release may do</h2>
+          <section class="page-panel" data-page-panel="boundary" aria-labelledby="boundary-title" hidden>
+            <div class="application-window-card">
+              <div class="application-window-preview" aria-hidden="true">
+                <div><span></span><span></span><span></span></div>
+                <svg viewBox="0 0 200 144"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M60 24h60a60 60 0 010 120H60A60 60 0 0160 24zM75 58v52l45-26z"></path></svg>
+              </div>
+              <div>
+                <span class="boundary-kicker">Separate application window · hidden until authorised</span>
+                <h2 id="boundary-title">Application window · executable assets locked</h2>
+                <p class="application-window-copy">Once allowed, the verified capsule opens maximized in its own native window. Re-locking it hides that window and returns here.</p>
+              </div>
             </div>
-            <span class="badge">Host-owned prompt</span>
-          </div>
-          <p class="prompt-copy" id="prompt-copy">
-            Capabilities come from the verified manifest. Missing or unsupported authority is never inferred.
-          </p>
-          <fieldset id="capability-list" aria-describedby="choice-note">
-            <legend class="sr-only">Requested capabilities</legend>
-          </fieldset>
-          <p class="choice-note" id="choice-note">
-            Allow once is memory-only. Always is scoped to this signed application digest and capsule. Deny is saved. Cancel changes nothing.
-          </p>
-          <div class="actions" id="actions">
-            <button type="button" class="primary" data-action="allow_once">Allow once</button>
-            <button type="button" data-action="always" id="always-button">Always for this release</button>
-            <button type="button" class="danger" data-action="deny">Deny this release</button>
-            <button type="button" class="quiet" data-action="cancel">Cancel</button>
-          </div>
-          <p class="action-status" id="action-status" role="status" aria-live="polite"></p>
-        </section>
+            <div class="boundary-notes">
+              <div><strong>Host capability boundary</strong><p>The untrusted renderer has no Tauri globals, generic IPC, or direct SQL endpoint.</p></div>
+              <div><strong>Exact named bridge</strong><p>Only the verified manifest and explicitly declared read/write operations are exposed.</p></div>
+            </div>
+          </section>
+        </main>
       </div>
-
-      <section class="app-boundary" aria-labelledby="boundary-title">
-        <div class="boundary-label">
-          <span>Separate application window · hidden until authorised</span>
-          <strong id="boundary-title">Application window · executable assets locked</strong>
-        </div>
-        <p class="application-window-copy">
-          Once allowed, the verified capsule opens maximized in its own native window. Re-locking it hides that window and returns here.
-        </p>
-      </section>
-    </main>
+    </div>
   </body>
 </html>

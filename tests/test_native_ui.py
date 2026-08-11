@@ -17,6 +17,7 @@ NATIVE_ENTRYPOINT = ROOT / "native" / "desktop" / "src-tauri" / "src" / "main.rs
 HOST_CAPABILITY = (
     ROOT / "native" / "desktop" / "src-tauri" / "capabilities" / "host-shell.json"
 )
+TAURI_CONFIG = ROOT / "native" / "desktop" / "src-tauri" / "tauri.conf.json"
 
 
 class HostMarkupParser(HTMLParser):
@@ -78,6 +79,11 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("Separate application window · hidden until authorised", html)
         self.assertIn("opens maximized in its own native window", html)
         self.assertNotIn("Native child renderer occupies this fixed region", html)
+        self.assertEqual(html.count('class="nav-item'), 6)
+        self.assertIn('id="window-minimize" aria-label="Minimize window"', html)
+        self.assertIn('id="window-maximize" aria-label="Maximize window"', html)
+        self.assertIn('id="window-close" aria-label="Close window"', html)
+        self.assertIn('data-theme-option="system"', html)
 
     def test_focus_and_reduced_motion_controls_are_not_colour_only(self) -> None:
         css = (UI / "styles.css").read_text(encoding="utf-8")
@@ -89,6 +95,9 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("outline: 3px solid Highlight", css)
         self.assertRegex(css, re.compile(r"button:disabled\s*\{[^}]*opacity:\s*1", re.S))
         self.assertRegex(css, re.compile(r"\.badge\s*\{"))
+        self.assertIn('font-family: "Segoe UI Variable Display"', css)
+        self.assertIn("--accent: #60cdff", css)
+        self.assertIn(':root[data-theme="light"]', css)
         script = (UI / "app.js").read_text(encoding="utf-8")
         self.assertIn("verdict.focus()", script)
         self.assertIn("promptTitle.focus()", script)
@@ -111,6 +120,9 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("Use Save a verified copy before editing", script)
         self.assertIn("report.transport_configured", script)
         self.assertIn("no complete compiled updater trust configuration", script)
+        self.assertIn('selectPage("capabilities", { focus: false })', script)
+        self.assertIn('localStorage.setItem("sqlite-capsule-theme"', script)
+        self.assertIn('hostWindow()?.toggleMaximize()', script)
         permission = HOST_PERMISSION.read_text(encoding="utf-8")
         self.assertIn('"update_status"', permission)
         self.assertIn('"check_host_update"', permission)
@@ -127,6 +139,13 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("core:event:allow-unlisten", capability["permissions"])
         self.assertNotIn("core:event:allow-emit", capability["permissions"])
         self.assertNotIn("core:event:allow-emit-to", capability["permissions"])
+        self.assertIn("core:window:allow-minimize", capability["permissions"])
+        self.assertIn("core:window:allow-toggle-maximize", capability["permissions"])
+        self.assertIn("core:window:allow-close", capability["permissions"])
+        self.assertIn("core:window:allow-start-dragging", capability["permissions"])
+        window = json.loads(TAURI_CONFIG.read_text(encoding="utf-8"))["app"]["windows"][0]
+        self.assertFalse(window["decorations"])
+        self.assertTrue(window["shadow"])
         native_shell = NATIVE_SHELL.read_text(encoding="utf-8")
         self.assertIn(".with_focused(false)", native_shell)
         self.assertIn("WindowBuilder::new(app, CAPSULE_WINDOW_LABEL)", native_shell)

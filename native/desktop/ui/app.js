@@ -24,13 +24,101 @@ const updateStageConsent = document.querySelector("#update-stage-consent");
 const updateStageButton = document.querySelector("#update-stage-button");
 const updateValidationStatus = document.querySelector("#update-validation-status");
 const openButton = document.querySelector("#open-button");
+const openStatus = document.querySelector("#open-status");
 const reopenButton = document.querySelector("#reopen-button");
 const readOnlyButton = document.querySelector("#read-only-button");
 const restoreButton = document.querySelector("#restore-button");
 const promptTitle = document.querySelector("#prompt-title");
+const pageTitle = document.querySelector("#page-title");
+const pageSubtitle = document.querySelector("#page-subtitle");
+const pageContent = document.querySelector("#page-content");
+const navSearch = document.querySelector("#nav-search");
+const trustNavTag = document.querySelector("#trust-nav-tag");
+const updateNavTag = document.querySelector("#update-nav-tag");
+const themeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
 let currentBackupId = null;
 let lastFocusKey = null;
 let reviewedUpdateVersion = null;
+let selectedTheme = "dark";
+
+const pageCopy = {
+  trust: ["Trust review", "Host-owned identity for the file that is asking to run. Nothing executes until you decide."],
+  capabilities: ["Capabilities", "Host-owned prompt. Capabilities come from the verified manifest."],
+  protection: ["Data protection", "Session mode, verified backups, and recovery for the open capsule."],
+  updates: ["Host updates", "Compiled, pinned host-only updater. Nothing downloads, stages, or installs without consent."],
+  admin: ["Local trust controls", "Host-local decision record. Capsule-controlled labels remain untrusted text."],
+  boundary: ["Application window", "The untrusted renderer runs in a separate native window behind the named bridge."],
+};
+
+function selectPage(page, options = {}) {
+  if (!pageCopy[page]) return;
+  document.querySelectorAll("[data-page-panel]").forEach((panel) => {
+    const active = panel.dataset.pagePanel === page;
+    panel.hidden = !active;
+    panel.classList.toggle("is-active", active);
+  });
+  document.querySelectorAll(".nav-item[data-page]").forEach((button) => {
+    const active = button.dataset.page === page;
+    button.classList.toggle("is-selected", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  const [title, subtitle] = pageCopy[page];
+  pageTitle.textContent = title;
+  pageSubtitle.textContent = subtitle;
+  document.title = `SQLite Capsule Host — ${title.toLowerCase()}`;
+  if (options.focus !== false) pageContent.focus();
+}
+
+function resolveTheme(mode) {
+  return mode === "system" ? (themeQuery.matches ? "dark" : "light") : mode;
+}
+
+function applyTheme(mode) {
+  selectedTheme = ["light", "dark", "system"].includes(mode) ? mode : "dark";
+  document.documentElement.dataset.theme = resolveTheme(selectedTheme);
+  document.querySelectorAll("[data-theme-option]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeOption === selectedTheme));
+  });
+  try { globalThis.localStorage.setItem("sqlite-capsule-theme", selectedTheme); } catch (_) { /* protected storage may be unavailable */ }
+}
+
+function setTrustNavState(label, tone) {
+  trustNavTag.textContent = label;
+  trustNavTag.dataset.tone = tone;
+}
+
+document.querySelector(".page-navigation").addEventListener("click", (event) => {
+  const button = event.target.closest(".nav-item[data-page]");
+  if (button) selectPage(button.dataset.page);
+});
+
+navSearch.addEventListener("input", () => {
+  const query = navSearch.value.trim().toLocaleLowerCase();
+  document.querySelectorAll(".nav-item[data-page]").forEach((button) => {
+    button.hidden = Boolean(query) && !button.textContent.toLocaleLowerCase().includes(query);
+  });
+});
+
+document.querySelector(".theme-options").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-theme-option]");
+  if (button) applyTheme(button.dataset.themeOption);
+});
+
+themeQuery.addEventListener("change", () => {
+  if (selectedTheme === "system") applyTheme("system");
+});
+
+try { selectedTheme = globalThis.localStorage.getItem("sqlite-capsule-theme") || "dark"; } catch (_) { selectedTheme = "dark"; }
+applyTheme(selectedTheme);
+
+function hostWindow() {
+  return globalThis.__TAURI__?.window?.getCurrentWindow?.() || null;
+}
+
+document.querySelector("#window-minimize").addEventListener("click", () => { hostWindow()?.minimize(); });
+document.querySelector("#window-maximize").addEventListener("click", () => { hostWindow()?.toggleMaximize(); });
+document.querySelector("#window-close").addEventListener("click", () => { hostWindow()?.close(); });
 
 const trustLabels = {
   unverified: "Unverified",
@@ -58,6 +146,8 @@ function setRows(target, rows) {
 
 function renderUpdateStatus(report) {
   const attention = report.incomplete_artifacts.length + report.invalid_artifacts.length;
+  updateNavTag.hidden = !report.release_policy_verified && !report.state && !report.error && !attention;
+  updateNavTag.textContent = report.error || attention ? "!" : report.release_policy_verified ? "1" : "•";
   updateCheckButton.disabled = !report.transport_configured || Boolean(report.error) || Boolean(attention);
   reviewedUpdateVersion = report.release_policy_verified ? report.candidate_version : null;
   updateDownloadControls.hidden = !reviewedUpdateVersion || report.downloaded;
@@ -154,10 +244,13 @@ function renderReport(report) {
   const focusKey = focusKeyFor(report);
   actionStatus.textContent = "";
   actionStatus.className = "action-status";
+  openStatus.textContent = "";
+  openStatus.className = "action-status";
   if (report.error) {
     state.textContent = "Rejected before execution";
     trustBadge.textContent = "Fail closed";
     trustBadge.className = "badge fail";
+    setTrustNavState("Blocked", "fail");
     setVerdict("Capsule rejected", report.error, "fail", "×");
     setRows(identityDetails, [["Stage", report.stage], ["Executable assets", "Not released"]]);
     capabilityList.replaceChildren();
@@ -174,6 +267,8 @@ function renderReport(report) {
   if (!report.capsule) {
     state.textContent = "No capsule selected";
     trustBadge.textContent = "Idle";
+    trustBadge.className = "badge";
+    setTrustNavState("Idle", "idle");
     setVerdict("Choose a capsule to begin", "Open with a .capsule.sqlite path. Nothing is executing.", "", "·");
     setRows(identityDetails, [["Stage", report.stage], ["Executable assets", "Not released"]]);
     capabilityList.replaceChildren();
@@ -209,6 +304,7 @@ function renderReport(report) {
       : "Trust decision required · code locked";
   trustBadge.textContent = label;
   trustBadge.className = `badge ${blocked ? "fail" : authorized ? "ok" : "warn"}`;
+  setTrustNavState(blocked ? "Blocked" : authorized ? "Running" : "Review", blocked ? "fail" : authorized ? "ok" : "warn");
   if (authorized && capsule.assets_released) {
     setVerdict(
       recovery ? "Recovered state verified; assets released" : "Verified assets released",
@@ -266,6 +362,7 @@ function renderReport(report) {
       : "Application window · release gate passed, payload locked"
     : "Application window · executable assets locked";
   if (report.stage === "first-open" && lastFocusKey !== focusKey) {
+    selectPage("capabilities", { focus: false });
     promptTitle.focus();
   }
   lastFocusKey = focusKey;
@@ -466,13 +563,13 @@ if (typeof listen === "function") {
 
 openButton.addEventListener("click", async () => {
   openButton.disabled = true;
-  actionStatus.textContent = "Choose one local SQLite Capsule. Its content will be inspected before any code runs.";
-  actionStatus.className = "action-status";
+  openStatus.textContent = "Choose one local SQLite Capsule. Its content will be inspected before any code runs.";
+  openStatus.className = "action-status";
   try {
     await invokeHost("open_capsule_picker");
   } catch (error) {
-    actionStatus.textContent = String(error);
-    actionStatus.className = "action-status error";
+    openStatus.textContent = String(error);
+    openStatus.className = "action-status error";
   } finally {
     openButton.disabled = false;
   }

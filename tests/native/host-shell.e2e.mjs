@@ -1,4 +1,6 @@
 describe("SQLite Capsule trusted native first-open shell (raw renderer intentionally absent)", () => {
+  let startupFocusId = "";
+
   beforeAll(async () => {
     const state = await $("#host-state");
     await state.waitUntil(
@@ -10,18 +12,21 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
     if (settledState !== "Trust decision required · code locked") {
       throw new Error(`${settledState}: ${await $("#verdict").getText()}`);
     }
+    startupFocusId = await browser.execute(() => document.activeElement?.id || "");
   });
 
   it("keeps executable assets locked while showing verified identity", async () => {
+    await $("button[data-page='trust']").click();
     await expect($("#verdict strong")).toHaveText("Your decision is required");
     await expect($("#host-state")).toHaveText("Trust decision required · code locked");
-    await expect($("#boundary-title")).toHaveText("Application window · executable assets locked");
+    expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
     await expect($("#identity-details")).toHaveText(expect.stringContaining("Diagram Studio — SQLite Capsule"));
     await expect($("#identity-details")).toHaveText(expect.stringContaining("org.sqlite-capsule.diagram-studio 0.3.0"));
     await expect($("#identity-details")).toHaveText(expect.stringContaining("Executable assets\nNot released"));
   });
 
   it("renders the host-owned capability decision without creating authority", async () => {
+    await $("button[data-page='capabilities']").click();
     const capabilities = await $$("#capability-list input[type='checkbox']");
     expect(capabilities.length).toBe(7);
     await expect($("button[data-action='allow_once']")).toBeEnabled();
@@ -32,12 +37,12 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("places real WebView2 keyboard focus on the first-open heading", async () => {
-    const activeId = await browser.execute(() => document.activeElement?.id || "");
-    expect(activeId).toBe("prompt-title");
+    expect(startupFocusId).toBe("prompt-title");
     await expect($("#prompt-title")).toHaveText("Choose what this release may do");
   });
 
   it("traverses every enabled prompt control in DOM order without a keyboard trap", async () => {
+    await $("button[data-page='capabilities']").click();
     const focusable = await browser.execute(() => [
       ...document.querySelectorAll("#capability-list input:not(:disabled)"),
       ...document.querySelectorAll("#actions button:not(:disabled)"),
@@ -72,16 +77,17 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("denies and forgets only the isolated exact-file decision without granting authority", async () => {
+    await $("button[data-page='capabilities']").click();
     await $("button[data-action='deny']").click();
-    await $("#verdict strong").waitUntil(
-      async () => (await $("#verdict strong").getText()) === "Execution is blocked",
+    await browser.waitUntil(
+      async () => browser.execute(() => document.querySelector("#verdict strong")?.textContent === "Execution is blocked"),
       { timeout: 20_000, timeoutMsg: "the host did not apply the exact-file denial" },
     );
-    await expect($("#boundary-title")).toHaveText("Application window · executable assets locked");
-    await expect($("#forget-decision-button")).toBeEnabled();
+    expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
     await expect($("#action-status")).toHaveText("Decision applied. The effective policy is shown above.");
 
-    await $("#technical-details > summary").click();
+    await $("button[data-page='admin']").click();
+    await expect($("#forget-decision-button")).toBeEnabled();
     await $("#forget-decision-button").scrollIntoView();
     await $("#forget-decision-button").click();
     await browser.waitUntil(
@@ -96,13 +102,15 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
     );
     await browser.sendAlertText("FORGET-CURRENT-DECISION");
     await browser.acceptAlert();
-    await $("#verdict strong").waitUntil(
-      async () => (await $("#verdict strong").getText()) === "Your decision is required",
+    await browser.waitUntil(
+      async () => browser.execute(() => document.querySelector("#verdict strong")?.textContent === "Your decision is required"),
       { timeout: 20_000, timeoutMsg: "forgetting the decision did not restore first-open policy" },
     );
-    await expect($("#boundary-title")).toHaveText("Application window · executable assets locked");
+    await $("button[data-page='admin']").click();
+    expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
     await expect($("#forget-decision-button")).toBeDisabled();
     await expect($("#admin-output")).toHaveText(expect.stringContaining('"authority_granted": false'));
+    await $("button[data-page='capabilities']").click();
     await expect($("button[data-action='allow_once']")).toBeEnabled();
   });
 });
