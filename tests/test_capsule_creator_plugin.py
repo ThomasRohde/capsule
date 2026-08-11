@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -262,6 +263,7 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
         self.assertGreater(assets["app/vendor/sqlite-wasm/sqlite3.wasm"][1], 800_000)
         self.assertIn("app/vendor/sqlite-wasm/index.mjs", assets)
         self.assertIn("app/sha256.js", assets)
+        self.assertIn("app/favicon.svg", assets)
         self.assertIn("app/legal/sqlite-wasm/LICENSE.Apache-2.0.txt", assets)
         self.assertIn("app/legal/sqlite-wasm/THIRD_PARTY.md", assets)
 
@@ -269,12 +271,46 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
         index = (source / "index.html").read_text(encoding="utf-8")
         app = (source / "app.js").read_text(encoding="utf-8")
         styles = (source / "styles.css").read_text(encoding="utf-8")
+        icon = (source / "favicon.svg").read_text(encoding="utf-8")
+        canonical_icon = (
+            ROOT
+            / "docs"
+            / "images"
+            / "brand"
+            / "sqlite-capsule-mark-verified.svg"
+        ).read_text(encoding="utf-8")
         self.assertIn('<html lang="en" data-theme="light">', index)
+        self.assertEqual(index.count('src="/app/favicon.svg"'), 2)
+        self.assertNotIn('class="database-shape"', index)
+        for path_data in re.findall(r'\bd="([^"]+)"', canonical_icon):
+            self.assertIn(f'd="{path_data}"', icon)
+        self.assertIn('transform="translate(12 34) scale(.9)"', icon)
+        self.assertNotIn('translate(-14 5)', icon)
+        self.assertIn('<mask id="loupe-knockout"', icon)
+        self.assertIn(
+            'stroke="black" stroke-width="20"',
+            icon,
+        )
+        self.assertIn('mask="url(#loupe-knockout)"', icon)
+        self.assertIn('<circle cx="184" cy="176" r="42"/>', icon)
         for mode in ("light", "dark", "system"):
             self.assertIn(f'data-theme-option="{mode}"', index)
         self.assertIn('matchMedia("(prefers-color-scheme: dark)")', app)
         self.assertIn('localStorage.getItem("capsule-inspector-theme") || "light"', app)
         self.assertIn('.theme-options button[aria-pressed="true"]', styles)
+
+    def test_repository_instructions_keep_plugin_current_without_capsule_only_installer_rebuilds(self) -> None:
+        instructions = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "Keep `plugins/capsule-creator/` synchronized with material changes",
+            instructions,
+        )
+        self.assertIn("standalone copy without repository access", instructions)
+        self.assertIn(
+            "generated-capsule-only changes do not require an installer",
+            instructions,
+        )
+        self.assertNotIn("verified after every feature", instructions)
 
     def test_inspector_portable_sha256_matches_standard_vectors(self) -> None:
         module_path = (

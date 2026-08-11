@@ -83,7 +83,7 @@ button:focus-visible, label:focus-within, a:focus-visible { outline: 2px solid v
 .titlebar { display: flex; height: 48px; flex: 0 0 48px; align-items: center; justify-content: space-between; padding: 0 16px; user-select: none; }
 .titlebar-identity, .titlebar-actions, .offline-pill { display: flex; align-items: center; }
 .titlebar-identity { gap: 10px; font-size: 12px; font-weight: 600; }
-.app-mark { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+.app-mark { display: block; width: 25px; height: 25px; flex: 0 0 auto; }
 .titlebar-actions { gap: 9px; }
 .offline-pill { gap: 7px; min-height: 26px; padding: 3px 10px; border: 1px solid var(--stroke); border-radius: 13px; color: var(--text-secondary); background: var(--card); font-size: 11px; }
 .offline-pill > span { width: 7px; height: 7px; border-radius: 50%; background: var(--ok-fg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-fg) 16%, transparent); }
@@ -120,16 +120,9 @@ button:focus-visible, label:focus-within, a:focus-visible { outline: 2px solid v
 .open-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 
 .empty-state { display: flex; min-height: min(570px, calc(100vh - 180px)); align-items: center; justify-content: center; flex-direction: column; padding: 50px 24px; border: 1px solid var(--stroke); border-radius: 12px; background: var(--card); text-align: center; }
-.empty-state h2 { margin: 25px 0 8px; font-family: "Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 600; }
+.empty-state h2 { margin: 17px 0 8px; font-family: "Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; font-size: 22px; font-weight: 600; }
 .empty-state > p { max-width: 610px; margin: 0 0 22px; color: var(--text-secondary); line-height: 1.55; }
-.empty-illustration { position: relative; width: 128px; height: 100px; }
-.database-shape { position: absolute; top: 17px; left: 18px; width: 68px; height: 66px; border: 1.5px solid var(--text-tertiary); border-radius: 50% / 18%; background: linear-gradient(180deg, var(--card-hover), transparent); }
-.database-shape::before, .database-shape::after { position: absolute; right: -1.5px; left: -1.5px; height: 17px; border: 1.5px solid var(--text-tertiary); border-radius: 50%; content: ""; }
-.database-shape::before { top: -1.5px; background: var(--layer); }
-.database-shape::after { top: 25px; border-top: 0; }
-.scan-line { position: absolute; z-index: 2; top: 47px; left: 12px; width: 82px; height: 2px; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.lens-shape { position: absolute; z-index: 3; right: 5px; bottom: 2px; width: 44px; height: 44px; border: 4px solid var(--accent); border-radius: 50%; background: color-mix(in srgb, var(--layer) 70%, transparent); }
-.lens-shape::after { position: absolute; right: -16px; bottom: -10px; width: 22px; height: 4px; border-radius: 2px; background: var(--accent); transform: rotate(45deg); content: ""; }
+.empty-illustration { display: block; width: 136px; height: 136px; object-fit: contain; }
 .privacy-strip { display: flex; margin: 29px 0 0; gap: 1px; overflow: hidden; border: 1px solid var(--stroke); border-radius: 4px; background: var(--stroke); }
 .privacy-strip > div { min-width: 118px; padding: 9px 14px; background: var(--card-alt); }
 .privacy-strip dt { color: var(--text-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }

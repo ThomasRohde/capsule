@@ -30,12 +30,20 @@ When asked to run, inspect, modify, or explain a `.capsule.sqlite` file:
 - Bind the server to loopback only.
 - Preserve the default-deny Content Security Policy.
 - Treat internal hashes as integrity checks, not proof of publisher authenticity.
+- Keep `plugins/capsule-creator/` synchronized with material changes to the
+  capsule framework. Changes to the format contract, runtime or host behavior,
+  security model, authoring workflow, or shared UI guidance must include a
+  review of the plugin's skill instructions, references, scripts, templates,
+  examples, and tests. Update every affected plugin surface and verify that the
+  plugin still works from a standalone copy without repository access.
 - Rebuild the example after changing embedded assets or data:
   `python tools/build_example.py`.
-- After completing any feature, rebuild and export the current Windows NSIS
-  installer with `python native/tools/build_installers.py`. The stable artifact
-  must be `capsules/sqlite-capsule-host-setup.exe`; do not substitute an older
-  bundle or a copy from another profile.
+- Rebuild and export the current Windows NSIS installer only when native host
+  or packaging changes can affect the installed binary. Use
+  `python native/tools/build_installers.py`; the stable artifact must be
+  `capsules/sqlite-capsule-host-setup.exe`. Capsule content, creator-plugin,
+  documentation, and generated-capsule-only changes do not require an installer
+  rebuild.
 - Run all tests before considering a change complete:
   `python -m unittest discover -s tests -v`.
 - Verify the generated capsule:
@@ -43,6 +51,10 @@ When asked to run, inspect, modify, or explain a `.capsule.sqlite` file:
 
 ## Definition of done
 
-A change is complete only when the relevant documentation is consistent, the example rebuilds deterministically enough for review, tests pass, the generated capsule verifies, and the one-prompt Codex launch path still works.
-The current NSIS installer must also be rebuilt, exported to
-`capsules/sqlite-capsule-host-setup.exe`, and verified after every feature.
+A change is complete only when the relevant documentation is consistent, every
+affected generated capsule rebuilds deterministically enough for review, tests
+pass, the affected capsules verify, and the one-prompt Codex launch path still
+works. Material framework changes must also leave the standalone creator plugin
+current and verified. Native host or packaging changes additionally require the
+current NSIS installer to be rebuilt, exported to
+`capsules/sqlite-capsule-host-setup.exe`, and verified.
