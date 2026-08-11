@@ -69,7 +69,8 @@ function persistedNodeLabel(filePath, nodeId) {
     "connection = sqlite3.connect(f'file:{sys.argv[1]}?mode=ro', uri=True)",
     "row = connection.execute('SELECT label FROM diagram_node WHERE id = ?', (sys.argv[2],)).fetchone()",
     "connection.close()",
-    "print(row[0] if row else '')",
+    "value = row[0] if row else ''",
+    "sys.stdout.buffer.write(value.encode('utf-8'))",
   ].join("\n");
   const result = spawnSync("python", ["-c", script, filePath, nodeId], {
     cwd: root,
