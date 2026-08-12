@@ -7,7 +7,8 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const capsule = path.join(root, ".tmp", "playwright", "diagram-studio.capsule.sqlite");
-const stateDir = path.join(root, ".tmp", "playwright", "state");
+const stateDir = process.env.SQLITE_CAPSULE_BROWSER_STATE_DIR
+  || path.join(root, ".tmp", "playwright", "state");
 const capsuleEnv = { ...process.env, SQLITE_CAPSULE_STATE_DIR: stateDir };
 
 
@@ -15,6 +16,7 @@ async function openStudio(page) {
   await page.goto("/");
   await expect(page.locator("#app")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator(".node")).toHaveCount(12);
+  await expect(page.locator(".node-accent")).toHaveCount(1);
   await expect(page.locator(".edge")).toHaveCount(13);
   await expect(page.locator(".scene-button")).toHaveCount(5);
   await expect(page.locator(".layer-row")).toHaveCount(3);
@@ -229,6 +231,40 @@ test("drag and resize previews avoid repeated canvas reconstruction", async ({ p
   await expect(page.locator("#toast")).toContainText("Undid: Resize node");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.locator("#toast")).toContainText("Undid: Move node");
+});
+
+test("rapid edits serialize history and keep node deletion undoable", async ({ page }) => {
+  await openStudio(page);
+  const node = page.locator(".node[data-id='node-trusted-host']");
+  await node.press("Enter");
+  await page.locator("#node-label-input").fill("Trusted application host");
+  await page.locator("#save-node-label").click();
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#delete-selection").click();
+  await expect(page.locator("#toast")).toContainText("dependent connectors deleted from SQLite");
+  await expect(page.locator(".node")).toHaveCount(11);
+
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Undid: Delete nodes");
+  await expect(page.locator(".node")).toHaveCount(12);
+  await expect(page.locator(".node[data-id='node-trusted-host']")).toHaveAttribute("aria-label", "Trusted application host, runtime node");
+
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Undid: Rename node");
+  await expect(page.locator(".node[data-id='node-trusted-host']")).toHaveAttribute("aria-label", "Trusted generic capsule host, runtime node");
+
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Redid: Rename node");
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Redid: Delete nodes");
+  await expect(page.locator(".node")).toHaveCount(11);
+
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Undid: Delete nodes");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator("#toast")).toContainText("Undid: Rename node");
+  await expect(page.locator(".node")).toHaveCount(12);
 });
 
 test("clipboard denial uses the explicit prompt fallback", async ({ page }) => {

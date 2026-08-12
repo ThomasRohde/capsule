@@ -162,7 +162,7 @@ fn hot_rollback_journal_is_recovered_then_fully_reverified_before_runtime_open()
         .expect("recovered domain state");
     assert_eq!(
         document["description"],
-        "The bootstrap architecture, rendered and edited by the application stored inside the database it describes."
+        "Create nodes and connectors, organise them in layers, and turn the same diagram into a sequence of presentation scenes."
     );
     drop(runtime);
 
@@ -219,7 +219,7 @@ fn verified_read_only_runtime_returns_assets_manifest_and_named_rows() {
     assert_eq!(document["id"], "diagram-main");
     assert_eq!(
         document["title"],
-        "A SQLite file that carries its own application"
+        "Design and present architecture diagrams"
     );
     assert!(
         runtime
@@ -246,7 +246,7 @@ fn compound_named_write_is_atomic_and_records_one_change_log_row() {
     )
     .expect("writable runtime");
     assert!(runtime.backup_record().is_none());
-    let old_title = "A SQLite file that carries its own application";
+    let old_title = "Design and present architecture diagrams";
     let write = runtime
         .write_endpoint(
             "diagram.rename",
@@ -379,6 +379,83 @@ fn compound_named_write_is_atomic_and_records_one_change_log_row() {
 }
 
 #[test]
+fn native_runtime_keeps_declared_foreign_key_cascades_reversible() {
+    let directory = TestDirectory::new();
+    let capsule = writable_capsule(&directory, "cascade-delete.capsule.sqlite");
+    let inspection = inspect_launch(&capsule).expect("launch evidence");
+    let (_store, decision) = authorise(&directory, &inspection);
+    let (lock_root, backup_root) = writer_lifecycle_roots(&directory);
+    let mut runtime = VerifiedCapsule::open(
+        &capsule,
+        &inspection,
+        &decision,
+        true,
+        Some(&lock_root),
+        Some(&backup_root),
+    )
+    .expect("writable runtime");
+
+    let operation_id = "operation-native-cascade-delete";
+    runtime
+        .write_endpoint(
+            "nodes.delete",
+            &arguments(json!({
+                "operation_id": operation_id,
+                "expected_cursor": 0,
+                "diagram_id": "diagram-main",
+                "node_ids_json": ["node-trusted-host"]
+            })),
+        )
+        .expect("node delete with declared foreign-key cascades");
+    let nodes = runtime
+        .read_endpoint(
+            "diagram.nodes",
+            &arguments(json!({"diagram_id": "diagram-main"})),
+        )
+        .expect("nodes after delete");
+    assert!(
+        nodes
+            .as_array()
+            .expect("node rows")
+            .iter()
+            .all(|node| node["id"] != "node-trusted-host")
+    );
+
+    runtime
+        .write_endpoint(
+            "nodes.delete.undo",
+            &arguments(json!({
+                "operation_id": operation_id,
+                "expected_cursor": 1,
+                "diagram_id": "diagram-main"
+            })),
+        )
+        .expect("undo cascaded node delete");
+    let nodes = runtime
+        .read_endpoint(
+            "diagram.nodes",
+            &arguments(json!({"diagram_id": "diagram-main"})),
+        )
+        .expect("nodes after undo");
+    assert!(
+        nodes
+            .as_array()
+            .expect("node rows")
+            .iter()
+            .any(|node| node["id"] == "node-trusted-host")
+    );
+    assert_eq!(
+        runtime
+            .read_endpoint(
+                "diagram.history",
+                &arguments(json!({"diagram_id": "diagram-main"}))
+            )
+            .expect("history after undo")["cursor"],
+        0
+    );
+}
+
+#[test]
 fn host_update_preflight_establishes_a_current_verified_backup_before_quiescence() {
     let directory = TestDirectory::new();
     let capsule = writable_capsule(&directory, "host-update.capsule.sqlite");
@@ -414,7 +491,7 @@ fn host_update_preflight_establishes_a_current_verified_backup_before_quiescence
                 "operation_id": "operation-host-update-preflight",
                 "expected_cursor": 0,
                 "diagram_id": "diagram-main",
-                "from_title": "A SQLite file that carries its own application",
+                "from_title": "Design and present architecture diagrams",
                 "to_title": "Preserved before host replacement"
             })),
         )
@@ -500,7 +577,7 @@ fn failed_compound_precondition_rolls_back_every_step_and_log() {
             |row| row.get(0),
         )
         .expect("title");
-    assert_eq!(title, "A SQLite file that carries its own application");
+    assert_eq!(title, "Design and present architecture diagrams");
     let operation_count: i64 = connection
         .query_row(
             "SELECT count(*) FROM diagram_operation WHERE id = 'operation-must-rollback'",
@@ -593,7 +670,7 @@ fn an_external_sqlite_commit_stops_the_session_before_another_host_write() {
                 "operation_id": "operation-after-conflict",
                 "expected_cursor": 0,
                 "diagram_id": "diagram-main",
-                "from_title": "A SQLite file that carries its own application",
+                "from_title": "Design and present architecture diagrams",
                 "to_title": "Must not commit"
             }))
         ),
@@ -635,7 +712,7 @@ fn a_verified_backup_restores_only_to_a_new_path_and_detects_tampering() {
                 "operation_id": "operation-before-restore",
                 "expected_cursor": 0,
                 "diagram_id": "diagram-main",
-                "from_title": "A SQLite file that carries its own application",
+                "from_title": "Design and present architecture diagrams",
                 "to_title": "Source changed after backup"
             })),
         )
@@ -660,10 +737,7 @@ fn a_verified_backup_restores_only_to_a_new_path_and_detects_tampering() {
             |row| row.get(0),
         )
         .expect("restored title");
-    assert_eq!(
-        restored_title,
-        "A SQLite file that carries its own application"
-    );
+    assert_eq!(restored_title, "Design and present architecture diagrams");
     assert!(restore_verified_backup(&backup_root, &record.backup_id, &restored_path).is_err());
 
     let tampered_backup = backup_root.join(&record.backup_id);

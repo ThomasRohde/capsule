@@ -54,6 +54,8 @@ native IPC, Tauri, or the network. Reads run under SQLite query-only mode and
 an authorizer. Writes may insert/update/delete domain tables only; DDL, PRAGMA,
 attach/detach, virtual tables, platform-table mutations, and extension loading
 are denied. Portable capsule schema is trigger-free and virtual-table-free.
+Declared foreign-key actions remain portable: the native host bounds SQLite's
+internal cascade machinery to 32 levels even though schema triggers are rejected.
 
 ## Resource ceilings
 

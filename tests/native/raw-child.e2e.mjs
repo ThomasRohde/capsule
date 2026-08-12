@@ -416,7 +416,7 @@ try {
   assert.match(await parentPage.locator("#verdict").textContent(), /SQLite performed rollback-journal recovery/);
   await rawPage.waitForURL(/\/app\/index\.html$/);
   await rawPage.locator("#app[aria-busy='false']").waitFor({ state: "attached", timeout: 20_000 });
-  assert.equal(await rawPage.locator("#diagram-title").textContent(), "A SQLite file that carries its own application");
+  assert.equal(await rawPage.locator("#diagram-title").textContent(), "Design and present architecture diagrams");
   assert.equal(await rawPage.locator("#save-state").textContent(), "Local · SQLite");
   assert.equal(await rawPage.locator("#scene-count").textContent(), "5");
   assert.equal(await rawPage.locator(".node").count(), 12);
@@ -451,6 +451,26 @@ try {
   assert.deepEqual(lifecycleAfterWrite.backup_inventory.invalid_artifacts, []);
   assert.equal(persistedNodeLabel(capsule, nodeId), persistedLabel);
   checked("python", ["tools/capsule.py", "verify", capsule], root);
+
+  const queuedNodeId = "node-trusted-host";
+  const queuedOriginalLabel = "Trusted generic capsule host";
+  await rawPage.locator(`[data-id='${queuedNodeId}']`).click();
+  await rawPage.locator("#node-label-input").fill("Trusted application host");
+  await rawPage.locator("#save-node-label").click();
+  const deleteConfirmation = rawPage.waitForEvent("dialog").then((dialog) => dialog.accept());
+  await rawPage.locator("#delete-selection").click();
+  await deleteConfirmation;
+  await rawPage.waitForFunction(() => document.querySelectorAll(".node").length === 11);
+  assert.equal(await rawPage.locator("#save-state").textContent(), "Saved in SQLite");
+  await rawPage.locator("#undo").click();
+  await rawPage.waitForFunction(() => document.querySelectorAll(".node").length === 12);
+  assert.equal(await rawPage.locator(`[data-id='${queuedNodeId}']`).getAttribute("aria-label"), "Trusted application host, runtime node");
+  await rawPage.locator("#undo").click();
+  await rawPage.waitForFunction(
+    (label) => document.querySelector("[data-id='node-trusted-host']")?.getAttribute("aria-label") === `${label}, runtime node`,
+    queuedOriginalLabel,
+  );
+  assert.equal(persistedHistoryCursor(capsule), 1);
 
   assert.equal(existsSync(supportBundlePath), false);
   await parentPage.locator("button[data-page='admin']").click();
@@ -743,6 +763,7 @@ async function runOpenCrashScenario() {
     await crashParentPage.locator("#host-state").waitFor({ state: "visible" });
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
     assert.equal(await crashParentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
+    await crashRawPage.waitForFunction(() => document.title === "Raw child renderer probe");
     assert.equal(await crashRawPage.title(), "Raw child renderer probe");
     await crashParentPage.locator("button[data-action='allow_once']").evaluate((button) => button.click());
     const crashed = await waitForProcessExit(crashProcess, "open-fault native host");

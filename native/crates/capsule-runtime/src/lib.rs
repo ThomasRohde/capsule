@@ -35,6 +35,7 @@ pub const MAX_RESULT_ROWS: usize = 1_000;
 pub const MAX_RESULT_BYTES: usize = 2 * 1024 * 1024;
 pub const MAX_ENDPOINT_STEPS: usize = 16;
 pub const ENDPOINT_TIMEOUT_SECONDS: u64 = 3;
+pub const MAX_FOREIGN_KEY_CASCADE_DEPTH: i32 = 32;
 const MAX_WRITES_BETWEEN_BACKUPS: u32 = 10;
 
 #[derive(Clone, Copy)]
@@ -1222,7 +1223,13 @@ fn harden_connection(connection: &Connection, writable: bool) -> Result<(), Runt
     connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 64)?;
     connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0)?;
     connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, 128)?;
-    connection.set_limit(Limit::SQLITE_LIMIT_TRIGGER_DEPTH, 0)?;
+    // SQLite implements declared foreign-key actions with its trigger VM even
+    // when the verified schema contains no SQL triggers. Keep that internal
+    // machinery bounded instead of disabling legitimate cascades entirely.
+    connection.set_limit(
+        Limit::SQLITE_LIMIT_TRIGGER_DEPTH,
+        MAX_FOREIGN_KEY_CASCADE_DEPTH,
+    )?;
     connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0)?;
     Ok(())
 }
@@ -1430,7 +1437,7 @@ mod tests {
             "operation_id": format!("operation-fault-{stage}"),
             "expected_cursor": 0,
             "diagram_id": "diagram-main",
-            "from_title": "A SQLite file that carries its own application",
+            "from_title": "Design and present architecture diagrams",
             "to_title": format!("Fault injection {stage}")
         })
         .as_object()

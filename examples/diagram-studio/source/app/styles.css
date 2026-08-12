@@ -720,8 +720,7 @@ body.profile-interactive .inspector-content[aria-disabled="true"] .inspector-but
   filter: none;
 }
 
-.node .node-accent { width: 5px; pointer-events: none; }
-.node.kind-container .node-accent { stroke: var(--line); }
+.node.kind-container .node-accent { stroke: var(--line); pointer-events: none; }
 
 .node .node-eyebrow {
   fill: var(--ink-3);

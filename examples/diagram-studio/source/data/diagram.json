@@ -2,8 +2,8 @@
   "document": {
     "id": "diagram-main",
     "slug": "sqlite-capsule-architecture",
-    "title": "A SQLite file that carries its own application",
-    "description": "The bootstrap architecture, rendered and edited by the application stored inside the database it describes.",
+    "title": "Design and present architecture diagrams",
+    "description": "Create nodes and connectors, organise them in layers, and turn the same diagram into a sequence of presentation scenes.",
     "canvas_width": 2200,
     "canvas_height": 1250,
     "background": "grid",

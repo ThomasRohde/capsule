@@ -153,7 +153,7 @@ Every asset is verified before launch. This catches accidental damage and incomp
 
 ### SQLite hardening
 
-The host enables foreign keys, disables extension loading, uses `trusted_schema=OFF` where available, applies a busy timeout, and uses read-only connections for inspection. It does not register application-defined SQL functions.
+The host enables foreign keys, disables extension loading, uses `trusted_schema=OFF` where available, applies a busy timeout, and uses read-only connections for inspection. It does not register application-defined SQL functions. The native runtime rejects schema triggers but permits SQLite's internal foreign-key action machinery with a 32-level cascade bound; a zero trigger-depth limit would also disable legitimate declared cascades.
 
 ### Request limits
 

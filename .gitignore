@@ -14,3 +14,4 @@ node_modules/
 *.sqlite-shm
 /capsules/sqlite-capsule-host-setup.exe
 /capsules/sqlite-capsule-host.msi
+/tests/visual-baselines/**/*.png

@@ -130,7 +130,9 @@ renderer memory limit. The host serialises responses; application content never
 receives an SQLite cursor or streaming file primitive. The current runtime
 bounds named results to 1,000 rows and 2 MiB, individual verified assets to 16
 MiB, compound endpoints to 16 steps, and endpoint execution to a three-second
-progress deadline.
+progress deadline. Verified schemas remain trigger-free, while SQLite's internal
+foreign-key action machinery is bounded to 32 cascade levels so declared
+`ON DELETE` and `ON UPDATE` actions remain usable.
 
 ## Renderer defaults
 

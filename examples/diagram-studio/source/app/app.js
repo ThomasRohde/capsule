@@ -20,6 +20,8 @@
     groups: [],
     history: null,
     historyBusy: false,
+    pendingCommands: 0,
+    commandTail: Promise.resolve(),
     selectedType: null,
     selectedId: null,
     selectedNodeIds: [],
@@ -369,22 +371,37 @@
     const history = state.history;
     const canUndo = Boolean(history?.undo_operation_id && history?.undo_endpoint);
     const canRedo = Boolean(history?.redo_operation_id && history?.redo_endpoint);
-    elements.undo.disabled = !canEdit() || state.historyBusy || !canUndo;
-    elements.redo.disabled = !canEdit() || state.historyBusy || !canRedo;
+    const busy = state.historyBusy || state.pendingCommands > 0;
+    elements.undo.disabled = !canEdit() || busy || !canUndo;
+    elements.redo.disabled = !canEdit() || busy || !canRedo;
     elements.undo.title = canUndo ? `Undo: ${history.undo_summary} (Ctrl+Z)` : "Nothing to undo";
     elements.redo.title = canRedo ? `Redo: ${history.redo_summary} (Ctrl+Shift+Z or Ctrl+Y)` : "Nothing to redo";
   }
 
-  async function executeCommand(name, parameters) {
-    if (!state.history) throw new Error("Diagram history is unavailable");
-    const result = await writeEndpoint(name, {
-      ...parameters,
-      operation_id: uid("operation"),
-      diagram_id: DIAGRAM_ID,
-      expected_cursor: state.history.cursor,
+  function executeCommand(name, parameters) {
+    state.pendingCommands += 1;
+    updateHistoryUI();
+    const operation = state.commandTail.then(async () => {
+      if (!state.history) throw new Error("Diagram history is unavailable");
+      try {
+        const result = await writeEndpoint(name, {
+          ...parameters,
+          operation_id: uid("operation"),
+          diagram_id: DIAGRAM_ID,
+          expected_cursor: state.history.cursor,
+        });
+        await refreshHistory();
+        return result;
+      } catch (error) {
+        await refreshHistory().catch(() => {});
+        throw error;
+      }
     });
-    await refreshHistory();
-    return result;
+    state.commandTail = operation.catch(() => undefined);
+    return operation.finally(() => {
+      state.pendingCommands -= 1;
+      updateHistoryUI();
+    });
   }
 
   async function reloadDiagramModel() {
@@ -428,14 +445,14 @@
 
   async function moveHistory(direction) {
     if (state.historyBusy || !state.history) return;
-    const undoing = direction === "undo";
-    const endpoint = undoing ? state.history.undo_endpoint : state.history.redo_endpoint;
-    const operationId = undoing ? state.history.undo_operation_id : state.history.redo_operation_id;
-    const summary = undoing ? state.history.undo_summary : state.history.redo_summary;
-    if (!endpoint || !operationId) return;
     state.historyBusy = true;
     updateHistoryUI();
-    try {
+    const operation = state.commandTail.then(async () => {
+      const undoing = direction === "undo";
+      const endpoint = undoing ? state.history.undo_endpoint : state.history.redo_endpoint;
+      const operationId = undoing ? state.history.undo_operation_id : state.history.redo_operation_id;
+      const summary = undoing ? state.history.undo_summary : state.history.redo_summary;
+      if (!endpoint || !operationId) return;
       await writeEndpoint(endpoint, {
         operation_id: operationId,
         diagram_id: DIAGRAM_ID,
@@ -443,6 +460,10 @@
       });
       await reloadDiagramModel();
       showToast(`${undoing ? "Undid" : "Redid"}: ${summary}.`);
+    });
+    state.commandTail = operation.catch(() => undefined);
+    try {
+      await operation;
     } catch (error) {
       await refreshHistory().catch(() => {});
       showToast(error.message, true);
@@ -790,17 +811,6 @@
           style.text,
         );
       } else {
-        const accent = svgElement("rect", {
-          class: "node-accent",
-          x: 0,
-          y: 0,
-          width: 7,
-          height: viewNode.height,
-          rx: Math.min(style.radius, 7),
-          fill: style.accent,
-          "fill-opacity": 0.95,
-        });
-        group.append(accent);
         appendText(group, data.eyebrow || node.kind.toUpperCase(), 24, 27, "node-eyebrow", style.accent);
         const labelLines = appendWrappedText(
           group,

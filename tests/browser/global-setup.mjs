@@ -4,7 +4,8 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const capsule = path.join(root, ".tmp", "playwright", "diagram-studio.capsule.sqlite");
-const stateDir = path.join(root, ".tmp", "playwright", "state");
+const stateDir = process.env.SQLITE_CAPSULE_BROWSER_STATE_DIR
+  || path.join(root, ".tmp", "playwright", "state");
 const env = { ...process.env, SQLITE_CAPSULE_STATE_DIR: stateDir };
 
 export default async function globalSetup() {
