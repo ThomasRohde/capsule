@@ -106,7 +106,9 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("Evidence and postconditions", html)
         self.assertIn("Upgrade the application in a new copy", html)
         self.assertIn("Exhaustive dataset actions", html)
-        self.assertIn("M07 accepts only a strictly newer SemVer release", html)
+        self.assertIn("Same-schema upgrades accept only a strictly newer SemVer release", html)
+        for milestone in ("M04", "M05", "M07", "M08"):
+            self.assertNotIn(milestone, html, "programme milestone IDs must not appear in product copy")
         self.assertIn("Existing files and the source path are never replaced", html)
         self.assertIn("Separate application window · hidden until authorised", html)
         self.assertIn("opens maximized in its own native window", html)

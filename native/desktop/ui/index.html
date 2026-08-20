@@ -58,25 +58,21 @@
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7v3H3zM6 6.5h7v7H6z"></path><path d="M3 5.5v5h2"></path></svg>
               <span>Create copy</span>
-              <span class="nav-tag">M04</span>
             </button>
             <button type="button" class="nav-item" data-page="lineage">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h5M8 4l2 4M10 8l3 4M3 12h10"></path><circle cx="3" cy="4" r="1"></circle><circle cx="10" cy="8" r="1"></circle><circle cx="13" cy="12" r="1"></circle></svg>
               <span>Lineage</span>
-              <span class="nav-tag">M04</span>
             </button>
             <button type="button" class="nav-item" data-page="compare">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h4v7h-4zM9.5 4.5h4v7h-4zM6.5 8h3"></path></svg>
               <span>Compare</span>
-              <span class="nav-tag">M05</span>
             </button>
             <button type="button" class="nav-item" data-page="versions">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5h10v3H3zM3 9.5h10v3H3z"></path><path d="M5 6.5v3M11 6.5v3"></path></svg>
               <span>Versions</span>
-              <span class="nav-tag">M07</span>
             </button>
             <span class="nav-group-label">Host</span>
             <button type="button" class="nav-item" data-page="security">
@@ -261,8 +257,8 @@
             <div class="section-card milestone-empty-state">
               <span class="boundary-kicker">Read-only preview</span>
               <h2 id="lineage-preview-page-title">Lineage</h2>
-              <p>Verified lineage browsing is delivered with create-new copy and fork outputs in M04. No mutable lineage claim is used as publisher authority.</p>
-              <button type="button" disabled title="Lineage browsing is delivered in M04.">Open lineage</button>
+              <p>Verified lineage is recorded for create-new copy and fork outputs. No mutable lineage claim is used as publisher authority.</p>
+              <button type="button" disabled title="Lineage browsing is not available yet.">Open lineage</button>
             </div>
           </section>
 
@@ -453,7 +449,7 @@
               <pre id="upgrade-result-output" tabindex="0" aria-live="polite" aria-label="Verified application upgrade result"></pre>
             </div>
 
-            <p class="boundary-note">M07 accepts only a strictly newer SemVer release with the same data-schema ID and version. Releases that require migration are rejected until M08.</p>
+            <p class="boundary-note">Same-schema upgrades accept only a strictly newer SemVer release with the same data-schema ID and version. Releases that require data migration are not supported.</p>
           </section>
 
           <section class="page-panel" data-page-panel="security" aria-labelledby="security-page-title" hidden>
