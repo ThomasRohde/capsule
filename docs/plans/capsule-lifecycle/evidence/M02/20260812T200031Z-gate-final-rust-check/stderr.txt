@@ -1,0 +1,10 @@
+    Checking sqlite-capsule-lifecycle v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-lifecycle)
+    Checking sqlite-capsule-launch v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-launch)
+    Checking sqlite-capsule-update v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-update)
+    Checking sqlite-capsule-signing v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-signing)
+    Checking sqlite-capsule-runtime v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-runtime)
+    Checking sqlite-capsule-workspace v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-workspace)
+    Checking sqlite-capsule-installer v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-installer)
+    Checking sqlite-capsule-desktop v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\desktop\src-tauri)
+    Checking sqlite-capsule-cli v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.61s

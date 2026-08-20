@@ -1,0 +1,36 @@
+{
+  "command": [
+    "C:\\Python312\\python.exe",
+    "docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py",
+    "--require-jsonschema"
+  ],
+  "completed_at": "2026-08-12T22:43:19Z",
+  "cwd": ".",
+  "duration_ms": 621,
+  "exit_code": 0,
+  "milestone": "M03",
+  "name": "gate-final-lifecycle-specs",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T22:43:18Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T224318Z-gate-final-lifecycle-specs/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 7428,
+    "original_bytes": 7428,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T224318Z-gate-final-lifecycle-specs/stdout.txt",
+    "sha256_captured": "d5e19fc7c0c77c1a22d4cc4ffc55ee813cc0c9cf7f142e1fef7d2de1f52413d8",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 120
+}

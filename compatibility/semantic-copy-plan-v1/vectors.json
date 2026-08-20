@@ -1,0 +1,21 @@
+{
+  "profile": "org.sqlite-capsule.semantic-copy-plan-vectors/1",
+  "plan": {
+    "plan_digest": "0b69951f3ca28a6917ec0b51ab049cf622a7a8f5dd75fd2bc2fada5edc675e37",
+    "canonical_size": 2670,
+    "canonical_sha256": "36c9fbd2d0cd64cb542dface964b7b6bd259e2f73a10295844cac3db6e8c2310"
+  },
+  "unicode_scalar_order": {
+    "value": { "": 2, "𐀀": 1 },
+    "canonical": "{\"\":2,\"𐀀\":1}",
+    "sha256": "daec79d8b6582badd3b46bd783a72379bc0b5ae29f5d59f6133025aad69bc8d4"
+  },
+  "canonical_cases": [
+    {
+      "name": "semantic-choice-and-unicode",
+      "value": { "choice": "copy", "dataset": "café", "confirmed": false },
+      "canonical": "{\"choice\":\"copy\",\"confirmed\":false,\"dataset\":\"café\"}",
+      "sha256": "d21e8b5abe38889a86b37d45b25b50aa0f0d8e908bd86cf1d7cb9a1999043e5b"
+    }
+  ]
+}

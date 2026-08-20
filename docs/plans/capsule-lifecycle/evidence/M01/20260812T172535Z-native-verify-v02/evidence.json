@@ -1,0 +1,36 @@
+{
+  "command": [
+    "native\\target\\debug\\capsule-native.exe",
+    "verify",
+    "capsules\\diagram-studio.capsule.sqlite"
+  ],
+  "completed_at": "2026-08-12T17:25:36Z",
+  "cwd": ".",
+  "duration_ms": 586,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "native-verify-v02",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:25:35Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172535Z-native-verify-v02/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 3315,
+    "original_bytes": 3315,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172535Z-native-verify-v02/stdout.txt",
+    "sha256_captured": "9748c612fa9f8564bf5c9b7c927d31684ff0b9cfbb6946e57f327042e300b688",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

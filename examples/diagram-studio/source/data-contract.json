@@ -1,0 +1,56 @@
+{
+  "datasets": [
+    {
+      "id": "diagram-content",
+      "role": "user-content",
+      "description": "User-created diagrams, visual objects, grouping and ordered presentation scenes.",
+      "fork_policy": "copy",
+      "compare_policy": "field",
+      "reconcile_policy": "three-way",
+      "upgrade_policy": "copy",
+      "sensitivity": "normal",
+      "required": 1
+    },
+    {
+      "id": "history-state",
+      "role": "derived",
+      "description": "Rebuildable cursor and tip projection over the semantic history sequence.",
+      "fork_policy": "omit",
+      "compare_policy": "summary",
+      "reconcile_policy": "ignore",
+      "upgrade_policy": "rebuild",
+      "sensitivity": "sensitive",
+      "required": 0
+    },
+    {
+      "id": "edit-history",
+      "role": "history",
+      "description": "Semantic undo and redo state; summaries are sensitive by default.",
+      "fork_policy": "prompt",
+      "compare_policy": "summary",
+      "reconcile_policy": "manual",
+      "upgrade_policy": "copy",
+      "sensitivity": "sensitive",
+      "required": 0
+    }
+  ],
+  "tables": [
+    {"dataset_id": "diagram-content", "table_name": "diagram_document", "sequence": 0, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_layer", "sequence": 1, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_node", "sequence": 2, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_edge", "sequence": 3, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_group", "sequence": 4, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_group_member", "sequence": 5, "primary_key_json": ["group_id", "node_id"], "ignored_columns_json": [], "immutable_columns_json": ["group_id", "node_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_scene", "sequence": 6, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id"]},
+    {"dataset_id": "diagram-content", "table_name": "diagram_scene_override", "sequence": 7, "primary_key_json": ["scene_id", "node_id"], "ignored_columns_json": [], "immutable_columns_json": ["scene_id", "node_id"]},
+    {"dataset_id": "edit-history", "table_name": "diagram_operation", "sequence": 1, "primary_key_json": ["id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["id", "diagram_id", "sequence"]},
+    {"dataset_id": "history-state", "table_name": "diagram_history", "sequence": 0, "primary_key_json": ["diagram_id"], "ignored_columns_json": ["updated_at"], "immutable_columns_json": ["diagram_id"]}
+  ],
+  "dependencies": [
+    {"dataset_id": "edit-history", "depends_on_dataset_id": "diagram-content", "reason": "Semantic history commands refer to diagram content."},
+    {"dataset_id": "history-state", "depends_on_dataset_id": "edit-history", "reason": "The cursor and tip projection summarizes semantic history."}
+  ],
+  "migrations": [],
+  "migration_steps": [],
+  "migration_checks": []
+}

@@ -1,0 +1,38 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-13T05:04:07Z",
+  "cwd": "native",
+  "duration_ms": 136527,
+  "exit_code": 0,
+  "milestone": "M04",
+  "name": "gate-post-review-rust-workspace",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T05:01:50Z",
+  "stderr": {
+    "captured_bytes": 2351,
+    "original_bytes": 2351,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050150Z-gate-post-review-rust-workspace/stderr.txt",
+    "sha256_captured": "a8628f205c9face2fbb88922d671dd182fdbaf445a88c59a62615436134e88c2",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 25662,
+    "original_bytes": 25662,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050150Z-gate-post-review-rust-workspace/stdout.txt",
+    "sha256_captured": "f0c985eac3eefcc547d2cd64b641e60eb9978c9151096c35a6343e4fffb1224d",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 900
+}

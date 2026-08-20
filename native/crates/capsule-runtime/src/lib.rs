@@ -22,7 +22,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use sqlite_capsule_core::{InspectError, inspect_header};
-use sqlite_capsule_launch::{LaunchInspection, inspect_launch};
+use sqlite_capsule_launch::{
+    LaunchInspection, assert_source_binding, inspect_launch, verify_conformance_connection,
+    verify_declared_checks_connection,
+};
 use sqlite_capsule_lifecycle::{
     LifecycleError, PinnedSource, SourceIdentity, WriterLease, prepare_private_directory,
     protect_private_file,
@@ -189,6 +192,24 @@ fn open_fault_point(point: OpenFaultPoint) {
 #[cfg(not(any(test, all(feature = "debug-fault-injection", debug_assertions))))]
 fn open_fault_point(_point: OpenFaultPoint) {}
 
+#[cfg(test)]
+thread_local! {
+    static OPEN_HANDOFF_HOOK: std::cell::RefCell<Option<Box<dyn FnOnce()>>> =
+        std::cell::RefCell::new(None);
+}
+
+#[cfg(test)]
+fn open_handoff_hook() {
+    OPEN_HANDOFF_HOOK.with(|hook| {
+        if let Some(callback) = hook.borrow_mut().take() {
+            callback();
+        }
+    });
+}
+
+#[cfg(not(test))]
+fn open_handoff_hook() {}
+
 #[derive(Debug, Error)]
 pub enum RuntimeError {
     #[error("launch evidence changed before the runtime opened")]
@@ -233,6 +254,8 @@ pub enum RuntimeError {
     Recovery(String),
     #[error("capsule changed outside this host session")]
     SourceConflict,
+    #[error("runtime session state is ambiguous and the session must be closed")]
+    SessionPoisoned,
 }
 
 impl RuntimeError {
@@ -241,6 +264,7 @@ impl RuntimeError {
             self,
             Self::LaunchEvidenceChanged
                 | Self::SourceConflict
+                | Self::SessionPoisoned
                 | Self::Lifecycle(LifecycleError::Replaced)
         )
     }
@@ -586,8 +610,13 @@ impl VerifiedCapsule {
         } else {
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX
         };
+        assert_source_binding(source.canonical_path(), &inspection.evidence.source_sha256)?;
         let connection = Connection::open_with_flags(source.canonical_path(), flags)?;
         harden_connection(&connection, writable)?;
+        connection.execute_batch("BEGIN; SELECT count(*) FROM sqlite_schema;")?;
+        assert_source_binding(source.canonical_path(), &inspection.evidence.source_sha256)?;
+        verify_conformance_connection(&connection, &inspection.identity)?;
+        verify_declared_checks_connection(&connection)?;
         source.assert_current()?;
         open_fault_point(OpenFaultPoint::SqliteOpened);
         let post_open = inspect_launch(source.canonical_path())?;
@@ -595,8 +624,13 @@ impl VerifiedCapsule {
             return Err(RuntimeError::LaunchEvidenceChanged);
         }
         let verification = conformance::verify(&connection, &inspection.identity)?;
+        // Bind the runtime baseline to the exact state still protected by the
+        // verification read transaction. A writer released by COMMIT must then
+        // advance data_version and be rejected by the first asset/endpoint use.
         let opened_data_version = data_version(&connection)?;
         let change_position = change_position(&connection)?;
+        open_handoff_hook();
+        connection.execute_batch("COMMIT")?;
         open_fault_point(OpenFaultPoint::Verified);
         let mut runtime_decision = decision.clone();
         if !writable
@@ -1360,7 +1394,9 @@ mod tests {
             source_identity: SourceIdentity {
                 device: 1,
                 file: index,
+                stable_file_id: format!("{index:032x}"),
                 bytes: bytes.len() as u64,
+                modified_ns: 0,
             },
             source_sha256: "source".to_owned(),
             capsule_id: "capsule".to_owned(),
@@ -1430,6 +1466,57 @@ mod tests {
         store
             .evaluate(&inspection.evidence, &context)
             .expect("authorise fault worker")
+    }
+
+    #[test]
+    fn writer_released_at_verification_handoff_is_rejected_before_asset_release() {
+        let directory = TestDirectory::new();
+        let source_parent = directory.0.join("source");
+        std::fs::create_dir(&source_parent).expect("create source directory");
+        let capsule = source_parent.join("handoff-race.sqlitecapsule");
+        std::fs::copy(checked_capsule(), &capsule).expect("copy checked capsule");
+        let inspection = inspect_launch(&capsule).expect("launch inspection");
+        let decision = authorised_decision(&directory.0, &inspection);
+        let (handle_sender, handle_receiver) = std::sync::mpsc::channel();
+        let writer_path = capsule.clone();
+        OPEN_HANDOFF_HOOK.with(|hook| {
+            *hook.borrow_mut() = Some(Box::new(move || {
+                let (ready_sender, ready_receiver) = std::sync::mpsc::channel();
+                let handle = std::thread::spawn(move || {
+                    let writer = Connection::open(writer_path).expect("open handoff writer");
+                    writer
+                        .execute_batch("BEGIN IMMEDIATE")
+                        .expect("begin blocked writer");
+                    writer
+                        .execute(
+                            "UPDATE diagram_document SET title = title || ' handoff-race' \
+                             WHERE id = 'diagram-main'",
+                            [],
+                        )
+                        .expect("stage external mutation");
+                    ready_sender.send(()).expect("signal staged writer");
+                    writer
+                        .execute_batch("COMMIT")
+                        .expect("commit after handoff");
+                });
+                ready_receiver
+                    .recv()
+                    .expect("writer reached blocked commit");
+                handle_sender.send(handle).expect("return writer handle");
+            }));
+        });
+
+        let runtime = VerifiedCapsule::open(&capsule, &inspection, &decision, false, None, None)
+            .expect("runtime completes verified handoff");
+        handle_receiver
+            .recv()
+            .expect("receive writer handle")
+            .join()
+            .expect("writer thread");
+        let error = runtime
+            .entry_asset()
+            .expect_err("external handoff writer must close the session");
+        assert!(error.session_must_close(), "unexpected error: {error}");
     }
 
     fn rename_arguments(stage: &str) -> Map<String, Value> {

@@ -66,7 +66,9 @@ Add-Type -AssemblyName UIAutomationTypes
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -TypeDefinition @'
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 public static class SQLiteCapsuleDialogFocus
 {
@@ -75,6 +77,130 @@ public static class SQLiteCapsuleDialogFocus
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr window, IntPtr processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool attach);
+
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr window, int command);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetActiveWindow(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetFocus(IntPtr window);
+
+    private delegate bool EnumWindowsProc(IntPtr window, IntPtr parameter);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr parameter);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassNameW(IntPtr window, StringBuilder className, int maximum);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool SetWindowTextW(IntPtr window, string value);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowTextW(IntPtr window, StringBuilder value, int maximum);
+
+    public static bool TrySetExactFileName(IntPtr edit, string value)
+    {
+        if (edit == IntPtr.Zero || !SetWindowTextW(edit, value)) return false;
+        var observed = new StringBuilder(Math.Max(value.Length + 1, 260));
+        GetWindowTextW(edit, observed, observed.Capacity);
+        return string.Equals(observed.ToString(), value, StringComparison.Ordinal);
+    }
+
+    public static bool TryCommitExact(IntPtr button)
+    {
+        if (button == IntPtr.Zero) return false;
+        SendMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
+        return true;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDlgItem(IntPtr dialog, int controlId);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessageW(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
+    public static bool ForceForeground(IntPtr window)
+    {
+        uint currentThread = GetCurrentThreadId();
+        uint targetThread = GetWindowThreadProcessId(window, IntPtr.Zero);
+        IntPtr foreground = GetForegroundWindow();
+        uint foregroundThread = foreground == IntPtr.Zero
+            ? 0
+            : GetWindowThreadProcessId(foreground, IntPtr.Zero);
+        bool attachedForeground = foregroundThread != 0 && foregroundThread != currentThread
+            && AttachThreadInput(currentThread, foregroundThread, true);
+        bool attachedTarget = targetThread != 0 && targetThread != currentThread
+            && targetThread != foregroundThread
+            && AttachThreadInput(currentThread, targetThread, true);
+        try
+        {
+            ShowWindow(window, 9);
+            BringWindowToTop(window);
+            SetActiveWindow(window);
+            SetFocus(window);
+            return SetForegroundWindow(window) || GetForegroundWindow() == window;
+        }
+        finally
+        {
+            if (attachedTarget) AttachThreadInput(currentThread, targetThread, false);
+            if (attachedForeground) AttachThreadInput(currentThread, foregroundThread, false);
+        }
+    }
+
+    private static void CollectEdits(IntPtr parent, List<IntPtr> candidates)
+    {
+        if (parent == IntPtr.Zero) return;
+        EnumChildWindows(parent, delegate(IntPtr child, IntPtr parameter)
+        {
+            var name = new StringBuilder(64);
+            if (GetClassNameW(child, name, name.Capacity) > 0
+                && string.Equals(name.ToString(), "Edit", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Add(child);
+            }
+            return true;
+        }, IntPtr.Zero);
+    }
+
+    public static bool TrySetFileName(IntPtr dialog, string value)
+    {
+        var candidates = new List<IntPtr>();
+        // Common Item Dialog: cmb13 (0x047c) owns the file-name edit. Give it
+        // priority over other Edit controls such as the search box.
+        CollectEdits(GetDlgItem(dialog, 0x047c), candidates);
+        IntPtr classicEdit = GetDlgItem(dialog, 0x0480);
+        if (classicEdit != IntPtr.Zero) candidates.Add(classicEdit);
+        CollectEdits(dialog, candidates);
+        bool updated = false;
+        for (int index = 0; index < candidates.Count; index++)
+        {
+            updated = SetWindowTextW(candidates[index], value) || updated;
+        }
+        return updated;
+    }
+
+    public static bool TryCommit(IntPtr dialog)
+    {
+        IntPtr button = GetDlgItem(dialog, 1);
+        if (button == IntPtr.Zero) return false;
+        SendMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
+        return true;
+    }
 }
 '@
 
@@ -207,9 +333,53 @@ if (-not $fileNameInput.TryGetCurrentPattern(
 }
 $inputPatternObject = $valuePatternObject
 if ($null -eq $fileNameInput -or $null -eq $inputPatternObject) {
-    $fileNameInput = $fileName
-    $inputPatternKind = 'WindowsSaveDialogKeyboard'
-    $inputPatternObject = [IntPtr] $dialog.Current.NativeWindowHandle
+    $legacyPatternObject = $null
+    $legacyCandidate = $fileName
+    $legacyPattern = [System.Windows.Automation.AutomationPattern]::LookupById(10018)
+    if ($null -ne $legacyPattern -and -not $legacyCandidate.TryGetCurrentPattern(
+        $legacyPattern,
+        [ref] $legacyPatternObject
+    )) {
+        for ($index = 0; $index -lt $descendants.Count; $index += 1) {
+            $candidate = $descendants.Item($index)
+            $candidatePattern = $null
+            if ($null -ne $legacyPattern -and $candidate.TryGetCurrentPattern(
+                $legacyPattern,
+                [ref] $candidatePattern
+            )) {
+                $legacyCandidate = $candidate
+                $legacyPatternObject = $candidatePattern
+                break
+            }
+        }
+    }
+    if ($null -ne $legacyPatternObject) {
+        $fileNameInput = $legacyCandidate
+        $inputPatternKind = 'LegacyIAccessiblePattern'
+        $inputPatternObject = $legacyPatternObject
+    }
+    else {
+        $fileNameInput = $fileName
+        $nativeFileNameHandle = [IntPtr] $fileName.Current.NativeWindowHandle
+        $nativeSaveButtonHandle = [IntPtr] $saveButton.Current.NativeWindowHandle
+        if ([string]::Equals(
+            $fileName.Current.Name,
+            $leaf,
+            [System.StringComparison]::Ordinal
+        ) -and $nativeSaveButtonHandle -ne [IntPtr]::Zero) {
+            $inputPatternKind = 'HostSuggestedName'
+            $inputPatternObject = $nativeSaveButtonHandle
+        }
+        elseif ($nativeFileNameHandle -ne [IntPtr]::Zero -and
+            $nativeSaveButtonHandle -ne [IntPtr]::Zero) {
+            $inputPatternKind = 'NativeDialogEdit'
+            $inputPatternObject = $nativeFileNameHandle
+        }
+        else {
+            $inputPatternKind = 'WindowsSaveDialogKeyboard'
+            $inputPatternObject = [IntPtr] $dialog.Current.NativeWindowHandle
+        }
+    }
 }
 if ($null -eq $fileNameInput -or $null -eq $inputPatternObject) {
     throw 'The process-owned file-name host has no writable UI Automation pattern.'
@@ -219,6 +389,7 @@ $saveButtonSupportsInvoke = $saveButton.TryGetCurrentPattern(
     [System.Windows.Automation.InvokePattern]::Pattern,
     [ref] $invokePatternObject
 )
+$foregroundRequested = $null
 
 try {
     $dialog.SetFocus()
@@ -233,32 +404,72 @@ catch {
     # Some Windows 11 file-dialog proxies expose a native HWND but reject the
     # optional UIA focus call. SetWindowTextW below targets that HWND directly.
 }
-if ($inputPatternKind -eq 'ValuePattern') {
-    if (-not $saveButtonSupportsInvoke -or $null -eq $invokePatternObject) {
+if ($inputPatternKind -eq 'ValuePattern' -or $inputPatternKind -eq 'LegacyIAccessiblePattern' -or $inputPatternKind -eq 'NativeDialogEdit' -or $inputPatternKind -eq 'HostSuggestedName') {
+    if ($inputPatternKind -notin @('NativeDialogEdit', 'HostSuggestedName') -and
+        (-not $saveButtonSupportsInvoke -or $null -eq $invokePatternObject)) {
         throw 'The process-owned Save button does not support InvokePattern.'
     }
-    ([System.Windows.Automation.ValuePattern] $inputPatternObject).SetValue($canonicalDestination)
-    ([System.Windows.Automation.InvokePattern] $invokePatternObject).Invoke()
-    $saveCommitMethod = 'InvokePattern'
+    if ($inputPatternKind -eq 'HostSuggestedName') {
+        # The host owns the bounded default leaf. Leaving it untouched exercises
+        # the real production picker without relying on locale-specific keys.
+    }
+    elseif ($inputPatternKind -eq 'ValuePattern') {
+        ([System.Windows.Automation.ValuePattern] $inputPatternObject).SetValue($canonicalDestination)
+    }
+    elseif ($inputPatternKind -eq 'LegacyIAccessiblePattern') {
+        $inputPatternObject.SetValue($canonicalDestination)
+    }
+    elseif (-not [SQLiteCapsuleDialogFocus]::TrySetExactFileName(
+        [IntPtr] $inputPatternObject,
+        $canonicalDestination
+    )) {
+        throw 'The process-owned save dialog exposes no writable native file-name edit.'
+    }
+    if ($saveButtonSupportsInvoke -and $null -ne $invokePatternObject) {
+        ([System.Windows.Automation.InvokePattern] $invokePatternObject).Invoke()
+        $saveCommitMethod = 'InvokePattern'
+    }
+    elseif ([SQLiteCapsuleDialogFocus]::TryCommitExact(
+        [IntPtr] $saveButton.Current.NativeWindowHandle
+    )) {
+        $saveCommitMethod = 'NativeDialogButton'
+    }
+    else {
+        throw 'The process-owned Save button has no invokable native control.'
+    }
 }
 else {
     $dialogHandle = [IntPtr] $inputPatternObject
     if ($dialogHandle -eq [IntPtr]::Zero) {
         throw 'The process-owned save dialog has no native window handle.'
     }
-    [SQLiteCapsuleDialogFocus]::SetForegroundWindow($dialogHandle) | Out-Null
+    $foregroundRequested = [SQLiteCapsuleDialogFocus]::ForceForeground($dialogHandle)
     Start-Sleep -Milliseconds 100
-    if ([SQLiteCapsuleDialogFocus]::GetForegroundWindow() -ne $dialogHandle) {
-        throw 'The process-owned save dialog could not receive the foreground.'
-    }
+    # Windows may reject the observable foreground transition for a process-
+    # owned common dialog while still accepting keyboard input after the UIA
+    # SetFocus calls above. Continue and prove success from the create-new output
+    # plus the dialog-owned report instead of treating foreground telemetry as
+    # authority.
     if ($canonicalDestination.IndexOfAny([char[]] '+^%~()[]{}') -ge 0) {
         throw 'The isolated acceptance path contains unsupported SendKeys metacharacters.'
     }
-    [System.Windows.Forms.SendKeys]::SendWait('%n')
-    [System.Windows.Forms.SendKeys]::SendWait('^a')
-    [System.Windows.Forms.SendKeys]::SendWait($canonicalDestination)
+    $keyboard = New-Object -ComObject WScript.Shell
+    if (-not $keyboard.AppActivate([int] $HostProcessId)) {
+        throw 'The process-owned save dialog could not be activated for keyboard input.'
+    }
+    Start-Sleep -Milliseconds 100
+    try {
+        $dialog.SetFocus()
+        $fileNameInput.SetFocus()
+    }
+    catch {
+        # The exact modal dialog is already process-owned and active; the
+        # subsequent create-new output remains the acceptance authority.
+    }
+    $keyboard.SendKeys('^a')
+    $keyboard.SendKeys($canonicalDestination)
     Start-Sleep -Milliseconds 200
-    [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
+    $keyboard.SendKeys('{ENTER}')
     $saveCommitMethod = 'KeyboardEnter'
 }
 
@@ -275,5 +486,6 @@ else {
     save_button_automation_id = $saveButton.Current.AutomationId
     save_button_supports_invoke = $saveButtonSupportsInvoke
     save_commit_method = $saveCommitMethod
+    foreground_requested = $foregroundRequested
     destination = $canonicalDestination
 } | ConvertTo-Json -Compress

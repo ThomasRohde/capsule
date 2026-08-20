@@ -1,0 +1,38 @@
+{
+  "command": [
+    "cargo",
+    "check",
+    "--offline",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-13T05:10:49Z",
+  "cwd": "native",
+  "duration_ms": 3900,
+  "exit_code": 0,
+  "milestone": "M04",
+  "name": "gate-final-check",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T05:10:45Z",
+  "stderr": {
+    "captured_bytes": 405,
+    "original_bytes": 405,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051045Z-gate-final-check/stderr.txt",
+    "sha256_captured": "607bbfc1cc1d0d8d2e4773909e6fa0c6a0a6b6558dcab4b04ba4b24e6c7f9955",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051045Z-gate-final-check/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

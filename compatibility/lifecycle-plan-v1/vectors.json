@@ -1,0 +1,36 @@
+{
+  "profile": "org.sqlite-capsule.lifecycle-plan-vectors/1",
+  "plan": {
+    "plan_digest": "ccaa96b347b0732e2a911384b76a203efe38fe0e57d2ac7c24eb30dd6df90e20",
+    "canonical_size": 1888,
+    "canonical_sha256": "be9b3f8e858d3e07d97b2b53b34205b6844012e51699097e5c3e7d3ac34c4a08"
+  },
+  "unicode_scalar_order": {
+    "value": {
+      "\ue000": 2,
+      "𐀀": 1
+    },
+    "canonical": "{\"\":2,\"𐀀\":1}",
+    "sha256": "daec79d8b6582badd3b46bd783a72379bc0b5ae29f5d59f6133025aad69bc8d4"
+  },
+  "canonical_cases": [
+    {
+      "name": "primitives-integer-bounds-and-escaping",
+      "value": {
+        "array": [null, true, false, -9223372036854775808, 18446744073709551615],
+        "escaped": "line\nquote\"slash\\"
+      },
+      "canonical": "{\"array\":[null,true,false,-9223372036854775808,18446744073709551615],\"escaped\":\"line\\nquote\\\"slash\\\\\"}",
+      "sha256": "1048d746fd60ac5a16ab06931f1fec141ed14c8d4588dde047898f2480795b8a"
+    },
+    {
+      "name": "combining-forms-remain-distinct",
+      "value": {
+        "é": 1,
+        "é": 2
+      },
+      "canonical": "{\"é\":1,\"é\":2}",
+      "sha256": "c2635d7e15e25b90abc8b3543d92f0ffcee0644372d8b662a0775f88d43278e5"
+    }
+  ]
+}

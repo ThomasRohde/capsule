@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/upgrade-plan-v1.schema.json",
+  "title": "Capsule application upgrade plan",
+  "description": "Create-new rebase plan. The output starts from a clean verified target application release, then carries forward the source instance profile and applies declared data policies/migrations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "plan_id",
+    "source",
+    "target_release",
+    "output",
+    "publisher_continuity",
+    "capability_delta",
+    "migration_path",
+    "dataset_actions",
+    "checks",
+    "limits",
+    "plan_digest"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.upgrade-plan/1"
+    },
+    "plan_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source": {
+      "$ref": "#/$defs/ref"
+    },
+    "target_release": {
+      "$ref": "#/$defs/ref"
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "preserve_capsule_id",
+        "new_revision_id",
+        "must_not_exist"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "preserve_capsule_id": {
+          "const": true
+        },
+        "new_revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "must_not_exist": {
+          "const": true
+        }
+      }
+    },
+    "publisher_continuity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "source_key_id",
+        "target_key_id"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "same-key",
+            "verified-delegation",
+            "unverified",
+            "different-publisher"
+          ]
+        },
+        "source_key_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_key_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "delegation_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "capability_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added",
+        "removed",
+        "changed",
+        "requires_review"
+      ],
+      "properties": {
+        "added": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "removed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "changed": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "requires_review": {
+          "type": "boolean"
+        }
+      }
+    },
+    "migration_path": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "migration_id",
+          "from_version",
+          "to_version",
+          "definition_digest"
+        ],
+        "properties": {
+          "migration_id": {
+            "type": "string"
+          },
+          "from_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "to_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "definition_digest": {
+            "$ref": "#/$defs/sha256"
+          }
+        }
+      }
+    },
+    "dataset_actions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataset_id",
+          "policy",
+          "action",
+          "reason"
+        ],
+        "properties": {
+          "dataset_id": {
+            "type": "string"
+          },
+          "policy": {
+            "enum": [
+              "copy",
+              "target",
+              "migrate",
+              "rebuild",
+              "omit",
+              "forbid"
+            ]
+          },
+          "action": {
+            "enum": [
+              "copy",
+              "take-target",
+              "migrate",
+              "rebuild",
+              "omit",
+              "block"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stage",
+          "check_id",
+          "severity"
+        ],
+        "properties": {
+          "stage": {
+            "enum": [
+              "source",
+              "target-release",
+              "pre-publish",
+              "post-publish"
+            ]
+          },
+          "check_id": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_input_bytes",
+        "max_output_bytes",
+        "max_rows_written",
+        "deadline_ms"
+      ],
+      "properties": {
+        "max_input_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_rows_written": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        }
+      }
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_sha256",
+        "capsule_id",
+        "revision_id",
+        "app_id",
+        "app_version",
+        "application_digest",
+        "publisher_key_id",
+        "data_schema_id",
+        "data_schema_version"
+      ],
+      "properties": {
+        "file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "capsule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "revision_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "app_id": {
+          "type": "string"
+        },
+        "app_version": {
+          "type": "string"
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "publisher_key_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "data_schema_id": {
+          "type": "string"
+        },
+        "data_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "profile": "org.sqlite-capsule.example-copy-fixtures/1",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "selective_fork": {
+    "choices": [
+      { "dataset_id": "diagram-content", "disposition": "include", "sensitive_confirmed": false },
+      { "dataset_id": "edit-history", "disposition": "omit", "sensitive_confirmed": false },
+      { "dataset_id": "history-state", "disposition": "omit", "sensitive_confirmed": false }
+    ],
+    "expected": {
+      "application_digest": "preserved",
+      "capsule_identity": "new-uuid-v4",
+      "revision_identity": "new-uuid-v4",
+      "instance_profile": "signed-app-defaults",
+      "sensitive_source_rows": "absent-after-vacuum"
+    }
+  },
+  "template": {
+    "authority": "signed-and-reproduced-template-state/1",
+    "choices": [],
+    "expected": {
+      "application_digest": "preserved",
+      "capsule_identity": "new-uuid-v4",
+      "revision_identity": "new-uuid-v4",
+      "dataset_rows": "authenticated-template-state-only",
+      "mutable_platform": "host-reset-profile"
+    }
+  }
+}

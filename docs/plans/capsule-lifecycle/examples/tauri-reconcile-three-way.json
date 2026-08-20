@@ -1,0 +1,61 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-three-way/1",
+  "ancestor_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "ancestor": {
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440001",
+    "application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "signature_count": 1,
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "clean_change_count": 3,
+  "conflicts": [
+    {
+      "conflict_token": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "dataset_label": "Diagram content",
+      "table_label": "Diagram nodes",
+      "kind": "update-update",
+      "choices": [
+        {
+          "resolution_token": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "choice": "keep-target"
+        },
+        {
+          "resolution_token": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "choice": "take-source"
+        }
+      ]
+    },
+    {
+      "conflict_token": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "dataset_label": "Diagram content",
+      "table_label": "Diagram nodes",
+      "kind": "immutable-field",
+      "choices": [
+        {
+          "resolution_token": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+          "choice": "keep-target"
+        }
+      ]
+    },
+    {
+      "conflict_token": "1234567890abcdefghijklmnopqrstuvwxyzABCDEFG",
+      "dataset_label": "Diagram content",
+      "table_label": "Diagram nodes",
+      "kind": "delete-update",
+      "deleted_side": "source",
+      "choices": [
+        {
+          "resolution_token": "2345678901abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "choice": "keep-target"
+        },
+        {
+          "resolution_token": "3456789012abcdefghijklmnopqrstuvwxyzABCDEFG",
+          "choice": "take-source"
+        }
+      ]
+    }
+  ],
+  "expires_at": "2026-08-20T12:05:00Z"
+}

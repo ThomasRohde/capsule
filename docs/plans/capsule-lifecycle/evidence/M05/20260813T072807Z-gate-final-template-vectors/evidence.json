@@ -1,0 +1,35 @@
+{
+  "command": [
+    "python",
+    "tools\\check_template_state_vectors.py"
+  ],
+  "completed_at": "2026-08-13T07:28:07Z",
+  "cwd": ".",
+  "duration_ms": 66,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-template-vectors",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:28:07Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072807Z-gate-final-template-vectors/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 647,
+    "original_bytes": 647,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072807Z-gate-final-template-vectors/stdout.txt",
+    "sha256_captured": "8773e66b04d96d55fdd200a65ceeabe5113135865002e80d4d62540f5cd291ea",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

@@ -1,0 +1,13 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.58s
+checkpoint-restart native host stderr:
+could not create locked raw renderer: WebView2 error: WindowsError(Error { code: HRESULT(0x800700AA), message: "The requested resource is in use." })
+file:///C:/Users/thoma/Projects/sqlite-capsule/tests/native/raw-child.e2e.mjs:181
+  throw new Error(`${label} CDP endpoint did not start: ${lastError}`);
+        ^
+
+Error: checkpoint-restart raw child CDP endpoint did not start: TypeError: fetch failed
+    at waitForEndpoint (file:///C:/Users/thoma/Projects/sqlite-capsule/tests/native/raw-child.e2e.mjs:181:9)
+    at async runCheckpointCrashScenario (file:///C:/Users/thoma/Projects/sqlite-capsule/tests/native/raw-child.e2e.mjs:1439:32)
+    at async file:///C:/Users/thoma/Projects/sqlite-capsule/tests/native/raw-child.e2e.mjs:2149:3
+
+Node.js v25.9.0

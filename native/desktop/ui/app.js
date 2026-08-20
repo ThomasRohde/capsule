@@ -25,6 +25,87 @@ const updateStageButton = document.querySelector("#update-stage-button");
 const updateValidationStatus = document.querySelector("#update-validation-status");
 const openButton = document.querySelector("#open-button");
 const openStatus = document.querySelector("#open-status");
+const cabinetOpenButton = document.querySelector("#cabinet-open-button");
+const cabinetOpenStatus = document.querySelector("#cabinet-open-status");
+const recentCapsules = document.querySelector("#recent-capsules");
+const copyStatus = document.querySelector("#copy-status");
+const copyBadge = document.querySelector("#copy-badge");
+const copyModeGrid = document.querySelector("#copy-mode-grid");
+const copyProfileReview = document.querySelector("#copy-profile-review");
+const copyProfileDatasets = document.querySelector("#copy-profile-datasets");
+const copyDestinationStatus = document.querySelector("#copy-destination-status");
+const copyDestinationButton = document.querySelector("#copy-destination-button");
+const copyClearButton = document.querySelector("#copy-clear-button");
+const copyPrepareButton = document.querySelector("#copy-prepare-button");
+const copyReview = document.querySelector("#copy-review");
+const copyReviewDetails = document.querySelector("#copy-review-details");
+const copyDatasetReview = document.querySelector("#copy-dataset-review");
+const copyConsent = document.querySelector("#copy-consent");
+const copyConfirmation = document.querySelector("#copy-confirmation");
+const copyExecuteButton = document.querySelector("#copy-execute-button");
+const copyActionStatus = document.querySelector("#copy-action-status");
+const copyResultWrap = document.querySelector("#copy-result-wrap");
+const copyResult = document.querySelector("#copy-result");
+const compareStatus = document.querySelector("#compare-status");
+const compareBadge = document.querySelector("#compare-badge");
+const compareChooseButton = document.querySelector("#compare-choose-button");
+const compareCloseButton = document.querySelector("#compare-close-button");
+const compareActionStatus = document.querySelector("#compare-action-status");
+const compareReport = document.querySelector("#compare-report");
+const compareCompatibilityTitle = document.querySelector("#compare-compatibility-title");
+const compareCompatibilityReason = document.querySelector("#compare-compatibility-reason");
+const compareCompatibilityBadge = document.querySelector("#compare-compatibility-badge");
+const comparePairDetails = document.querySelector("#compare-pair-details");
+const compareLimitBadge = document.querySelector("#compare-limit-badge");
+const compareApplicationButton = document.querySelector("#compare-application-button");
+const compareApplicationDetail = document.querySelector("#compare-application-detail");
+const compareDatasets = document.querySelector("#compare-datasets");
+const compareDetail = document.querySelector("#compare-detail");
+const compareDetailTitle = document.querySelector("#compare-detail-title");
+const compareDetailDescription = document.querySelector("#compare-detail-description");
+const compareDetailBadge = document.querySelector("#compare-detail-badge");
+const compareSensitiveConsent = document.querySelector("#compare-sensitive-consent");
+const compareRevealButton = document.querySelector("#compare-reveal-button");
+const compareDetailTableWrap = document.querySelector("#compare-detail-table-wrap");
+const compareDetailRows = document.querySelector("#compare-detail-rows");
+const compareNextButton = document.querySelector("#compare-next-button");
+const reconcileBadge = document.querySelector("#reconcile-badge");
+const reconcileOpenButton = document.querySelector("#reconcile-open-button");
+const reconcileStatus = document.querySelector("#reconcile-status");
+const reconcileOptionsWrap = document.querySelector("#reconcile-options");
+const reconcileOrientations = document.querySelector("#reconcile-orientations");
+const reconcileStartButton = document.querySelector("#reconcile-start-button");
+const reconcileSessionWrap = document.querySelector("#reconcile-session");
+const reconcileIdentity = document.querySelector("#reconcile-identity");
+const reconcileSelections = document.querySelector("#reconcile-selections");
+const reconcileConflicts = document.querySelector("#reconcile-conflicts");
+const reconcileAncestorButton = document.querySelector("#reconcile-ancestor-button");
+const reconcileThreeWayWrap = document.querySelector("#reconcile-three-way");
+const reconcileSessionChecks = document.querySelector("#reconcile-session-checks");
+const reconcileDestinationButton = document.querySelector("#reconcile-destination-button");
+const reconcilePrepareButton = document.querySelector("#reconcile-prepare-button");
+const reconcileDestinationStatus = document.querySelector("#reconcile-destination-status");
+const reconcileReviewWrap = document.querySelector("#reconcile-review");
+const reconcileReviewTitle = document.querySelector("#reconcile-review-title");
+const reconcileReviewIdentity = document.querySelector("#reconcile-review-identity");
+const reconcileOperationList = document.querySelector("#reconcile-operation-list");
+const reconcileReviewChecks = document.querySelector("#reconcile-review-checks");
+const reconcileConfirmation = document.querySelector("#reconcile-confirmation");
+const reconcileExecuteButton = document.querySelector("#reconcile-execute-button");
+const reconcileCancelButton = document.querySelector("#reconcile-cancel-button");
+const reconcileResult = document.querySelector("#reconcile-result");
+const reconcileResultOutput = document.querySelector("#reconcile-result-output");
+const reviewCapabilitiesButton = document.querySelector("#review-capabilities-button");
+const overviewTitle = document.querySelector("#overview-title");
+const overviewDescription = document.querySelector("#overview-description");
+const overviewIconImage = document.querySelector("#overview-icon-image");
+const overviewIconFallback = document.querySelector("#overview-icon-fallback");
+const formatBadge = document.querySelector("#format-badge");
+const profileBadge = document.querySelector("#profile-badge");
+const applicationIdentity = document.querySelector("#application-identity");
+const instanceIdentity = document.querySelector("#instance-identity");
+const applicationStateBadge = document.querySelector("#application-state-badge");
+const recoverSelectedButton = document.querySelector("#recover-selected-button");
 const reopenButton = document.querySelector("#reopen-button");
 const readOnlyButton = document.querySelector("#read-only-button");
 const restoreButton = document.querySelector("#restore-button");
@@ -54,21 +135,43 @@ const pageTitle = document.querySelector("#page-title");
 const pageSubtitle = document.querySelector("#page-subtitle");
 const pageContent = document.querySelector("#page-content");
 const navSearch = document.querySelector("#nav-search");
-const trustNavTag = document.querySelector("#trust-nav-tag");
+const overviewNavTag = document.querySelector("#overview-nav-tag");
 const updateNavTag = document.querySelector("#update-nav-tag");
 const themeQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
 let currentBackupId = null;
 let lastFocusKey = null;
 let reviewedUpdateVersion = null;
 let signingSession = null;
+let copyDestination = null;
+let copyProfilePreview = null;
+let preparedCopy = null;
+let activeCopyOperationId = null;
+let compareSession = null;
+let compareTableSelection = null;
+let compareNextPageToken = null;
+let comparePageRevealed = false;
+let reconcileOptions = null;
+let reconcileSession = null;
+let reconcileDestination = null;
+let reconcileThreeWay = null;
+const reconcileFinalizations = new Map();
+let preparedReconcile = null;
+let activeReconcileOperationToken = null;
+let currentReport = null;
 let selectedTheme = "dark";
 
 const pageCopy = {
-  trust: ["Trust review", "Host-owned identity for the file that is asking to run. Nothing executes until you decide."],
+  cabinet: ["Cabinet", "Choose a capsule to inspect. Recent metadata is a convenience only and never execution authority."],
+  overview: ["Overview", "Bounded host-owned application, capsule, publisher, and file identity before execution."],
+  copy: ["Create copy", "Review one create-new operation. Paths, retained sources, plans, and publication authority remain in Rust."],
+  lineage: ["Lineage", "Mutable provenance is visibly separate from publisher authentication."],
+  compare: ["Compare", "Read-only compatibility, identity, lineage, application, schema, and signed-policy data comparison."],
+  versions: ["Versions", "Application upgrade and migration remain create-new, signed-release workflows."],
+  security: ["Security", "Trust, capabilities, publisher tools, local trust, and the application boundary."],
   capabilities: ["Capabilities", "Host-owned prompt. Capabilities come from the verified manifest."],
   protection: ["Data protection", "Session mode, verified backups, and recovery for the open capsule."],
   signing: ["Publisher signing", "Host-owned, use-once signing of a verified capsule copy. Private key bytes never enter JavaScript."],
-  updates: ["Host updates", "Compiled, pinned host-only updater. Nothing downloads, stages, or installs without consent."],
+  updates: ["Settings", "Compiled, pinned host-only updater. Nothing downloads, stages, or installs without consent."],
   admin: ["Local trust controls", "Host-local decision record. Capsule-controlled labels remain untrusted text."],
   boundary: ["Application window", "The untrusted renderer runs in a separate native window behind the named bridge."],
 };
@@ -80,8 +183,9 @@ function selectPage(page, options = {}) {
     panel.hidden = !active;
     panel.classList.toggle("is-active", active);
   });
+  const topPage = ["capabilities", "signing", "admin", "boundary"].includes(page) ? "security" : page;
   document.querySelectorAll(".nav-item[data-page]").forEach((button) => {
-    const active = button.dataset.page === page;
+    const active = button.dataset.page === topPage;
     button.classList.toggle("is-selected", active);
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
@@ -106,14 +210,19 @@ function applyTheme(mode) {
   try { globalThis.localStorage.setItem("sqlite-capsule-theme", selectedTheme); } catch (_) { /* protected storage may be unavailable */ }
 }
 
-function setTrustNavState(label, tone) {
-  trustNavTag.textContent = label;
-  trustNavTag.dataset.tone = tone;
+function setOverviewNavState(label, tone) {
+  overviewNavTag.textContent = label;
+  overviewNavTag.dataset.tone = tone;
 }
 
 document.querySelector(".page-navigation").addEventListener("click", (event) => {
   const button = event.target.closest(".nav-item[data-page]");
   if (button) selectPage(button.dataset.page);
+});
+
+document.querySelector("#page-content").addEventListener("click", (event) => {
+  const route = event.target.closest("button[data-route]")?.dataset.route;
+  if (route) selectPage(route);
 });
 
 navSearch.addEventListener("input", () => {
@@ -216,6 +325,13 @@ function shortDigest(value) {
   return value ? `${value.slice(0, 12)}…${value.slice(-10)}` : "Not available";
 }
 
+function hostError(error) {
+  if (error && typeof error === "object" && typeof error.safe_detail === "string") {
+    return error.safe_detail;
+  }
+  return String(error);
+}
+
 function signingPublisherValuesMatchPreview() {
   const preview = signingSession?.preview;
   return Boolean(preview)
@@ -259,7 +375,7 @@ function renderSigningSession(report) {
 
   signingBadge.className = `badge ${report.preview ? "ok" : report.key ? "warn" : ""}`.trim();
   signingBadge.textContent = report.preview ? "Ready to sign" : report.key ? "Key loaded" : "No key";
-  signingNavTag.textContent = report.preview ? "Ready" : report.key ? "Key" : "Use once";
+  if (signingNavTag) signingNavTag.textContent = report.preview ? "Ready" : report.key ? "Key" : "Use once";
   signingStatus.textContent = busy
     ? "Protected host operation in progress. No capsule application code is executing."
     : report.preview
@@ -291,10 +407,8 @@ function renderSigningSession(report) {
 }
 
 function renderCapabilities(capsule) {
-  const permissions = capsule.identity.permissions || {};
   const decisions = capsule.decision.capabilities || {};
   const rows = Object.entries(decisions).map(([name, evaluation]) => {
-    const declaration = permissions[name] || {};
     const label = document.createElement("label");
     label.className = "capability";
     const checkbox = document.createElement("input");
@@ -306,7 +420,7 @@ function renderCapabilities(capsule) {
     const title = document.createElement("strong");
     const reason = document.createElement("p");
     title.textContent = name;
-    reason.textContent = declaration.reason || evaluation.reason;
+    reason.textContent = evaluation.reason;
     copy.append(title, reason);
     const kind = document.createElement("span");
     kind.className = evaluation.required ? "required" : "optional";
@@ -337,8 +451,126 @@ function focusKeyFor(report) {
   return `${report.stage}:${identity}`;
 }
 
+function renderCabinet(snapshot) {
+  const entries = Array.isArray(snapshot?.entries) ? snapshot.entries.slice(0, 12) : [];
+  if (!entries.length) {
+    const empty = document.createElement("li");
+    empty.textContent = "No recent capsules yet.";
+    recentCapsules.replaceChildren(empty);
+    return;
+  }
+  recentCapsules.replaceChildren(...entries.map((entry) => {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    const title = document.createElement("strong");
+    const detail = document.createElement("span");
+    title.textContent = entry.instance_title || entry.application_name || "Unnamed capsule";
+    detail.textContent = `v${entry.format_version || "?"} · ${entry.last_observed_badge || "Reinspect required"} · ${entry.last_opened_at || "Unknown time"}`;
+    button.type = "button";
+    button.className = "recent-capsule-button";
+    button.append(title, detail);
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      cabinetOpenStatus.textContent = "Re-inspecting the selected source. Cached identity and trust are not reused.";
+      cabinetOpenStatus.className = "action-status";
+      try {
+        renderReport(await invokeHost("open_recent_capsule", { recentId: entry.recent_id }));
+      } catch (error) {
+        cabinetOpenStatus.textContent = `Recent open failed closed: ${hostError(error)}`;
+        cabinetOpenStatus.className = "action-status error";
+        button.disabled = false;
+      }
+    });
+    item.append(button);
+    return item;
+  }));
+}
+
+function initials(value) {
+  const words = String(value || "SQLite Capsule").trim().split(/\s+/u).filter(Boolean);
+  return words.slice(0, 2).map((word) => word[0]?.toLocaleUpperCase() || "").join("") || "SC";
+}
+
+function renderOverview(capsule) {
+  const identity = capsule.identity;
+  const overview = capsule.overview || identity.overview || {};
+  const application = overview.application || {};
+  const instance = overview.instance || null;
+  const dataSchema = overview.data_schema || null;
+  const legacy = overview.compatibility === "legacy-v02" || application.legacy_fallback === true || identity.format_version === "0.2";
+  overviewTitle.textContent = instance?.title || application.name || identity.title || "Capsule overview";
+  overviewDescription.textContent = instance?.description || application.description || identity.summary || "No description supplied.";
+  formatBadge.textContent = `Format v${overview.format_version || identity.format_version}`;
+  formatBadge.className = "badge";
+  profileBadge.textContent = legacy ? "Legacy v0.2" : "Lifecycle v0.3";
+  profileBadge.className = `badge ${legacy ? "warn" : "ok"}`;
+  const publisherState = application.publisher?.state || (capsule.decision.signature_valid ? "signature-valid" : "unsigned");
+  applicationStateBadge.textContent = publisherState === "signature-valid"
+    ? "Signature valid"
+    : publisherState === "invalid-signature"
+      ? "Invalid signature"
+      : "Unsigned";
+  applicationStateBadge.className = `badge ${publisherState === "signature-valid" ? "ok" : publisherState === "invalid-signature" ? "fail" : "warn"}`;
+
+  const safeIcon = application.safe_image || instance?.safe_image;
+  const iconSource = safeIcon?.data_url;
+  const allowedIcon = typeof iconSource === "string"
+    && (iconSource.startsWith("data:image/png;base64,") || iconSource.startsWith("data:image/webp;base64,"));
+  overviewIconImage.hidden = !allowedIcon;
+  overviewIconFallback.hidden = allowedIcon;
+  overviewIconImage.removeAttribute("src");
+  if (allowedIcon) overviewIconImage.src = iconSource;
+  overviewIconFallback.textContent = initials(application.name || instance?.title || identity.title);
+
+  setRows(applicationIdentity, [
+    [legacy ? "Legacy application" : "Application", application.name || identity.title],
+    ["Application ID", application.app_id || identity.app_id],
+    ["Release", application.app_version || identity.app_version],
+    ["Category", application.category || (legacy ? "Legacy capsule" : "Not declared")],
+    ["Released", application.released_at || "Not available in v0.2"],
+    ["Publisher metadata", capsule.publisher?.name || application.publisher?.name || "None"],
+    ["Cryptographic state", applicationStateBadge.textContent],
+    ["Host trust", application.publisher?.host_trust || (capsule.decision.publisher_trusted ? "trusted" : "not trusted")],
+    ["Revocation", application.publisher?.revocation || capsule.decision.revocation_status],
+  ]);
+  if (instance) {
+    setRows(instanceIdentity, [
+      ["Title", instance.title],
+      ["Capsule ID", instance.capsule_id],
+      ["Revision", instance.revision_id || "Not declared"],
+      ["Document kind", instance.document_kind],
+      ["Tags", Array.isArray(instance.tags) && instance.tags.length ? instance.tags.join(", ") : "None"],
+      ["Updated", instance.content_updated_at],
+      ["Data schema", dataSchema ? `${dataSchema.id || dataSchema.data_schema_id} v${dataSchema.version || dataSchema.data_schema_version}` : "Not declared"],
+    ]);
+  } else {
+    setRows(instanceIdentity, [
+      ["Profile", "Not available in legacy v0.2"],
+      ["Compatibility", "No v0.3 revision, tags, or data-schema identity is synthesized"],
+    ]);
+  }
+}
+
 function renderReport(report) {
+  const priorSelectionId = currentSelectionId();
+  currentReport = report;
+  const nextSelectionId = currentSelectionId();
+  if (priorSelectionId && priorSelectionId !== nextSelectionId && !activeCopyOperationId) {
+    resetCopyReview("The selected Capsule changed. Choose a fresh create-new destination.");
+  }
+  if (priorSelectionId && priorSelectionId !== nextSelectionId && compareSession) {
+    resetCompareView("The selected Capsule changed. Choose a fresh comparison pair.");
+  }
+  if (priorSelectionId && priorSelectionId !== nextSelectionId) {
+    if (!activeReconcileOperationToken) {
+      resetReconcileView("The selected Capsule changed. Start a fresh comparison before reconciling.");
+    } else {
+      reconcileStatus.textContent = "The Cabinet selection changed. The host cancelled the prior reconciliation if publication was still cancellable.";
+      reconcileStatus.className = "lifecycle-action-status error";
+    }
+  }
   const focusKey = focusKeyFor(report);
+  void refreshCabinet();
   actionStatus.textContent = "";
   actionStatus.className = "action-status";
   openStatus.textContent = "";
@@ -347,34 +579,40 @@ function renderReport(report) {
     state.textContent = "Rejected before execution";
     trustBadge.textContent = "Fail closed";
     trustBadge.className = "badge fail";
-    setTrustNavState("Blocked", "fail");
+    setOverviewNavState("Blocked", "fail");
     setVerdict("Capsule rejected", report.error, "fail", "×");
     setRows(identityDetails, [["Stage", report.stage], ["Executable assets", "Not released"]]);
     capabilityList.replaceChildren();
     actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+    reviewCapabilitiesButton.disabled = true;
+    recoverSelectedButton.disabled = report.stage !== "recovery-required";
     reopenButton.disabled = true;
     readOnlyButton.disabled = true;
     forgetDecisionButton.disabled = true;
     if (lastFocusKey !== focusKey) {
-      verdict.focus();
+      selectPage(report.stage === "recovery-required" ? "protection" : "overview", { focus: false });
+      (report.stage === "recovery-required" ? recoverSelectedButton : verdict).focus();
       lastFocusKey = focusKey;
     }
     return;
   }
+  recoverSelectedButton.disabled = true;
   if (!report.capsule) {
     state.textContent = "No capsule selected";
     trustBadge.textContent = "Idle";
     trustBadge.className = "badge";
-    setTrustNavState("Idle", "idle");
+    setOverviewNavState("No file", "idle");
     setVerdict("Choose a capsule to begin", "Open with a .capsule.sqlite path. Nothing is executing.", "", "·");
     setRows(identityDetails, [["Stage", report.stage], ["Executable assets", "Not released"]]);
     capabilityList.replaceChildren();
     actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+    reviewCapabilitiesButton.disabled = true;
     reopenButton.disabled = true;
     readOnlyButton.disabled = true;
     forgetDecisionButton.disabled = true;
     if (lastFocusKey !== focusKey) {
-      openButton.focus();
+      selectPage("cabinet", { focus: false });
+      cabinetOpenButton.focus();
     }
     lastFocusKey = focusKey;
     return;
@@ -384,12 +622,15 @@ function renderReport(report) {
   const decision = capsule.decision;
   const identity = capsule.identity;
   const recovery = report.recovery;
+  renderOverview(capsule);
+  reviewCapabilitiesButton.disabled = false;
   const recoverySummary = recovery
     ? `SQLite recovery attempted · ${recovery.rollback_journal_hot_candidate_before ? "hot-journal candidate" : "rollback sidecar"} · ${recovery.rollback_journal_present_after ? "sidecar retained" : "sidecar cleared by SQLite"}`
     : "Not required";
   const label = trustLabels[decision.trust_state] || decision.trust_state;
   const blocked = ["unverified", "modified_after_signature", "invalid_signature", "denied_by_user", "revoked"].includes(decision.trust_state);
   const authorized = decision.executable_allowed;
+  reviewCapabilitiesButton.textContent = authorized ? "Open application" : "Review capabilities";
   reopenButton.disabled = false;
   readOnlyButton.disabled = !authorized;
   state.textContent = authorized && capsule.assets_released
@@ -400,8 +641,10 @@ function renderReport(report) {
       ? "Policy authorized · payload still locked"
       : "Trust decision required · code locked";
   trustBadge.textContent = label;
-  trustBadge.className = `badge ${blocked ? "fail" : authorized ? "ok" : "warn"}`;
-  setTrustNavState(blocked ? "Blocked" : authorized ? "Running" : "Review", blocked ? "fail" : authorized ? "ok" : "warn");
+  // Runtime authorization is not publisher authentication. An explicitly
+  // allowed unsigned capsule stays visually cautionary even while running.
+  trustBadge.className = `badge ${blocked ? "fail" : authorized && decision.signature_valid ? "ok" : "warn"}`;
+  setOverviewNavState(blocked ? "Blocked" : authorized ? "Running" : "Ready", blocked ? "fail" : authorized ? "ok" : "warn");
   if (authorized && capsule.assets_released) {
     setVerdict(
       recovery ? "Recovered state verified; assets released" : "Verified assets released",
@@ -458,11 +701,19 @@ function renderReport(report) {
       ? "Application window · verified assets · exact named bridge"
       : "Application window · release gate passed, payload locked"
     : "Application window · executable assets locked";
-  if (report.stage === "first-open" && lastFocusKey !== focusKey) {
-    selectPage("capabilities", { focus: false });
-    promptTitle.focus();
+  if (lastFocusKey !== focusKey) {
+    selectPage("overview", { focus: false });
+    overviewTitle.focus();
   }
   lastFocusKey = focusKey;
+}
+
+async function refreshCabinet() {
+  try {
+    renderCabinet(await invokeHost("cabinet_status"));
+  } catch (_) {
+    renderCabinet(null);
+  }
 }
 
 function selectedCapabilities() {
@@ -473,6 +724,1147 @@ async function invokeHost(command, payload = {}) {
   const invoke = globalThis.__TAURI__?.core?.invoke;
   if (typeof invoke !== "function") throw new Error("The trusted Tauri API was not injected.");
   return invoke(command, payload);
+}
+
+function compareLabel(value) {
+  return String(value || "unavailable").replaceAll("-", " ");
+}
+
+function compareDisplayText(value) {
+  return String(value ?? "").replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, (character) => {
+    const code = character.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+    return `\\u${code}`;
+  });
+}
+
+function compareIsolate(value) {
+  const isolate = document.createElement("bdi");
+  isolate.textContent = compareDisplayText(value);
+  return isolate;
+}
+
+function compareDefinition(label, value) {
+  const dt = document.createElement("dt");
+  const dd = document.createElement("dd");
+  const isolate = document.createElement("bdi");
+  dt.textContent = label;
+  isolate.textContent = compareDisplayText(value);
+  dd.append(isolate);
+  return [dt, dd];
+}
+
+function resetReconcileView(message = "Open bounded row detail before applying changes. Only rows disclosed in this comparison can be selected.") {
+  reconcileOptions = null;
+  reconcileSession = null;
+  reconcileDestination = null;
+  reconcileThreeWay = null;
+  preparedReconcile = null;
+  if (!activeReconcileOperationToken) {
+    reconcileOptionsWrap.hidden = true;
+    reconcileSessionWrap.hidden = true;
+    reconcileReviewWrap.hidden = true;
+    reconcileResult.hidden = true;
+    reconcileOrientations.replaceChildren(reconcileOrientations.querySelector("legend") || document.createElement("legend"));
+    reconcileSelections.replaceChildren(reconcileSelections.querySelector("legend") || document.createElement("legend"));
+    reconcileIdentity.replaceChildren();
+    reconcileReviewIdentity.replaceChildren();
+    reconcileOperationList.replaceChildren();
+    reconcileSessionChecks.replaceChildren();
+    reconcileReviewChecks.replaceChildren();
+    reconcileThreeWayWrap.replaceChildren();
+    reconcileThreeWayWrap.hidden = true;
+    reconcileConfirmation.checked = false;
+    reconcileExecuteButton.disabled = true;
+    reconcileCancelButton.disabled = true;
+    reconcilePrepareButton.disabled = true;
+    reconcileAncestorButton.disabled = true;
+    reconcileOpenButton.disabled = !compareSession;
+    reconcileBadge.textContent = "No authority";
+    reconcileBadge.className = "badge";
+    reconcileStatus.textContent = message;
+    reconcileStatus.className = "lifecycle-action-status";
+  }
+}
+
+function resetCompareView(message = "Choose a second local Capsule to begin a bounded read-only comparison.") {
+  compareSession = null;
+  compareTableSelection = null;
+  compareNextPageToken = null;
+  comparePageRevealed = false;
+  compareReport.hidden = true;
+  compareDetail.hidden = true;
+  compareSensitiveConsent.hidden = true;
+  compareDetailTableWrap.hidden = true;
+  compareDetailRows.replaceChildren();
+  compareDatasets.replaceChildren();
+  comparePairDetails.replaceChildren();
+  compareApplicationDetail.replaceChildren();
+  compareApplicationDetail.hidden = true;
+  compareApplicationButton.disabled = true;
+  compareChooseButton.disabled = false;
+  compareCloseButton.disabled = true;
+  compareNextButton.disabled = true;
+  compareStatus.textContent = message;
+  compareBadge.textContent = "No session";
+  compareBadge.className = "badge";
+  if (!activeReconcileOperationToken) resetReconcileView();
+}
+
+function renderCompareLayer(name, section) {
+  const target = document.querySelector(`[data-compare-layer='${name}']`);
+  if (!target) return;
+  const count = Number(section?.change_count || 0);
+  target.textContent = `${compareLabel(section?.state)} · ${count.toLocaleString()} bounded change${count === 1 ? "" : "s"}`;
+  target.dataset.state = section?.state || "unavailable";
+}
+
+function compareCounts(summary) {
+  const counts = summary?.counts;
+  if (!counts || [counts.added, counts.removed, counts.changed, counts.unchanged].some((value) => value == null)) {
+    return "Delta classification withheld by signed policy";
+  }
+  return `${Number(counts.added || 0).toLocaleString()} added · ${Number(counts.removed || 0).toLocaleString()} removed · ${Number(counts.changed || 0).toLocaleString()} changed · ${Number(counts.unchanged || 0).toLocaleString()} unchanged`;
+}
+
+function openCompareTable(dataset, table, selector) {
+  compareTableSelection = {
+    tableToken: selector.table_token,
+    datasetLabel: dataset.dataset_id,
+    tableLabel: table.table,
+    sensitivity: dataset.sensitivity,
+  };
+  compareNextPageToken = null;
+  comparePageRevealed = false;
+  compareDetail.hidden = false;
+  compareDetailTitle.replaceChildren(compareIsolate(dataset.dataset_id), document.createTextNode(" · "), compareIsolate(table.table));
+  compareDetailDescription.textContent = `${compareLabel(dataset.policy)} policy · ${compareCounts(table)}`;
+  compareDetailBadge.textContent = dataset.sensitivity;
+  compareDetailBadge.className = `badge ${dataset.sensitivity === "sensitive" ? "warn" : ""}`;
+  compareDetailRows.replaceChildren();
+  compareDetailTableWrap.hidden = true;
+  compareNextButton.disabled = true;
+  if (dataset.sensitivity === "sensitive") {
+    compareSensitiveConsent.hidden = false;
+    compareActionStatus.textContent = "Sensitive values remain unavailable until the explicit reveal below.";
+    compareDetailTitle.focus();
+  } else {
+    compareSensitiveConsent.hidden = true;
+    void requestComparePage(false, null);
+  }
+}
+
+function renderCompareDatasets(report, selectors) {
+  compareDatasets.replaceChildren(...report.datasets.map((dataset, datasetIndex) => {
+    const article = document.createElement("article");
+    const heading = document.createElement("h3");
+    const summary = document.createElement("p");
+    const tableList = document.createElement("div");
+    heading.append(compareIsolate(dataset.dataset_id));
+    summary.textContent = `${dataset.sensitivity} · ${compareLabel(dataset.policy)} policy · ${compareLabel(dataset.state)} · ${Number(dataset.left_rows).toLocaleString()} left / ${Number(dataset.right_rows).toLocaleString()} right · ${compareCounts(dataset)}`;
+    tableList.className = "compare-table-list";
+    const selectorDataset = selectors[datasetIndex];
+    dataset.tables.forEach((table, tableIndex) => {
+      const row = document.createElement("div");
+      const text = document.createElement("span");
+      const selector = selectorDataset?.tables?.[tableIndex];
+      text.append(
+        compareIsolate(table.table),
+        document.createTextNode(` · ${compareLabel(table.state)} · ${Number(table.left_rows).toLocaleString()} / ${Number(table.right_rows).toLocaleString()} rows · ${compareCounts(table)}`),
+      );
+      row.append(text);
+      if (selector?.detail_available) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = dataset.sensitivity === "sensitive" ? "Review sensitive detail" : "Open bounded detail";
+        button.addEventListener("click", () => openCompareTable(dataset, table, selector));
+        row.append(button);
+      } else {
+        const unavailable = document.createElement("small");
+        unavailable.textContent = dataset.policy === "ignore" || dataset.policy === "summary"
+          ? "Signed policy permits summary only"
+          : table.truncated ? "Detail limit reached" : "Detail unavailable";
+        row.append(unavailable);
+      }
+      tableList.append(row);
+    });
+    article.append(heading, summary, tableList);
+    return article;
+  }));
+  if (report.datasets.length === 0) {
+    const empty = document.createElement("p");
+    empty.textContent = report.compatibility.can_compare_data
+      ? "The signed contract declares no comparable datasets."
+      : "Domain-data comparison is unavailable for this compatibility state.";
+    compareDatasets.append(empty);
+  }
+}
+
+function renderCompareSession(session) {
+  if (session?.profile !== "org.sqlite-capsule.tauri-compare-session/1") {
+    throw new Error("The host returned an unsupported comparison-session profile.");
+  }
+  compareSession = session;
+  resetReconcileView();
+  reconcileOpenButton.disabled = false;
+  compareReport.hidden = false;
+  compareDetail.hidden = true;
+  compareCloseButton.disabled = false;
+  compareApplicationButton.disabled = false;
+  const report = session.report;
+  const compatibility = report.compatibility;
+  compareCompatibilityBadge.textContent = compareLabel(compatibility.state);
+  compareCompatibilityBadge.className = `badge ${compatibility.can_compare_data ? "ok" : "warn"}`;
+  compareCompatibilityReason.textContent = compatibility.reasons.join(" · ");
+  comparePairDetails.replaceChildren(
+    ...compareDefinition("Selected application", `${report.left.app_id} · ${report.left.app_version}`),
+    ...compareDefinition("Comparison application", `${report.right.app_id} · ${report.right.app_version}`),
+    ...compareDefinition("Selected instance", `${report.left.capsule_id} · revision ${report.left.revision_id}`),
+    ...compareDefinition("Comparison instance", `${report.right.capsule_id} · revision ${report.right.revision_id}`),
+    ...compareDefinition("Selected signature evidence", `${report.left.publisher.signature_count} valid envelope${report.left.publisher.signature_count === 1 ? "" : "s"} · ${report.left.publisher.publisher_name}`),
+    ...compareDefinition("Comparison signature evidence", `${report.right.publisher.signature_count} valid envelope${report.right.publisher.signature_count === 1 ? "" : "s"} · ${report.right.publisher.publisher_name}`),
+    ...compareDefinition("Report digest", report.report_digest),
+  );
+  ["identity", "lineage", "application", "schema"].forEach((name) => renderCompareLayer(name, report[name]));
+  compareLimitBadge.textContent = report.truncated ? "Bounded · truncated" : "Bounded · complete";
+  compareLimitBadge.className = `badge ${report.truncated ? "warn" : "ok"}`;
+  renderCompareDatasets(report, session.selectors);
+  compareStatus.textContent = `Comparison ready · ${compareLabel(compatibility.state)} · expires ${session.expires_at}`;
+  compareBadge.textContent = "Read-only report";
+  compareBadge.className = "badge ok";
+  compareActionStatus.textContent = "Both retained sources were rechecked after comparison. No application assets or endpoints were executed.";
+  compareActionStatus.className = "lifecycle-action-status";
+  selectPage("compare", { focus: false });
+  compareCompatibilityTitle.focus();
+}
+
+function renderCompareApplicationDetail(detail) {
+  if (!compareSession || detail?.profile !== "org.sqlite-capsule.compare-application/1"
+    || detail.comparison_report_digest !== compareSession.report.report_digest
+    || detail.left_file_sha256 !== compareSession.report.left.file_sha256
+    || detail.right_file_sha256 !== compareSession.report.right.file_sha256) {
+    throw new Error("The host returned stale application-compartment evidence.");
+  }
+  compareApplicationDetail.replaceChildren(...detail.families.map((family) => {
+    const row = document.createElement("div");
+    const label = document.createElement("strong");
+    const evidence = document.createElement("span");
+    label.textContent = compareLabel(family.family);
+    evidence.textContent = `${compareLabel(family.state)} · ${Number(family.table_count).toLocaleString()} table${family.table_count === 1 ? "" : "s"} · ${Number(family.left_rows).toLocaleString()} / ${Number(family.right_rows).toLocaleString()} rows · ${Number(family.change_count).toLocaleString()} bounded changes · ${shortDigest(family.left_digest)} / ${shortDigest(family.right_digest)}`;
+    row.append(label, evidence);
+    return row;
+  }));
+  compareApplicationDetail.hidden = false;
+  compareApplicationButton.textContent = "Refresh bounded application families";
+  compareActionStatus.textContent = `Application compartment rechecked · ${detail.families.length.toLocaleString()} fixed families · digest ${shortDigest(detail.detail_digest)}.`;
+  compareActionStatus.className = "lifecycle-action-status";
+}
+
+compareApplicationButton.addEventListener("click", async () => {
+  if (!compareSession) return;
+  compareApplicationButton.disabled = true;
+  compareActionStatus.textContent = "Re-verifying both retained sources and hashing fixed application-compartment families…";
+  try {
+    const detail = await invokeHost("get_compare_application_detail", {
+      request: { session_id: compareSession.session_id },
+    });
+    renderCompareApplicationDetail(detail);
+  } catch (error) {
+    compareActionStatus.textContent = hostError(error);
+    compareActionStatus.className = "lifecycle-action-status error";
+  } finally {
+    compareApplicationButton.disabled = false;
+  }
+});
+
+function renderCompareValue(value) {
+  const wrap = document.createElement("span");
+  const display = document.createElement("bdi");
+  wrap.className = "compare-value";
+  if (!value) {
+    display.textContent = "absent";
+  } else if (value.storage_class === "blob") {
+    display.textContent = `BLOB · ${Number(value.byte_count).toLocaleString()} bytes · sha256 ${shortDigest(value.sha256)}`;
+  } else if (value.redacted || value.display == null) {
+    display.textContent = `${value.storage_class} · redacted · sha256 ${shortDigest(value.sha256)}`;
+  } else {
+    display.textContent = compareDisplayText(value.display);
+    if (value.truncated) display.append(document.createTextNode(" … [truncated]"));
+  }
+  wrap.append(display);
+  return wrap;
+}
+
+function renderComparePage(page) {
+  if (!compareSession || page?.profile !== "org.sqlite-capsule.compare-page/1"
+    || page.session_id !== compareSession.session_id
+    || page.report_digest !== compareSession.report.report_digest) {
+    throw new Error("The host returned a stale comparison page.");
+  }
+  comparePageRevealed = Boolean(page.revealed);
+  compareNextPageToken = page.next_page_token;
+  compareSensitiveConsent.hidden = true;
+  compareDetailTableWrap.hidden = false;
+  compareDetailBadge.textContent = page.sensitivity === "sensitive" ? "Sensitive · revealed" : page.sensitivity;
+  compareDetailRows.replaceChildren(...page.rows.map((row) => {
+    const tr = document.createElement("tr");
+    const kind = document.createElement("th");
+    const evidence = document.createElement("td");
+    const fields = document.createElement("td");
+    kind.scope = "row";
+    kind.textContent = row.kind;
+    evidence.textContent = `key ${shortDigest(row.key_digest)} · left ${row.left_digest ? shortDigest(row.left_digest) : "absent"} · right ${row.right_digest ? shortDigest(row.right_digest) : "absent"}`;
+    if (row.fields.length === 0) {
+      fields.textContent = "Field values withheld by signed row policy";
+    } else {
+      const list = document.createElement("ul");
+      row.fields.forEach((field) => {
+        const item = document.createElement("li");
+        const label = document.createElement("strong");
+        label.append(compareIsolate(field.column), document.createTextNode(` · ${field.kind}: `));
+        item.append(label, renderCompareValue(field.left), document.createTextNode(" → "), renderCompareValue(field.right));
+        list.append(item);
+      });
+      fields.append(list);
+    }
+    tr.append(kind, evidence, fields);
+    return tr;
+  }));
+  if (page.rows.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 3;
+    td.textContent = "No row differences on this page.";
+    tr.append(td);
+    compareDetailRows.append(tr);
+  }
+  compareNextButton.disabled = !compareNextPageToken;
+  compareActionStatus.textContent = `${page.rows.length.toLocaleString()} bounded row result${page.rows.length === 1 ? "" : "s"}. ${compareNextPageToken ? "A consumed continuation token is ready." : "No further page is available."}`;
+  compareActionStatus.className = "lifecycle-action-status";
+  compareDetailTitle.focus();
+}
+
+async function requestComparePage(reveal, pageToken) {
+  if (!compareSession || !compareTableSelection) return;
+  compareNextButton.disabled = true;
+  compareRevealButton.disabled = true;
+  compareActionStatus.textContent = reveal ? "Re-verifying both sources and preparing one explicitly revealed bounded page…" : "Re-verifying both sources and preparing one bounded page…";
+  try {
+    const page = await invokeHost(reveal ? "reveal_compare_page" : "get_compare_page", {
+      request: {
+        session_id: compareSession.session_id,
+        table_token: compareTableSelection.tableToken,
+        page_token: pageToken,
+      },
+    });
+    renderComparePage(page);
+  } catch (error) {
+    compareActionStatus.textContent = hostError(error);
+    compareActionStatus.className = "lifecycle-action-status error";
+  } finally {
+    compareRevealButton.disabled = false;
+    compareNextButton.disabled = !compareNextPageToken;
+  }
+}
+
+compareChooseButton.addEventListener("click", async () => {
+  const selectionId = currentSelectionId();
+  if (!selectionId) {
+    compareActionStatus.textContent = "Select and inspect a Capsule before choosing its comparison partner.";
+    compareActionStatus.className = "lifecycle-action-status error";
+    return;
+  }
+  compareChooseButton.disabled = true;
+  compareActionStatus.textContent = "Choose a second local Capsule. It will be pinned and verified without executing application code.";
+  compareActionStatus.className = "lifecycle-action-status";
+  try {
+    const candidate = await invokeHost("choose_compare_capsule", { request: { selection_id: selectionId } });
+    if (!candidate) {
+      compareActionStatus.textContent = "Comparison selection cancelled. No source was opened.";
+      return;
+    }
+    compareStatus.textContent = `Opaque comparison candidate retained until ${candidate.expires_at}. Verifying the pair…`;
+    const session = await invokeHost("start_compare", {
+      request: { selection_id: selectionId, candidate_id: candidate.candidate_id },
+    });
+    renderCompareSession(session);
+  } catch (error) {
+    resetCompareView("Comparison failed closed. Choose a fresh pair to try again.");
+    compareActionStatus.textContent = hostError(error);
+    compareActionStatus.className = "lifecycle-action-status error";
+  } finally {
+    compareChooseButton.disabled = false;
+  }
+});
+
+compareRevealButton.addEventListener("click", () => requestComparePage(true, null));
+compareNextButton.addEventListener("click", () => requestComparePage(comparePageRevealed, compareNextPageToken));
+compareCloseButton.addEventListener("click", async () => {
+  const sessionId = compareSession?.session_id;
+  compareCloseButton.disabled = true;
+  try {
+    if (sessionId) await invokeHost("close_compare_session", { request: { session_id: sessionId } });
+    resetCompareView("Comparison closed. Retained sources and cursors were released.");
+    compareActionStatus.textContent = "Comparison session closed.";
+    compareActionStatus.className = "lifecycle-action-status";
+  } catch (error) {
+    compareActionStatus.textContent = hostError(error);
+    compareActionStatus.className = "lifecycle-action-status error";
+    compareCloseButton.disabled = false;
+  }
+});
+
+function renderCheckList(target, checks) {
+  target.replaceChildren(...(checks || []).map((check) => {
+    const item = document.createElement("li");
+    item.textContent = compareLabel(check);
+    return item;
+  }));
+}
+
+function reconcileSelectedOrientationToken() {
+  return reconcileOrientations.querySelector("input[name='reconcile-orientation']:checked")?.value || null;
+}
+
+function selectedReconcileTokens() {
+  return [...reconcileSelections.querySelectorAll("input[name='reconcile-selection']:checked")]
+    .map((input) => input.value);
+}
+
+function selectedReconcileResolutionTokens() {
+  return [...reconcileThreeWayWrap.querySelectorAll("input[type='radio']:checked")]
+    .map((input) => input.value);
+}
+
+function updateReconcilePrepareState() {
+  const hasThreeWayAuthority = Boolean(reconcileThreeWay)
+    && selectedReconcileResolutionTokens().length === reconcileThreeWay.conflicts.length;
+  const hasTwoWayAuthority = !reconcileThreeWay && selectedReconcileTokens().length > 0;
+  reconcilePrepareButton.disabled = !reconcileSession || !reconcileDestination
+    || (!hasThreeWayAuthority && !hasTwoWayAuthority);
+}
+
+function renderReconcileOptions(options) {
+  if (options?.profile !== "org.sqlite-capsule.tauri-reconcile-options/1") {
+    throw new Error("The host returned an unsupported reconciliation-options profile.");
+  }
+  reconcileOptions = options;
+  const legend = document.createElement("legend");
+  legend.textContent = "Choose source and target";
+  const choices = options.orientations.map((orientation, index) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    const copy = document.createElement("span");
+    const heading = document.createElement("strong");
+    const detail = document.createElement("small");
+    input.type = "radio";
+    input.name = "reconcile-orientation";
+    input.value = orientation.orientation_token;
+    input.checked = index === 0;
+    heading.append(document.createTextNode("Source "), compareIsolate(orientation.source_label), document.createTextNode(" → target "), compareIsolate(orientation.target_label));
+    detail.textContent = `${orientation.result_label}. The original target remains unchanged.`;
+    copy.className = "reconcile-choice-copy";
+    copy.append(heading, detail);
+    label.append(input, copy);
+    return label;
+  });
+  reconcileOrientations.replaceChildren(legend, ...choices);
+  reconcileOptionsWrap.hidden = false;
+  reconcileStartButton.disabled = options.blockers.length > 0;
+  reconcileBadge.textContent = options.blockers.length ? "Needs detail" : `${options.disclosed_change_count.toLocaleString()} disclosed`;
+  reconcileBadge.className = `badge ${options.blockers.length ? "warn" : "ok"}`;
+  reconcileStatus.textContent = options.blockers.length
+    ? `Cannot begin: ${options.blockers.map(compareLabel).join(" · ")}.`
+    : `${options.disclosed_change_count.toLocaleString()} disclosed row change${options.disclosed_change_count === 1 ? "" : "s"} available; ${options.sensitive_change_count.toLocaleString()} came from an explicit sensitive reveal.`;
+}
+
+reconcileOpenButton.addEventListener("click", async () => {
+  if (!compareSession || activeReconcileOperationToken) return;
+  reconcileOpenButton.disabled = true;
+  reconcileStatus.textContent = "Binding eligible rows from the retained comparison evidence…";
+  try {
+    const options = await invokeHost("get_reconcile_options", {
+      request: { session_token: compareSession.session_id },
+    });
+    renderReconcileOptions(options);
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+  } finally {
+    reconcileOpenButton.disabled = false;
+  }
+});
+
+reconcileStartButton.addEventListener("click", async () => {
+  const orientationToken = reconcileSelectedOrientationToken();
+  if (!orientationToken) return;
+  reconcileStartButton.disabled = true;
+  reconcileStatus.textContent = "Consuming the comparison and fixing one source-to-target direction…";
+  try {
+    const session = await invokeHost("start_reconcile_review", {
+      request: { orientation_token: orientationToken },
+    });
+    if (session?.profile !== "org.sqlite-capsule.tauri-reconcile-session/1") {
+      throw new Error("The host returned an unsupported reconciliation-session profile.");
+    }
+    reconcileSession = session;
+    reconcileThreeWay = null;
+    compareSession = null;
+    compareCloseButton.disabled = true;
+    reconcileOptionsWrap.hidden = true;
+    reconcileSessionWrap.hidden = false;
+    reconcileIdentity.replaceChildren(
+      ...compareDefinition("Source", session.source_label),
+      ...compareDefinition("Target", session.target_label),
+      ...compareDefinition("Output Capsule ID", session.output_capsule_id),
+      ...compareDefinition("Output application digest", session.output_application_digest),
+      ...compareDefinition("Output signature inventory", `${Number(session.output_signature_count).toLocaleString()} valid envelope${session.output_signature_count === 1 ? "" : "s"}`),
+      ...compareDefinition("Review expires", session.expires_at),
+    );
+    const legend = document.createElement("legend");
+    legend.textContent = "Select disclosed changes";
+    const selectionRows = session.selections.map((selection) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      const copy = document.createElement("span");
+      const heading = document.createElement("strong");
+      const detail = document.createElement("small");
+      input.type = "checkbox";
+      input.name = "reconcile-selection";
+      input.value = selection.selection_token;
+      input.addEventListener("change", updateReconcilePrepareState);
+      heading.append(compareIsolate(selection.dataset_label), document.createTextNode(" · "), compareIsolate(selection.table_label));
+      detail.textContent = `${compareLabel(selection.action)}${selection.field_count ? ` · ${selection.field_count.toLocaleString()} field${selection.field_count === 1 ? "" : "s"}` : ""} · ${selection.sensitivity}${selection.sensitive_reveal_confirmed && selection.sensitivity === "sensitive" ? " · explicitly revealed" : ""}`;
+      copy.className = "reconcile-choice-copy";
+      copy.append(heading, detail);
+      label.append(input, copy);
+      return label;
+    });
+    reconcileSelections.replaceChildren(legend, ...selectionRows);
+    renderCheckList(reconcileSessionChecks, session.checks);
+    reconcileConflicts.textContent = "Two-way review has no ancestor-derived conflict resolution. Every operation is guarded by the exact row state disclosed from both retained inputs.";
+    reconcileThreeWayWrap.replaceChildren();
+    reconcileThreeWayWrap.hidden = true;
+    reconcileAncestorButton.disabled = true;
+    reconcileBadge.textContent = "Five-minute review";
+    reconcileBadge.className = "badge warn";
+    reconcileStatus.textContent = `${session.selections.length.toLocaleString()} eligible disclosed change${session.selections.length === 1 ? "" : "s"}. Choose changes and a destination that does not exist.`;
+    reconcileOpenButton.disabled = true;
+    reconcileIdentity.scrollIntoView({ block: "nearest" });
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+    reconcileStartButton.disabled = false;
+  }
+});
+
+reconcileDestinationButton.addEventListener("click", async () => {
+  if (!reconcileSession) return;
+  reconcileDestinationButton.disabled = true;
+  reconcileDestinationStatus.textContent = "Choose a path for a new Capsule. Existing files are rejected.";
+  reconcileDestinationStatus.className = "boundary-note";
+  try {
+    const destination = await invokeHost("choose_reconcile_destination", {
+      request: { review_token: reconcileSession.review_token },
+    });
+    if (!destination) {
+      reconcileDestinationStatus.textContent = "Destination selection cancelled.";
+      return;
+    }
+    reconcileDestination = destination;
+    reconcileDestinationStatus.className = "boundary-note";
+    reconcileDestinationStatus.replaceChildren(
+      document.createTextNode(`${destination.parent_display} · `),
+      compareIsolate(destination.leaf_display),
+      document.createTextNode(` · authority expires ${destination.expires_at}`),
+    );
+    reconcileAncestorButton.disabled = false;
+    updateReconcilePrepareState();
+  } catch (error) {
+    reconcileDestinationStatus.textContent = hostError(error);
+    reconcileDestinationStatus.className = "boundary-note error";
+  } finally {
+    reconcileDestinationButton.disabled = false;
+  }
+});
+
+reconcileAncestorButton.addEventListener("click", async () => {
+  if (!reconcileSession || !reconcileDestination || reconcileThreeWay) return;
+  reconcileAncestorButton.disabled = true;
+  reconcilePrepareButton.disabled = true;
+  reconcileDestinationButton.disabled = true;
+  reconcileStatus.textContent = "Choose a verified common ancestor. The host keeps its path and exact snapshot private.";
+  try {
+    const threeWay = await invokeHost("choose_reconcile_ancestor", {
+      request: {
+        review_token: reconcileSession.review_token,
+        destination_token: reconcileDestination.destination_token,
+      },
+    });
+    if (!threeWay) {
+      reconcileStatus.textContent = "Ancestor selection cancelled. Two-way review remains available.";
+      reconcileAncestorButton.disabled = false;
+      reconcileDestinationButton.disabled = false;
+      updateReconcilePrepareState();
+      return;
+    }
+    if (threeWay.profile !== "org.sqlite-capsule.tauri-reconcile-three-way/1") {
+      throw new Error("The host returned an unsupported three-way reconciliation profile.");
+    }
+    reconcileThreeWay = threeWay;
+    reconcileSelections.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+    reconcileConflicts.textContent = `${threeWay.clean_change_count.toLocaleString()} clean three-way change${threeWay.clean_change_count === 1 ? "" : "s"}; ${threeWay.conflicts.length.toLocaleString()} conflict${threeWay.conflicts.length === 1 ? "" : "s"} must be resolved before the short authority expires ${threeWay.expires_at}.`;
+    const ancestor = document.createElement("article");
+    const ancestorHeading = document.createElement("strong");
+    const ancestorDetail = document.createElement("span");
+    ancestorHeading.textContent = "Verified ancestor";
+    ancestorDetail.append(
+      compareIsolate(threeWay.ancestor.capsule_id),
+      document.createTextNode(` · revision ${compareDisplayText(threeWay.ancestor.revision_id)} · schema v${Number(threeWay.ancestor.data_schema_version).toLocaleString()}`),
+    );
+    ancestor.append(ancestorHeading, ancestorDetail);
+    const conflicts = threeWay.conflicts.map((conflict, index) => {
+      const fieldset = document.createElement("fieldset");
+      const legend = document.createElement("legend");
+      legend.append(
+        document.createTextNode(`${index + 1}. `),
+        compareIsolate(conflict.dataset_label),
+        document.createTextNode(" · "),
+        compareIsolate(conflict.table_label),
+        document.createTextNode(` · ${compareLabel(conflict.kind)}${conflict.deleted_side ? ` · ${compareLabel(conflict.deleted_side)} deleted` : ""}`),
+      );
+      fieldset.append(legend);
+      conflict.choices.forEach((choice) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const copy = document.createElement("span");
+        input.type = "radio";
+        input.name = `reconcile-conflict-${conflict.conflict_token}`;
+        input.value = choice.resolution_token;
+        input.addEventListener("change", updateReconcilePrepareState);
+        copy.textContent = compareLabel(choice.choice);
+        label.append(input, copy);
+        fieldset.append(label);
+      });
+      return fieldset;
+    });
+    reconcileThreeWayWrap.replaceChildren(ancestor, ...conflicts);
+    reconcileThreeWayWrap.hidden = false;
+    reconcileBadge.textContent = threeWay.conflicts.length ? "Resolve conflicts" : "Three-way clean";
+    reconcileBadge.className = `badge ${threeWay.conflicts.length ? "warn" : "ok"}`;
+    reconcileStatus.textContent = threeWay.conflicts.length
+      ? "Resolve every conflict explicitly; immutable-field conflicts permit only keeping the target."
+      : "The verified ancestor classified every change as clean. Prepare the exact target-derived review now.";
+    updateReconcilePrepareState();
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+    reconcileBadge.textContent = "Ancestor rejected";
+    reconcileBadge.className = "badge fail";
+  }
+});
+
+reconcilePrepareButton.addEventListener("click", async () => {
+  if (!reconcileSession || !reconcileDestination) return;
+  const selectionTokens = selectedReconcileTokens();
+  const resolutionTokens = selectedReconcileResolutionTokens();
+  if (!reconcileThreeWay && !selectionTokens.length) return;
+  if (reconcileThreeWay && resolutionTokens.length !== reconcileThreeWay.conflicts.length) return;
+  reconcilePrepareButton.disabled = true;
+  reconcileDestinationButton.disabled = true;
+  reconcileStatus.textContent = "Recomputing comparison, resolving opaque selections and dry-running all signed datasets…";
+  try {
+    const review = await invokeHost("prepare_reconcile", {
+      request: {
+        review_token: reconcileSession.review_token,
+        destination_token: reconcileDestination.destination_token,
+        selection_tokens: reconcileThreeWay ? [] : selectionTokens,
+        ancestor_token: reconcileThreeWay?.ancestor_token ?? null,
+        resolution_tokens: reconcileThreeWay ? resolutionTokens : [],
+      },
+    });
+    if (review?.profile !== "org.sqlite-capsule.tauri-reconcile-review/1") {
+      throw new Error("The host returned an unsupported reconciliation-review profile.");
+    }
+    preparedReconcile = review;
+    reconcileSessionWrap.hidden = true;
+    reconcileReviewWrap.hidden = false;
+    reconcileReviewIdentity.replaceChildren(
+      ...compareDefinition("Source", `${review.source.capsule_id} · revision ${review.source.revision_id}`),
+      ...compareDefinition("Target", `${review.target.capsule_id} · revision ${review.target.revision_id}`),
+      ...compareDefinition("Output", `${review.output.capsule_id} · new revision ${review.output.revision_id}`),
+      ...compareDefinition("Application", review.output.application_digest),
+      ...compareDefinition("Signature inventory", `${Number(review.output.signature_count).toLocaleString()} valid envelope${review.output.signature_count === 1 ? "" : "s"}`),
+      ...compareDefinition("Data schema", `${review.output.data_schema_id} v${review.output.data_schema_version}`),
+      ...compareDefinition("Review digest", review.review_digest),
+      ...compareDefinition("Value-free payload digest", review.payload_digest),
+      ...compareDefinition("Lineage parents", review.lineage_parent_count),
+      ...compareDefinition("New destination", review.destination.leaf_display),
+      ...compareDefinition("Execution expires", review.expires_at),
+    );
+    reconcileOperationList.replaceChildren(...review.operations.map((operation) => {
+      const article = document.createElement("article");
+      const heading = document.createElement("strong");
+      const detail = document.createElement("span");
+      heading.append(document.createTextNode(`${operation.sequence.toLocaleString()}. `), compareIsolate(operation.dataset_label), document.createTextNode(" · "), compareIsolate(operation.table_label));
+      detail.textContent = `${compareLabel(operation.action)}${operation.field_count ? ` · ${operation.field_count.toLocaleString()} field${operation.field_count === 1 ? "" : "s"}` : ""}${operation.sensitive_confirmed ? " · sensitive reveal confirmed" : ""}`;
+      article.append(heading, detail);
+      return article;
+    }));
+    renderCheckList(reconcileReviewChecks, review.checks);
+    reconcileConfirmation.checked = false;
+    reconcileExecuteButton.disabled = true;
+    reconcileBadge.textContent = "Exact review ready";
+    reconcileBadge.className = "badge ok";
+    reconcileStatus.textContent = `${review.operation_count.toLocaleString()} exact operation${review.operation_count === 1 ? "" : "s"} prepared. Confirm before the separate 30-second authority expires.`;
+    reconcileReviewTitle.focus();
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+    reconcileBadge.textContent = "Review rejected";
+    reconcileBadge.className = "badge fail";
+  }
+});
+
+reconcileConfirmation.addEventListener("change", () => {
+  reconcileExecuteButton.disabled = !preparedReconcile || !reconcileConfirmation.checked || Boolean(activeReconcileOperationToken);
+});
+
+function finishReconcileOperation(operationToken) {
+  return oncePerReconcileOperation(operationToken, async () => {
+    try {
+      const status = await invokeHost("get_reconcile_operation", {
+        request: { operation_token: operationToken },
+      });
+      if (status.operation_token !== operationToken) return;
+      reconcileResult.hidden = false;
+      reconcileResultOutput.textContent = status.phase === "succeeded"
+        ? `Verified new Capsule\n${compareDisplayText(status.output_leaf)}\n${Number(status.output_bytes).toLocaleString()} bytes\nBoth retained inputs remained unchanged.`
+        : `${compareLabel(status.phase)}\n${hostError(status.error || "Operation did not complete.")}`;
+      reconcileBadge.textContent = compareLabel(status.phase);
+      reconcileBadge.className = `badge ${status.phase === "succeeded" ? "ok" : "fail"}`;
+      reconcileStatus.textContent = status.phase === "succeeded"
+        ? "The new Capsule was reopened, exhaustively validated and rebound before publication completed."
+        : `Reconciliation ${compareLabel(status.phase)}. No unverified output is accepted.`;
+      reconcileStatus.className = `lifecycle-action-status${status.phase === "succeeded" ? "" : " error"}`;
+      await invokeHost("acknowledge_reconcile_result", {
+        request: { operation_token: operationToken },
+      });
+      if (activeReconcileOperationToken === operationToken) {
+        activeReconcileOperationToken = null;
+      }
+      reconcileCancelButton.disabled = true;
+      reconcileExecuteButton.disabled = true;
+    } catch (error) {
+      reconcileStatus.textContent = `Could not read the terminal reconciliation result: ${hostError(error)}`;
+      reconcileStatus.className = "lifecycle-action-status error";
+    }
+  });
+}
+
+function oncePerReconcileOperation(operationToken, finalizer) {
+  const existing = reconcileFinalizations.get(operationToken);
+  if (existing) return existing;
+  const finalization = Promise.resolve().then(finalizer);
+  if (reconcileFinalizations.size >= 64) {
+    reconcileFinalizations.delete(reconcileFinalizations.keys().next().value);
+  }
+  reconcileFinalizations.set(operationToken, finalization);
+  return finalization;
+}
+
+async function reconcileStatusAfterStart(operationToken) {
+  const inFlightFinalization = reconcileFinalizations.get(operationToken);
+  if (inFlightFinalization) {
+    await inFlightFinalization;
+    return;
+  }
+  let status;
+  try {
+    status = await invokeHost("get_reconcile_operation", {
+      request: { operation_token: operationToken },
+    });
+  } catch (error) {
+    const terminalEventFinalization = reconcileFinalizations.get(operationToken);
+    if (terminalEventFinalization) {
+      await terminalEventFinalization;
+      return;
+    }
+    throw error;
+  }
+  if (status.operation_token !== operationToken) return;
+  if (["succeeded", "failed", "cancelled"].includes(status.phase)) {
+    await finishReconcileOperation(operationToken);
+    return;
+  }
+  if (activeReconcileOperationToken === operationToken) {
+    globalThis.setTimeout(() => {
+      if (activeReconcileOperationToken === operationToken) {
+        void reconcileStatusAfterStart(operationToken).catch((error) => {
+          reconcileStatus.textContent = `Could not poll reconciliation status: ${hostError(error)}`;
+          reconcileStatus.className = "lifecycle-action-status error";
+        });
+      }
+    }, 250);
+  }
+}
+
+reconcileExecuteButton.addEventListener("click", async () => {
+  if (!preparedReconcile || !reconcileConfirmation.checked) return;
+  reconcileExecuteButton.disabled = true;
+  reconcileStatus.textContent = "Consuming the one-use confirmation authority…";
+  try {
+    const status = await invokeHost("execute_reconcile", {
+      request: { confirmation_nonce: preparedReconcile.confirmation_nonce },
+    });
+    activeReconcileOperationToken = status.operation_token;
+    reconcileCancelButton.disabled = !status.cancellable;
+    reconcileBadge.textContent = compareLabel(status.phase);
+    reconcileBadge.className = "badge warn";
+    await reconcileStatusAfterStart(status.operation_token);
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+    reconcileBadge.textContent = "Execution rejected";
+    reconcileBadge.className = "badge fail";
+  }
+});
+
+reconcileCancelButton.addEventListener("click", async () => {
+  if (!activeReconcileOperationToken) return;
+  reconcileCancelButton.disabled = true;
+  try {
+    await invokeHost("cancel_reconcile_operation", {
+      request: { operation_token: activeReconcileOperationToken },
+    });
+    reconcileStatus.textContent = "Cancellation requested. Publication becomes non-cancellable before the no-replace rename.";
+  } catch (error) {
+    reconcileStatus.textContent = hostError(error);
+    reconcileStatus.className = "lifecycle-action-status error";
+  }
+});
+
+function selectedCopyMode() {
+  return copyModeGrid.querySelector("input[name='copy-mode']:checked")?.value || "exact-duplicate";
+}
+
+function currentSelectionId() {
+  return currentReport?.selection_id ?? currentReport?.capsule?.overview?.selection_id ?? null;
+}
+
+function resetCopyReview(message = "Choose a create-new destination to prepare a review.") {
+  if (activeCopyOperationId) {
+    copyActionStatus.textContent = "A copy operation is already active. Cancel it or wait for its verified terminal result.";
+    copyActionStatus.className = "lifecycle-action-status error";
+    return false;
+  }
+  copyDestination = null;
+  copyProfilePreview = null;
+  preparedCopy = null;
+  activeCopyOperationId = null;
+  copyReview.hidden = true;
+  copyConsent.hidden = true;
+  copyConfirmation.checked = false;
+  copyExecuteButton.disabled = true;
+  copyPrepareButton.disabled = true;
+  copyResultWrap.hidden = true;
+  copyDatasetReview.replaceChildren();
+  copyProfileDatasets.replaceChildren();
+  copyProfileReview.hidden = true;
+  copyDestinationStatus.textContent = message;
+  copyBadge.textContent = "No review";
+  copyBadge.className = "badge";
+  return true;
+}
+
+function setCopyControlsLocked(locked) {
+  copyModeGrid.querySelectorAll("input[name='copy-mode']").forEach((input) => { input.disabled = locked; });
+  copyDestinationButton.disabled = locked;
+  copyPrepareButton.disabled = locked || !copyDestination;
+  copyClearButton.textContent = locked ? "Cancel operation" : "Clear review";
+}
+
+function renderCopyProfilePreview(preview) {
+  copyProfilePreview = preview;
+  copyStatus.dataset.mode = preview.mode;
+  copyBadge.textContent = preview.blockers.length ? "Blocked" : "Profile reviewed";
+  copyBadge.className = `badge ${preview.blockers.length ? "fail" : "ok"}`;
+  copyProfileReview.hidden = preview.datasets.length === 0;
+  copyProfileDatasets.replaceChildren(...preview.datasets.map((dataset) => {
+    const article = document.createElement("article");
+    const title = document.createElement("strong");
+    const detail = document.createElement("span");
+    title.textContent = dataset.dataset_id;
+    const dependencyDetail = dataset.dependencies.length
+      ? ` · depends on ${dataset.dependencies.join(", ")}`
+      : "";
+    const selectedDetail = dataset.auto_selected_by_dependency
+      ? " · included because another selected dataset depends on it"
+      : "";
+    detail.textContent = `${dataset.sensitivity} · signed ${dataset.signed_fork_policy}${dependencyDetail}${selectedDetail}`;
+    article.append(title, detail);
+    if (dataset.choice_id) {
+      const label = document.createElement("label");
+      label.textContent = "Dataset action ";
+      const select = document.createElement("select");
+      select.dataset.choiceId = dataset.choice_id;
+      if (dataset.allow_include) select.append(new Option("Include", "include"));
+      if (dataset.allow_omit) select.append(new Option("Omit", "omit"));
+      select.value = dataset.default_disposition || (dataset.allow_omit ? "omit" : "include");
+      select.addEventListener("change", () => {
+        const checkbox = copyProfileDatasets.querySelector(`[data-sensitive-choice-id='${dataset.choice_id}']`);
+        if (checkbox) {
+          checkbox.disabled = select.value !== "include";
+          if (checkbox.disabled) checkbox.checked = false;
+        }
+      });
+      label.append(select);
+      article.append(label);
+      if (dataset.sensitive_confirmation_required) {
+        const confirm = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.dataset.sensitiveChoiceId = dataset.choice_id;
+        checkbox.disabled = select.value !== "include";
+        confirm.append(checkbox, document.createTextNode(" Explicitly include sensitive data"));
+        article.append(confirm);
+      }
+    } else {
+      const fixed = document.createElement("span");
+      fixed.textContent = `Host action: ${dataset.fixed_action}`;
+      article.append(fixed);
+    }
+    return article;
+  }));
+  copyStatus.textContent = preview.blockers.length
+    ? `This profile is blocked: ${preview.blockers.join(" · ")}`
+    : "Profile inspected. Choose a create-new destination when the dataset decisions are correct.";
+  copyDestinationButton.disabled = preview.blockers.length > 0;
+}
+
+async function loadCopyProfilePreview() {
+  const selectionId = currentSelectionId();
+  if (!selectionId) throw new Error("Select and inspect a Capsule first.");
+  const preview = await invokeHost("preview_copy_profile", {
+    request: { selection_id: selectionId, mode: selectedCopyMode() },
+  });
+  renderCopyProfilePreview(preview);
+  return preview;
+}
+
+function submittedCopyChoices() {
+  if (!copyProfilePreview) return [];
+  return copyProfilePreview.datasets.flatMap((dataset) => {
+    if (!dataset.choice_id) return [];
+    const disposition = copyProfileDatasets.querySelector(`[data-choice-id='${dataset.choice_id}']`)?.value;
+    const sensitiveConfirmed = Boolean(copyProfileDatasets.querySelector(`[data-sensitive-choice-id='${dataset.choice_id}']`)?.checked);
+    return [{
+      choice_id: dataset.choice_id,
+      disposition,
+      sensitive_confirmed: sensitiveConfirmed,
+    }];
+  });
+}
+
+function renderPreparedCopy(review) {
+  preparedCopy = review;
+  copyReview.hidden = false;
+  copyConsent.hidden = false;
+  copyConfirmation.checked = false;
+  copyExecuteButton.disabled = true;
+  copyBadge.textContent = "Review ready";
+  copyBadge.className = "badge warn";
+  const source = review.preview || {};
+  setRows(copyReviewDetails, [
+    ["Operation", review.mode],
+    ["Plan", review.plan_id],
+    ["Plan digest", review.plan_digest],
+    ["Source format", source.format_version || source.source_format_version],
+    ["Source SHA-256", source.source_sha256 || "Bound in the retained plan"],
+    ["Signature state", source.signature_state || `${source.signature_count || 0} valid signature(s)`],
+    ["Publisher trust", currentReport?.capsule?.overview?.application?.publisher?.host_trust || "separate host policy"],
+    ["Capsule identity", source.capsule_identity],
+    ["Revision identity", source.revision_identity],
+    ["Application digest", source.application_digest || source.expected_output_sha256 || "Preserved"],
+    ["Destination", `${review.output.parent_display} · ${review.output.leaf_display}`],
+    ["Overwrite", source.overwrite_allowed ? "Allowed" : "Never"],
+    ["Expires", review.expires_at],
+    ["Checks", review.checks.join(" · ")],
+  ]);
+  const datasets = source.datasets || [];
+  copyDatasetReview.replaceChildren(...datasets.map((dataset) => {
+    const article = document.createElement("article");
+    const title = document.createElement("strong");
+    const detail = document.createElement("span");
+    title.textContent = dataset.dataset_id;
+    detail.textContent = `${dataset.action} · ${dataset.sensitivity} · ${dataset.source_row_count.toLocaleString()} source rows`;
+    article.append(title, detail);
+    return article;
+  }));
+}
+
+copyModeGrid.addEventListener("change", async () => {
+  if (activeCopyOperationId) return;
+  if (copyDestination) {
+    try {
+      await invokeHost("cancel_copy_destination", { request: { destination_id: copyDestination.destination_id } });
+    } catch (_) { /* stale destination authority is already unusable */ }
+  }
+  resetCopyReview("The copy profile changed. Choose a new create-new destination.");
+  try {
+    await loadCopyProfilePreview();
+  } catch (error) {
+    copyActionStatus.textContent = hostError(error);
+    copyActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
+copyDestinationButton.addEventListener("click", async () => {
+  const selectionId = currentSelectionId();
+  if (!selectionId) {
+    copyActionStatus.textContent = "Select and inspect a Capsule before choosing a destination.";
+    copyActionStatus.className = "lifecycle-action-status error";
+    return;
+  }
+  copyDestinationButton.disabled = true;
+  copyActionStatus.textContent = "Choose a new local Capsule filename. Existing files and destination sidecars are refused.";
+  copyActionStatus.className = "lifecycle-action-status";
+  try {
+    if (!copyProfilePreview || copyProfilePreview.mode !== selectedCopyMode()) {
+      await loadCopyProfilePreview();
+    }
+    if (copyProfilePreview.blockers.length) throw new Error("The selected signed policy blocks this profile.");
+    const destination = await invokeHost("choose_copy_destination", {
+      request: { selection_id: selectionId, mode: selectedCopyMode() },
+    });
+    if (!destination) {
+      copyActionStatus.textContent = "Destination selection cancelled. Nothing was created.";
+      return;
+    }
+    copyDestination = destination;
+    preparedCopy = null;
+    copyPrepareButton.disabled = false;
+    copyDestinationStatus.textContent = `${destination.parent_display} · ${destination.leaf_display} · expires ${destination.expires_at}`;
+    copyActionStatus.textContent = "Opaque create-new destination retained by Rust. Prepare a fresh source-bound review.";
+  } catch (error) {
+    resetCopyReview("Destination selection failed closed. Choose another create-new destination.");
+    copyActionStatus.textContent = hostError(error);
+    copyActionStatus.className = "lifecycle-action-status error";
+  } finally {
+    copyDestinationButton.disabled = false;
+  }
+});
+
+copyPrepareButton.addEventListener("click", async () => {
+  const selectionId = currentSelectionId();
+  if (!selectionId || !copyDestination) return;
+  copyPrepareButton.disabled = true;
+  copyActionStatus.textContent = "Re-verifying the selected source and binding the held destination…";
+  copyActionStatus.className = "lifecycle-action-status";
+  try {
+    const review = await invokeHost("prepare_copy", {
+      request: {
+        selection_id: selectionId,
+        destination_id: copyDestination.destination_id,
+        mode: selectedCopyMode(),
+        choices: submittedCopyChoices(),
+      },
+    });
+    renderPreparedCopy(review);
+    copyActionStatus.textContent = "Review prepared. The confirmation nonce is one-use and expires with this native authority.";
+  } catch (error) {
+    resetCopyReview("The prepared authority was refused. Choose a fresh destination.");
+    copyActionStatus.textContent = hostError(error);
+    copyActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
+copyConfirmation.addEventListener("change", () => {
+  copyExecuteButton.disabled = !copyConfirmation.checked || !preparedCopy;
+});
+
+copyExecuteButton.addEventListener("click", async () => {
+  if (!preparedCopy || !copyConfirmation.checked) return;
+  copyExecuteButton.disabled = true;
+  copyActionStatus.textContent = "Starting the one-use native copy operation…";
+  copyActionStatus.className = "lifecycle-action-status";
+  try {
+    const status = await invokeHost("execute_copy", {
+      request: {
+        plan_id: preparedCopy.plan_id,
+        confirmation_nonce: preparedCopy.confirmation_nonce,
+      },
+    });
+    activeCopyOperationId = status.operation_id;
+    preparedCopy = null;
+    setCopyControlsLocked(true);
+    copyBadge.textContent = "Running";
+    copyBadge.className = "badge warn";
+    copyActionStatus.textContent = "Source re-verification and private create-new transformation are running.";
+    const current = await invokeHost("get_copy_operation", {
+      request: { operation_id: activeCopyOperationId },
+    });
+    if (["succeeded", "failed", "cancelled"].includes(current.phase)) {
+      await finishCopyOperation(activeCopyOperationId);
+    }
+  } catch (error) {
+    copyActionStatus.textContent = hostError(error);
+    copyActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
+copyClearButton.addEventListener("click", async () => {
+  if (activeCopyOperationId) {
+    copyClearButton.disabled = true;
+    try {
+      await invokeHost("cancel_copy_operation", { request: { operation_id: activeCopyOperationId } });
+      copyActionStatus.textContent = "Cancellation requested. Publication may finish if the no-replace boundary has already started.";
+      copyActionStatus.className = "lifecycle-action-status";
+    } catch (error) {
+      copyActionStatus.textContent = hostError(error);
+      copyActionStatus.className = "lifecycle-action-status error";
+    } finally {
+      copyClearButton.disabled = false;
+    }
+    return;
+  }
+  if (copyDestination && !preparedCopy) {
+    try {
+      await invokeHost("cancel_copy_destination", { request: { destination_id: copyDestination.destination_id } });
+    } catch (_) { /* already consumed or stale */ }
+  }
+  resetCopyReview("Review cleared. No destination or plan authority is retained by this page.");
+  copyActionStatus.textContent = "Copy review cleared.";
+  copyActionStatus.className = "lifecycle-action-status";
+});
+
+async function finishCopyOperation(operationId) {
+  try {
+    const status = await invokeHost("get_copy_operation", { request: { operation_id: operationId } });
+    if (activeCopyOperationId !== operationId) return;
+    copyResultWrap.hidden = false;
+    const succeeded = status.phase === "succeeded";
+    copyResult.textContent = succeeded
+      ? `${status.mode}\n${status.output_leaf}\n${Number(status.output_bytes || 0).toLocaleString()} bytes\nVerified, create-new, source unchanged`
+      : `${status.mode}\n${status.phase}\n${hostError(status.error || "The operation failed closed.")}`;
+    copyBadge.textContent = succeeded ? "Verified" : status.phase === "cancelled" ? "Cancelled" : "Failed closed";
+    copyBadge.className = `badge ${succeeded ? "ok" : status.phase === "cancelled" ? "warn" : "fail"}`;
+    copyActionStatus.textContent = succeeded
+      ? "The new Capsule was exhaustively reopened and verified. The source remained unchanged."
+      : hostError(status.error || "The operation did not report success.");
+    copyActionStatus.className = succeeded ? "lifecycle-action-status" : "lifecycle-action-status error";
+    await invokeHost("acknowledge_copy_result", { request: { operation_id: operationId } });
+    activeCopyOperationId = null;
+    copyDestination = null;
+    preparedCopy = null;
+    copyReview.hidden = true;
+    copyConsent.hidden = true;
+    copyPrepareButton.disabled = true;
+    copyExecuteButton.disabled = true;
+    setCopyControlsLocked(false);
+  } catch (error) {
+    copyActionStatus.textContent = hostError(error);
+    copyActionStatus.className = "lifecycle-action-status error";
+  }
 }
 
 async function startSigningPicker(command, message) {
@@ -576,7 +1968,10 @@ actions.addEventListener("click", async (event) => {
   actions.querySelectorAll("button").forEach((item) => { item.disabled = true; });
   actionStatus.textContent = "Applying the host-local decision…";
   try {
+    const selectionId = currentReport?.selection_id ?? currentReport?.capsule?.overview?.selection_id;
+    if (!selectionId) throw new Error("The reviewed Capsule selection is no longer current.");
     const report = await invokeHost("first_open_decide", {
+      selectionId,
       request: { action: button.dataset.action, capabilities: selectedCapabilities() },
     });
     renderReport(report);
@@ -771,19 +2166,71 @@ if (typeof listen === "function") {
     signingBadge.className = "badge fail";
     signingBadge.textContent = "Unavailable";
   });
+  listen("capsule-copy-progress-v1", (event) => {
+    const progress = event.payload;
+    if (progress?.profile !== "org.sqlite-capsule.copy-progress/1"
+      || progress.operation_id !== activeCopyOperationId) return;
+    const phaseLabel = String(progress.phase || "working").replaceAll("-", " ");
+    copyStatus.textContent = `Create-new operation · ${phaseLabel} · source remains read-only`;
+    copyBadge.textContent = phaseLabel;
+    copyBadge.className = `badge ${progress.phase === "succeeded" ? "ok" : progress.phase === "failed" ? "fail" : "warn"}`;
+    copyClearButton.disabled = !progress.cancellable;
+    if (["succeeded", "failed", "cancelled"].includes(progress.phase)) {
+      void finishCopyOperation(progress.operation_id);
+    }
+  }).catch((error) => {
+    copyActionStatus.textContent = `Copy progress channel unavailable: ${hostError(error)}`;
+    copyActionStatus.className = "lifecycle-action-status error";
+  });
+  listen("capsule-reconcile-progress-v1", (event) => {
+    const progress = event.payload;
+    if (progress?.profile !== "org.sqlite-capsule.tauri-reconcile-status/1"
+      || progress.operation_token !== activeReconcileOperationToken) return;
+    const phaseLabel = compareLabel(progress.phase);
+    reconcileBadge.textContent = phaseLabel;
+    reconcileBadge.className = `badge ${progress.phase === "succeeded" ? "ok" : progress.phase === "failed" ? "fail" : "warn"}`;
+    reconcileStatus.textContent = `Create-new reconciliation · ${phaseLabel} · both inputs remain pinned read-only`;
+    reconcileCancelButton.disabled = !progress.cancellable;
+    if (["succeeded", "failed", "cancelled"].includes(progress.phase)) {
+      void finishReconcileOperation(progress.operation_token);
+    }
+  }).catch((error) => {
+    reconcileStatus.textContent = `Reconciliation progress channel unavailable: ${hostError(error)}`;
+    reconcileStatus.className = "lifecycle-action-status error";
+  });
 }
 
-openButton.addEventListener("click", async () => {
-  openButton.disabled = true;
-  openStatus.textContent = "Choose one local SQLite Capsule. Its content will be inspected before any code runs.";
-  openStatus.className = "action-status";
+async function chooseCapsule(button, statusTarget) {
+  button.disabled = true;
+  statusTarget.textContent = "Choose one local SQLite Capsule. Its content will be inspected before any code runs.";
+  statusTarget.className = "action-status";
   try {
     await invokeHost("open_capsule_picker");
   } catch (error) {
-    openStatus.textContent = String(error);
-    openStatus.className = "action-status error";
+    statusTarget.textContent = String(error);
+    statusTarget.className = "action-status error";
   } finally {
-    openButton.disabled = false;
+    button.disabled = false;
+  }
+}
+
+openButton.addEventListener("click", () => chooseCapsule(openButton, openStatus));
+cabinetOpenButton.addEventListener("click", () => chooseCapsule(cabinetOpenButton, cabinetOpenStatus));
+reviewCapabilitiesButton.addEventListener("click", () => {
+  if (reviewCapabilitiesButton.disabled) return;
+  const capsule = currentReport?.capsule;
+  if (capsule?.decision?.executable_allowed) {
+    reviewCapabilitiesButton.disabled = true;
+    invokeHost("open_selected_capsule", {
+      selectionId: capsule.overview.selection_id,
+    }).then(renderReport).catch((error) => {
+      openStatus.textContent = `Open failed closed: ${hostError(error)}`;
+      openStatus.className = "action-status error";
+      reviewCapabilitiesButton.disabled = false;
+    });
+  } else {
+    selectPage("capabilities", { focus: false });
+    promptTitle.focus();
   }
 });
 
@@ -796,6 +2243,22 @@ reopenButton.addEventListener("click", async () => {
   } catch (error) {
     lifecycleActionStatus.textContent = String(error);
     lifecycleActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
+recoverSelectedButton.addEventListener("click", async () => {
+  if (recoverSelectedButton.disabled) return;
+  recoverSelectedButton.disabled = true;
+  lifecycleActionStatus.textContent = "Running explicit SQLite rollback-journal recovery, then inspecting again with application assets locked…";
+  lifecycleActionStatus.className = "lifecycle-action-status";
+  try {
+    const selectionId = currentReport?.selection_id ?? currentReport?.capsule?.overview?.selection_id;
+    if (!selectionId) throw new Error("The reviewed Capsule selection is no longer current.");
+    renderReport(await invokeHost("recover_selected_capsule", { selectionId }));
+  } catch (error) {
+    lifecycleActionStatus.textContent = `Recovery failed closed: ${hostError(error)}`;
+    lifecycleActionStatus.className = "lifecycle-action-status error";
+    recoverSelectedButton.disabled = false;
   }
 });
 

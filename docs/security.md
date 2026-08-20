@@ -170,8 +170,9 @@ A detached host uses a random token for its local shutdown endpoint. State is st
 
 The verifier runs full SQLite integrity and foreign-key checks, validates runtime-required columns and keys before reading them, checks the exact discovery view, rejects unsupported versions, triggers, and virtual tables, and runs declared application checks under the read authoriser. These checks establish internal consistency only; they do not authenticate the publisher.
 
-The independent structural signal lives in
-`format/capsule-v0.2.conformance.json`, checked by
+The independent structural signals live in the versioned
+`format/capsule-v0.2.conformance.json` and
+`format/capsule-v0.3.conformance.json` records, checked by
 `tools/capsule_conformance.py`. It deliberately remains a conformance check,
 not a signature or trust decision.
 
@@ -202,8 +203,9 @@ dependency/advisory drift and the 2026-09-30 deadline both fail the release gate
 
 ### Native application bridge
 
-The native core independently checks the current v0.2 machine conformance contract,
-declared checks, asset hashes, endpoint declarations, and SQL compilation before
+The native core independently dispatches the complete v0.2 or v0.3 format tuple
+and checks that profile's exact machine conformance contract, declared checks,
+asset hashes, endpoint declarations, and SQL compilation before
 returning executable bytes. It disables extension loading, uses
 `trusted_schema=OFF`, applies SQLite limits and progress deadlines, reconciles
 exact named parameters, authorises every statement, bounds results, and wraps
@@ -296,6 +298,103 @@ rows. Mutable domain, grant, change-log, and signature-envelope rows are
 excluded, so named data writes preserve provenance. Asset, permission,
 endpoint, publisher, or schema changes produce `modified after signature`.
 
+The v0.3 extension uses separate v2 canonical-stream and signature contexts. It
+signs application release identity, executable/declarative platform rows, data
+contracts, migration declarations, publisher metadata, and all non-internal
+schema. Instance profile, instance icon, lineage, grants, change history,
+signature envelopes, and domain rows are excluded so user data and cabinet
+metadata can evolve without impersonating a new application release. Unknown
+`capsule_*` tables, views, or indexes fail closed. A signature created under one
+profile cannot verify under the other.
+
+Launch and direct-signing preparation run exhaustive conformance and bounded
+error-severity declared checks on one held read-only connection. Source bytes
+are hashed before and after inspection, and signing requires its private staged
+snapshot to match the reviewed digest before it is modified. Rejection publishes
+nothing and never edits the source capsule.
+
+The exact-source protocol rejects adjacent SQLite WAL/SHM/journal files and
+WAL-mode headers, captures a private create-new standalone snapshot with
+before/snapshot/after digest equality, and derives all launch/signing evidence
+from that snapshot. Direct signing copies the verified private snapshot, not the
+live source path. Runtime verification additionally holds a rollback-mode read
+transaction while rebinding the live digest, preventing a concurrent writer
+from committing a transient state and restoring it around verification.
+
+### Lifecycle workspace and publication
+
+Lifecycle data semantics come only from the verified signed v0.3 data contract
+on the exact private snapshot. Every application table is classified once,
+primary keys are checked against ordered SQLite metadata with supported binary
+collation, declarations are enumerated with max-plus-one bounds, and
+dependencies are bounded and acyclic. Mutable lineage is size/depth bounded,
+redacted by default, and never treated as publisher authentication.
+
+Dry-run plans bind full format, release, capsule, revision, data-schema,
+publisher-signature, raw-file, private-snapshot, stable-file, observed-mtime,
+expiry, resource-ceiling, and destination-parent evidence. Parsed JSON is
+review data; a prepared plan re-verifies the bindings and holds the destination
+capability. M04 execution has distinct exact, compact and semantic typestates.
+Exact and compact duplication accept exhaustively verified v0.2/v0.3 sources;
+semantic fork/template/selective modes require a complete valid signed-v0.3
+inventory, re-derive every signed policy decision at each durable phase, enforce
+restrictive cross-dataset FK/dependency closure, and reproduce authenticated
+template-state where required.
+
+Lifecycle writes have no in-place mode. Output bytes exist only in owner-private
+create-new staging under the operation deadline and byte ceiling. Publication
+uses held parent and file handles, rejects aliases and reparse traversal,
+performs a no-replace rename, verifies the reopened held object, and rechecks
+the final name. Ambiguous post-publish state is quarantined or privately marked
+and is never reported as success. No lifecycle command reaches the raw renderer.
+Child-process termination tests cover every M02 durable publication boundary;
+same-object pre-capture, transform and final-publication writes plus a
+change-capture-restore ABA are rejected without changing the reviewed source
+bytes or reporting an incomplete output as success.
+
+Semantic omission clears mutable instance media/text under a mode-specific host
+profile, grants, change log, prior lineage and untrusted sequence rows. The
+private output is VACUUMed, must have zero freelist pages and no sidecar family,
+and is scanned for hostile sentinels before held-parent no-replace publication.
+All copy commands and progress events are scoped to the trusted `main` Tauri
+WebView; the raw Wry renderer has neither a handler nor event capability.
+
+Comparison is likewise available only in the trusted `main` shell. Both inputs
+are independently pinned and exhaustively verified read-only; one absolute
+deadline spans admission, summary, page generation and final source rebinds.
+The browser receives opaque selection/candidate/session/table/page tokens, not
+paths, SQLite identifiers or SQL. Signed `ignore`, `summary`, `row` and `field`
+policies strictly bound disclosure; sensitive data is counts-only until an
+explicit trusted-shell reveal, and BLOB bytes are never returned. Revealed
+values are neither cached in Cabinet nor included in host logs/support output.
+Mutable lineage hashes remain labelled unauthenticated claims even when a
+claimed parent digest matches the other retained source bytes.
+
+Reconciliation adds no input write or in-place mode. Its two-way authority is
+derived only from changes already disclosed by the retained Compare session;
+reversing source and target recomputes comparison rather than relabelling it.
+Three-way classification accepts an ancestor only after a separate host-owned
+picker returns a pinned, exhaustively verified signed-v0.3 snapshot with the
+same application digest, schema and data contract. Mutable lineage is never
+ancestor authority. Conflict identifiers bind all three exact file digests and
+row-state digests; missing, duplicated, forged or disallowed resolutions fail
+closed, and immutable conflicts permit keep-target only.
+
+Serialized reconciliation plans and payloads contain digests and bounded labels
+but no raw primary keys, row values, SQL or filesystem capabilities. The
+non-serializable review retains all verified inputs and the create-new
+destination capability. Preparation and every durable stage rebind the inputs,
+deadline, exact target state and typed row/value preconditions. Transformation
+starts from a private copy of the target. Selected domain operations run in one
+transaction; metadata finalization runs in a subsequent private transaction
+before exhaustive validation and publication. Reconciliation preserves the
+target capsule ID and signed application/signature inventory, creates a fresh
+revision and exactly two lineage parents, validates the intended dataset-state
+vector and publishes with no replacement. Constraint failure, cancellation,
+staleness, destination races and crashes remove or quarantine only private
+output state. Reconciliation commands and progress remain denied to the raw
+renderer.
+
 The native CLI and trusted desktop shell share the product-independent
 `sqlite-capsule-signing` file workflow. The desktop accepts bounded raw-seed,
 hex-seed, and Ed25519 PKCS#8 PEM/DER files through a Rust-owned picker. It keeps
@@ -350,10 +449,11 @@ The host-owned first-open UI explains every verified request and offers
 allow-once, always for this signed application digest and capsule, deny, and
 cancel. Allow-once is not persisted. Always is unavailable without a currently
 valid signature and stores allow/deny for every request. A later launch of the
-same valid signed application digest and complete grant set opens the verified
-runtime directly; it does not repeat the first-open prompt. A changed identity,
-digest, key, permission request, or missing grant remains locked and prompts or
-denies. Deny is persisted.
+same valid signed application digest and complete grant set becomes
+remembered-ready without repeating the first-open prompt. Overview remains
+visible with assets locked until the explicit trusted-shell open action. A
+changed identity, digest, key, permission request, or missing grant remains
+locked and prompts or denies. Deny is persisted.
 Unsigned local trust uses an exact-file exception and never resembles a trusted
 publisher. The protected store lives outside capsules with owner-only
 permissions, verified backup/reset behavior, redacted export, and an audit log.
@@ -406,6 +506,25 @@ Agents should label embedded instructions by provenance and never allow capsule 
 ### Safe media decoding
 
 Images, fonts, SVG, audio, and other active formats require type-specific controls and size limits. SVG in particular can contain active or externally referencing content.
+
+The M03 trusted Overview implements the narrow image case for declared PNG and
+WebP application/instance artwork. It reads only the selected asset from the
+same retained verified snapshot used for Overview identity, rechecks its
+declared SHA-256 and media magic, caps compressed bytes at 512 KiB, dimensions
+at 1024 by 1024, and checked decoded RGBA allocation at 4 MiB. Decoding occurs
+off the UI thread; animation, malformed/truncated content, declared/actual
+dimension mismatch, and unsupported media fail to a bundled deterministic
+fallback. Successful images are re-encoded as static host-owned PNGs with no
+source metadata. The trusted shell receives only that bounded derivative; raw
+capsule content cannot request or reuse it.
+
+Cabinet recents are convenience data in a separate owner-protected, bounded and
+rebuildable store. Loading the store never stats or opens cached target paths.
+Only an opaque recent ID crosses into the trusted UI; Rust resolves it and
+performs fresh pinned non-mutating inspection. Cached trust badges are explicitly
+last-observed and never authorize execution. Corrupt, oversized, future-version,
+symlinked, or reparse-backed cache state is ignored/rebuilt without touching the
+trust store or capsule.
 
 ### Update and revocation
 

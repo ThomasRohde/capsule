@@ -1,0 +1,41 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--offline",
+    "--workspace",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "completed_at": "2026-08-12T22:21:06Z",
+  "cwd": "native",
+  "duration_ms": 930,
+  "exit_code": 0,
+  "milestone": "M03",
+  "name": "gate-final-rust-clippy",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T22:21:05Z",
+  "stderr": {
+    "captured_bytes": 72,
+    "original_bytes": 72,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T222105Z-gate-final-rust-clippy/stderr.txt",
+    "sha256_captured": "0674b29b50c3dec56646820dd880f72135797e8fbae612e62ca8370ee4ddce1c",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T222105Z-gate-final-rust-clippy/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

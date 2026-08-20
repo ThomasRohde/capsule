@@ -1,0 +1,3 @@
+    Checking sqlite-capsule-runtime v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-runtime)
+    Checking sqlite-capsule-desktop v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\desktop\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.37s

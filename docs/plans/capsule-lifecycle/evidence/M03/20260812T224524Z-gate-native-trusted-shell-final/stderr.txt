@@ -1,0 +1,4 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.56s
+[0-0] 2026-08-12T22:45:32.542Z WARN webdriverio: Failed to execute "scrollIntoView" using WebDriver Actions API: WebDriverError: move target out of bounds
+[0-0]   (Session info: MicrosoftEdge=151.0.4129.78) when running "actions" with method "POST"!
+[0-0] Re-attempting using `Element.scrollIntoView` via Web API.

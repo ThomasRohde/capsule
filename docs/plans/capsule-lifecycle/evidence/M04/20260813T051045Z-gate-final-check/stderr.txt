@@ -1,0 +1,4 @@
+    Checking sqlite-capsule-workspace v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-workspace)
+    Checking sqlite-capsule-desktop v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\desktop\src-tauri)
+    Checking sqlite-capsule-cli v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.77s

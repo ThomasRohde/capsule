@@ -1,0 +1,37 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "-p",
+    "sqlite-capsule-cli"
+  ],
+  "completed_at": "2026-08-12T17:25:24Z",
+  "cwd": "native",
+  "duration_ms": 2592,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "native-cli-build",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:25:22Z",
+  "stderr": {
+    "captured_bytes": 178,
+    "original_bytes": 178,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172522Z-native-cli-build/stderr.txt",
+    "sha256_captured": "838fd406f8522c6efb82993737ee3924600f3696c00903988bdfdba73882ec90",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172522Z-native-cli-build/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

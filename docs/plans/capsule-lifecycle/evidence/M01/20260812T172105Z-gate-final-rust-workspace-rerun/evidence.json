@@ -1,0 +1,37 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-12T17:22:22Z",
+  "cwd": "native",
+  "duration_ms": 77496,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-rust-workspace-rerun",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:21:05Z",
+  "stderr": {
+    "captured_bytes": 2291,
+    "original_bytes": 2291,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172105Z-gate-final-rust-workspace-rerun/stderr.txt",
+    "sha256_captured": "26fe8a40d4b6ed19d8c7908689aa83e2a66716f748b4b5ff703e31a34fb30ac1",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 13268,
+    "original_bytes": 13268,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172105Z-gate-final-rust-workspace-rerun/stdout.txt",
+    "sha256_captured": "3751146359d7093b923d109568bbdd6ff09c7492a7e4b88f16de67dcf48974a9",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 1200
+}

@@ -179,11 +179,22 @@ def _manifest_identity(connection: sqlite3.Connection) -> dict[str, Any] | None:
     }
     if "capsule_manifest" not in tables:
         return None
-    row = connection.execute(
-        "SELECT format_id, format_version, capsule_id, app_id, app_version, title "
-        "FROM capsule_manifest WHERE id = 1"
-    ).fetchone()
-    return dict(row) if row is not None else None
+    user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if user_version == 2:
+        row = connection.execute(
+            "SELECT format_id, format_version, capsule_id, app_id, app_version, title "
+            "FROM capsule_manifest WHERE id = 1"
+        ).fetchone()
+        return dict(row) if row is not None else None
+    if user_version == 3:
+        row = connection.execute(
+            "SELECT m.format_id, m.format_version, i.capsule_id, i.revision_id, "
+            "m.app_id, m.app_version, i.title "
+            "FROM capsule_manifest AS m CROSS JOIN capsule_instance AS i "
+            "WHERE m.id = 1 AND i.id = 1"
+        ).fetchone()
+        return dict(row) if row is not None else None
+    raise AuthoringError(f"Unsupported capsule user_version: {user_version}")
 
 
 def unpack_capsule(capsule_path: Path, output_directory: Path) -> dict[str, Any]:

@@ -1,0 +1,14 @@
+{
+  "profile": "org.sqlite-capsule.exact-copy-preview/1",
+  "format_version": "0.3",
+  "signature_state": "signed-valid",
+  "signature_count": 1,
+  "source_size_bytes": 1048576,
+  "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "capsule_identity": "preserved",
+  "revision_identity": "preserved",
+  "logical_state": "preserved-exactly",
+  "destination": "create-new-no-replace",
+  "overwrite_allowed": false,
+  "expected_output_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+}

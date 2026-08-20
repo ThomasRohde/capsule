@@ -1,0 +1,35 @@
+{
+  "command": [
+    "python",
+    "tools/check_compact_state_vectors.py"
+  ],
+  "completed_at": "2026-08-13T05:10:46Z",
+  "cwd": ".",
+  "duration_ms": 883,
+  "exit_code": 0,
+  "milestone": "M04",
+  "name": "gate-final-compact-vectors",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T05:10:45Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051045Z-gate-final-compact-vectors/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 177,
+    "original_bytes": 177,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051045Z-gate-final-compact-vectors/stdout.txt",
+    "sha256_captured": "de8bdf5ab2af9c8d6ff6057c5f152d288a6d60545415e32c8a77378b304fdfb5",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 180
+}

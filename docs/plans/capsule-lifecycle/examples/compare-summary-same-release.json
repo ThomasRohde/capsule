@@ -1,0 +1,83 @@
+{
+  "profile": "org.sqlite-capsule.compare-report/1",
+  "left": {
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440001",
+    "app_id": "org.sqlite-capsule.example",
+    "app_version": "1.0.0",
+    "application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "publisher": {
+      "publisher_id": "org.sqlite-capsule.example-publisher",
+      "publisher_name": "Example Publisher",
+      "signature_count": 1,
+      "signatures": [{"key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111", "status": "valid", "signed_at": "2026-08-13T05:00:00Z"}]
+    },
+    "data_schema_id": "org.sqlite-capsule.example.data",
+    "data_schema_version": 1
+  },
+  "right": {
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440001",
+    "app_id": "org.sqlite-capsule.example",
+    "app_version": "1.0.0",
+    "application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "publisher": {
+      "publisher_id": "org.sqlite-capsule.example-publisher",
+      "publisher_name": "Example Publisher",
+      "signature_count": 1,
+      "signatures": [{"key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111", "status": "valid", "signed_at": "2026-08-13T05:00:00Z"}]
+    },
+    "data_schema_id": "org.sqlite-capsule.example.data",
+    "data_schema_version": 1
+  },
+  "compatibility": {
+    "state": "same-release-same-schema",
+    "can_compare_data": true,
+    "can_reconcile": true,
+    "reasons": ["Exact application release and signed data schema match."]
+  },
+  "identity": {"state": "same", "left_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "right_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "change_count": 0},
+  "lineage": {"state": "same", "left_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "right_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "change_count": 0, "direct_relationship": "none", "direct_evidence": [], "common_ancestor_claims": [], "common_ancestor_claims_truncated": false},
+  "application": {"state": "same", "left_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "right_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "change_count": 0},
+  "schema": {"state": "same", "left_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "right_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "change_count": 0},
+  "datasets": [
+    {
+      "dataset_id": "content",
+      "policy": "row",
+      "sensitivity": "normal",
+      "state": "same",
+      "left_rows": 1,
+      "right_rows": 1,
+      "counts": {"added": 0, "removed": 0, "changed": 0, "unchanged": 1},
+      "left_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "right_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "tables": [
+        {
+          "table": "content",
+          "primary_key": ["id"],
+          "state": "same",
+          "left_rows": 1,
+          "right_rows": 1,
+          "counts": {"added": 0, "removed": 0, "changed": 0, "unchanged": 1},
+          "left_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "right_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "details_redacted": false,
+          "truncated": false
+        }
+      ],
+      "details_redacted": false,
+      "truncated": false
+    }
+  ],
+  "limits": {
+    "max_rows_per_table": 10000,
+    "max_total_rows": 100000,
+    "max_value_bytes": 4096,
+    "max_stream_bytes": 67108864,
+    "deadline_ms": 30000
+  },
+  "truncated": false,
+  "report_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}

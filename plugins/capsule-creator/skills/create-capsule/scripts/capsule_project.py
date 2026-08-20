@@ -7,9 +7,11 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import re
 import sqlite3
+import struct
 import subprocess
 import sys
 import tempfile
@@ -19,10 +21,23 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 PROJECT_FORMAT = "org.sqlite-capsule.source-project/0.2"
+PROJECT_FORMAT_V03 = "org.sqlite-capsule.source-project/0.3"
 FORMAT_ID = "org.sqlite-capsule"
-FORMAT_VERSION = "0.2"
+DEFAULT_FORMAT_VERSION = "0.2"
+SUPPORTED_FORMAT_VERSIONS = ("0.2", "0.3")
+PROJECT_FORMATS = {
+    "0.2": PROJECT_FORMAT,
+    "0.3": PROJECT_FORMAT_V03,
+}
 RUNTIME_PROTOCOL = "capsule-http/0.2"
-IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+V03_HOST_PROFILE = "org.sqlite-capsule.host-profile/0.3"
+TEMPLATE_STATE_PROFILE = "org.sqlite-capsule.template-state/1"
+DATASET_STATE_PROFILE = "org.sqlite-capsule.dataset-state/1"
+TEMPLATE_PLATFORM_RESET_PROFILE = "org.sqlite-capsule.template-platform-reset/1"
+TEMPLATE_STATE_DOC_SLUG = "org.sqlite-capsule.template-state"
+DATASET_STREAM_CONTEXT = b"SQLite Capsule dataset-state canonical stream v1\0"
+MAX_TEMPLATE_ROWS = 100_000
+MAX_TEMPLATE_STREAM_BYTES = 512 * 1024 * 1024
 APP_ID = re.compile(r"^[a-z0-9]+(?:[.-][a-z0-9]+)+$")
 MEDIA_TYPES = {
     ".css": "text/css; charset=utf-8",
@@ -116,9 +131,9 @@ def _load_array(path: Path) -> list[dict[str, Any]]:
 
 
 def _quote_identifier(value: str) -> str:
-    if not IDENTIFIER.fullmatch(value):
+    if not isinstance(value, str) or not value or "\x00" in value or len(value.encode("utf-8")) > 256:
         raise ProjectError(f"Unsafe SQLite identifier: {value!r}")
-    return '"' + value + '"'
+    return '"' + value.replace('"', '""') + '"'
 
 
 def _insert_mapping(
@@ -172,6 +187,8 @@ def _resource_root(explicit: Path | None = None) -> Path:
         if (
             (candidate / "format" / "capsule-v0.2.sql").is_file()
             and (candidate / "format" / "capsule-v0.2.conformance.json").is_file()
+            and (candidate / "format" / "capsule-v0.3.sql").is_file()
+            and (candidate / "format" / "capsule-v0.3.conformance.json").is_file()
             and (candidate / "format" / "capsule_conformance.py").is_file()
             and (candidate / "runtime" / "capsule_host.py").is_file()
             and (candidate / "runtime" / "browser" / "capsule-client.js").is_file()
@@ -203,9 +220,16 @@ def _project_config(project: Path) -> dict[str, Any]:
     config = _load_json(project / "capsule-project.json")
     if not isinstance(config, dict):
         raise ProjectError("capsule-project.json must contain an object")
-    if config.get("project_format") != PROJECT_FORMAT:
-        raise ProjectError(f"Unsupported project format: {config.get('project_format')!r}")
-    required_strings = (
+    format_version = config.get("format_version", DEFAULT_FORMAT_VERSION)
+    if format_version not in SUPPORTED_FORMAT_VERSIONS:
+        raise ProjectError(f"Unsupported capsule format version: {format_version!r}")
+    expected_project_format = PROJECT_FORMATS[format_version]
+    if config.get("project_format") != expected_project_format:
+        raise ProjectError(
+            "Project format does not match format_version: "
+            f"expected {expected_project_format!r}, got {config.get('project_format')!r}"
+        )
+    required_strings = [
         "capsule_id",
         "title",
         "summary",
@@ -213,8 +237,20 @@ def _project_config(project: Path) -> dict[str, Any]:
         "app_version",
         "entry_asset",
         "created_at",
-        "updated_at",
-    )
+    ]
+    if format_version == "0.2":
+        required_strings.append("updated_at")
+    else:
+        required_strings.extend(
+            (
+                "revision_id",
+                "released_at",
+                "content_updated_at",
+                "application_category",
+                "document_kind",
+                "data_schema_id",
+            )
+        )
     for field in required_strings:
         if not isinstance(config.get(field), str) or not config[field].strip():
             raise ProjectError(f"Project field {field!r} must be a non-empty string")
@@ -238,6 +274,48 @@ def _project_config(project: Path) -> dict[str, Any]:
         raise ProjectError("non_executable_assets must not contain duplicates")
     if config["entry_asset"] in non_executable_assets:
         raise ProjectError("entry_asset cannot be declared non-executable")
+    if format_version == "0.3":
+        for field in ("capsule_id", "revision_id"):
+            try:
+                parsed = uuid.UUID(config[field])
+            except (AttributeError, ValueError) as exc:
+                raise ProjectError(f"{field} must be a canonical RFC 4122 UUID") from exc
+            if str(parsed) != config[field] or parsed.variant != uuid.RFC_4122:
+                raise ProjectError(f"{field} must be a canonical RFC 4122 UUID")
+        if not isinstance(config.get("data_schema_version"), int) or config[
+            "data_schema_version"
+        ] < 1:
+            raise ProjectError("data_schema_version must be a positive integer")
+        tags = config.get("tags_json")
+        if not (
+            isinstance(tags, list)
+            and len(tags) <= 64
+            and len(tags) == len(set(tags))
+            and all(
+                isinstance(tag, str)
+                and 1 <= len(tag) <= 128
+                and len(tag.encode("utf-8")) <= 128
+                for tag in tags
+            )
+        ):
+            raise ProjectError("tags_json must contain at most 64 unique bounded strings")
+        if not (project / "source" / "data-contract.json").is_file():
+            raise ProjectError("A v0.3 project requires source/data-contract.json")
+        template_state = config.get("template_state")
+        if template_state is not None and not (
+            isinstance(template_state, dict)
+            and template_state
+            and all(
+                isinstance(dataset_id, str)
+                and disposition in {"seed", "empty"}
+                for dataset_id, disposition in template_state.items()
+            )
+        ):
+            raise ProjectError(
+                "template_state must map every dataset id to 'seed' or 'empty'"
+            )
+    elif "template_state" in config:
+        raise ProjectError("template_state is available only for v0.3 projects")
     return config
 
 
@@ -386,6 +464,8 @@ def init_project(
     app_id: str,
     summary: str | None = None,
     app_version: str = "0.1.0",
+    format_version: str = DEFAULT_FORMAT_VERSION,
+    template: bool = False,
 ) -> dict[str, Any]:
     project = project.expanduser().resolve()
     if project.exists():
@@ -394,11 +474,19 @@ def init_project(
         raise ProjectError("title must not be empty")
     if not APP_ID.fullmatch(app_id):
         raise ProjectError("app-id must be a lowercase dotted or hyphenated identifier")
+    if format_version not in SUPPORTED_FORMAT_VERSIONS:
+        raise ProjectError(f"Unsupported capsule format version: {format_version!r}")
+    if template and format_version != "0.3":
+        raise ProjectError("--template requires --format-version 0.3")
     timestamp = _utc_now()
-    capsule_id = f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, app_id)}"
+    stable_uuid = uuid.uuid5(uuid.NAMESPACE_URL, app_id)
+    capsule_id = (
+        f"urn:uuid:{stable_uuid}" if format_version == "0.2" else str(stable_uuid)
+    )
     summary = summary or f"A self-describing offline {title} application stored in SQLite."
     config = {
-        "project_format": PROJECT_FORMAT,
+        "project_format": PROJECT_FORMATS[format_version],
+        "format_version": format_version,
         "capsule_id": capsule_id,
         "title": title.strip(),
         "summary": summary.strip(),
@@ -422,8 +510,26 @@ def init_project(
             },
         },
         "created_at": timestamp,
-        "updated_at": timestamp,
     }
+    if format_version == "0.2":
+        config["updated_at"] = timestamp
+    else:
+        config.update(
+            {
+                "revision_id": str(
+                    uuid.uuid5(uuid.NAMESPACE_URL, f"{app_id}/revision/initial")
+                ),
+                "released_at": timestamp,
+                "content_updated_at": timestamp,
+                "application_category": "productivity",
+                "document_kind": "document",
+                "tags_json": [],
+                "data_schema_id": f"{app_id}.data",
+                "data_schema_version": 1,
+            }
+        )
+        if template:
+            config["template_state"] = {"items": "seed"}
     try:
         _write_json(project / "capsule-project.json", config)
         _write_text(project / "domain.sql", STARTER_DOMAIN)
@@ -444,6 +550,39 @@ def init_project(
                 ]
             },
         )
+        if format_version == "0.3":
+            _write_json(
+                project / "source" / "data-contract.json",
+                {
+                    "datasets": [
+                        {
+                            "id": "items",
+                            "role": "user-content",
+                            "description": "User-authored application items.",
+                            "fork_policy": "copy",
+                            "compare_policy": "field",
+                            "reconcile_policy": "three-way",
+                            "upgrade_policy": "copy",
+                            "sensitivity": "normal",
+                            "required": 1,
+                        }
+                    ],
+                    "tables": [
+                        {
+                            "dataset_id": "items",
+                            "table_name": "item",
+                            "sequence": 10,
+                            "primary_key_json": ["id"],
+                            "ignored_columns_json": [],
+                            "immutable_columns_json": ["id"],
+                        }
+                    ],
+                    "dependencies": [],
+                    "migrations": [],
+                    "migration_steps": [],
+                    "migration_checks": [],
+                },
+            )
         _write_json(
             project / "source" / "endpoints.json",
             [
@@ -587,7 +726,8 @@ def init_project(
     return {
         "ok": True,
         "project": str(project),
-        "project_format": PROJECT_FORMAT,
+        "project_format": PROJECT_FORMATS[format_version],
+        "format_version": format_version,
         "capsule_id": capsule_id,
         "app_id": app_id,
     }
@@ -719,6 +859,262 @@ def _validate_domain_schema(connection: sqlite3.Connection) -> None:
         )
 
 
+def _load_v03_data_contract(project: Path) -> dict[str, list[dict[str, Any]]]:
+    path = project / "source" / "data-contract.json"
+    value = _load_json(path)
+    if not isinstance(value, dict):
+        raise ProjectError(f"{path} must contain an object")
+    collections = (
+        "datasets",
+        "tables",
+        "dependencies",
+        "migrations",
+        "migration_steps",
+        "migration_checks",
+    )
+    unknown = sorted(set(value) - set(collections))
+    if unknown:
+        raise ProjectError(
+            "source/data-contract.json has unknown fields: " + ", ".join(unknown)
+        )
+    result: dict[str, list[dict[str, Any]]] = {}
+    for collection in collections:
+        rows = value.get(collection)
+        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+            raise ProjectError(
+                f"source/data-contract.json field {collection!r} must be an array of objects"
+            )
+        result[collection] = rows
+    if not result["datasets"] or not result["tables"]:
+        raise ProjectError("A v0.3 data contract requires datasets and classified tables")
+    return result
+
+
+def _validate_v03_data_contract(
+    connection: sqlite3.Connection,
+    contract: Mapping[str, list[dict[str, Any]]],
+) -> None:
+    domain_tables = {
+        name
+        for row in connection.execute(
+            "SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name"
+        ).fetchall()
+        for name in (str(row[0]),)
+        if not name.startswith("capsule_") and not name.startswith("sqlite_")
+    }
+    if len(contract["datasets"]) > 256 or len(contract["tables"]) > 4096:
+        raise ProjectError("v0.3 data contract exceeds the host dataset/table ceiling")
+    dataset_ids = [row.get("id") for row in contract["datasets"]]
+    dataset_id_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_.:-]{0,255}$")
+    if not all(
+        isinstance(value, str)
+        and len(value.encode("utf-8")) <= 256
+        and dataset_id_pattern.fullmatch(value)
+        for value in dataset_ids
+    ):
+        raise ProjectError("Every v0.3 dataset requires a bounded portable id")
+    if len(dataset_ids) != len(set(dataset_ids)):
+        raise ProjectError("v0.3 dataset ids must be unique")
+    known_datasets = set(dataset_ids)
+
+    tables_per_dataset = {dataset: 0 for dataset in known_datasets}
+    for row in contract["datasets"]:
+        description = row.get("description")
+        if not isinstance(description, str) or not (1 <= len(description.encode("utf-8")) <= 2048):
+            raise ProjectError("v0.3 dataset descriptions must be 1..2048 UTF-8 bytes")
+        required = row.get("required")
+        fork_policy = row.get("fork_policy")
+        compare_policy = row.get("compare_policy")
+        reconcile_policy = row.get("reconcile_policy")
+        if required not in (0, 1):
+            raise ProjectError("v0.3 dataset required must be 0 or 1")
+        if required == 1 and fork_policy == "omit":
+            raise ProjectError("A required dataset cannot use fork_policy 'omit'")
+        if reconcile_policy == "three-way" and compare_policy not in ("row", "field"):
+            raise ProjectError(
+                "Three-way reconciliation requires row or field comparison"
+            )
+
+    declared_tables: set[str] = set()
+    dataset_by_table: dict[str, str] = {}
+    for row in contract["tables"]:
+        table = row.get("table_name")
+        dataset = row.get("dataset_id")
+        if not isinstance(table, str) or table not in domain_tables:
+            raise ProjectError(f"Data contract references unknown domain table: {table!r}")
+        if table in declared_tables:
+            raise ProjectError(f"Domain table is classified more than once: {table!r}")
+        if dataset not in known_datasets:
+            raise ProjectError(f"Data contract references unknown dataset: {dataset!r}")
+        tables_per_dataset[dataset] += 1
+        if tables_per_dataset[dataset] > 256:
+            raise ProjectError("A v0.3 dataset cannot classify more than 256 tables")
+        if len(table.encode("utf-8")) > 256:
+            raise ProjectError("v0.3 table names are limited to 256 UTF-8 bytes")
+        declared_tables.add(table)
+        dataset_by_table[table] = dataset
+        column_rows = connection.execute(
+            f"PRAGMA table_xinfo({_quote_identifier(table)})"
+        ).fetchall()
+        columns = {str(column[1]) for column in column_rows}
+        if len(column_rows) > 256 or any(
+            not name or len(name.encode("utf-8")) > 256 for name in columns
+        ):
+            raise ProjectError("v0.3 tables/columns exceed the host schema ceiling")
+        actual_primary_key = [
+            str(column[1])
+            for column in sorted(
+                column_rows,
+                key=lambda column: int(column[5]) if int(column[5]) else 1_000_000,
+            )
+            if int(column[5])
+        ]
+        if not actual_primary_key:
+            raise ProjectError(
+                f"V0.3 domain table {table!r} must declare an explicit primary key"
+            )
+        primary_key = row.get("primary_key_json")
+        if primary_key != actual_primary_key:
+            raise ProjectError(
+                f"Data contract primary key for {table!r} must be {actual_primary_key!r}"
+            )
+        if len(primary_key) > 16 or any(len(name.encode("utf-8")) > 256 for name in primary_key):
+            raise ProjectError("v0.3 primary keys exceed the host column ceiling")
+        xinfo = {str(column[1]): column for column in column_rows}
+        table_sql = str(
+            connection.execute(
+                "SELECT sql FROM sqlite_schema WHERE type='table' AND name=?1 COLLATE BINARY",
+                (table,),
+            ).fetchone()[0]
+        )
+        integer_alias = (
+            len(primary_key) == 1
+            and str(xinfo[primary_key[0]][2]).upper() == "INTEGER"
+            and "WITHOUT ROWID" not in table_sql.upper()
+        )
+        if not integer_alias and any(not bool(xinfo[name][3]) for name in primary_key):
+            raise ProjectError(
+                f"V0.3 primary key columns for {table!r} must be NOT NULL"
+            )
+        if not integer_alias:
+            primary_indexes = [
+                row
+                for row in connection.execute(
+                    f"PRAGMA index_list({_quote_identifier(table)})"
+                ).fetchall()
+                if str(row[3]).casefold() == "pk"
+            ]
+            if len(primary_indexes) != 1:
+                raise ProjectError(
+                    f"V0.3 table {table!r} must expose exactly one primary-key index"
+                )
+            index_name = str(primary_indexes[0][1])
+            key_rows = [
+                row
+                for row in connection.execute(
+                    f"PRAGMA index_xinfo({_quote_identifier(index_name)})"
+                ).fetchall()
+                if bool(row[5])
+            ]
+            if [str(row[2]) for row in key_rows] != primary_key or any(
+                bool(row[3]) or str(row[4]).upper() != "BINARY" for row in key_rows
+            ):
+                raise ProjectError(
+                    f"V0.3 primary key for {table!r} must use ascending BINARY order"
+                )
+        for field in ("ignored_columns_json", "immutable_columns_json"):
+            names = row.get(field)
+            if not (
+                isinstance(names, list)
+                and len(names) <= 64
+                and len(names) == len(set(names))
+                and all(isinstance(name, str) and name in columns for name in names)
+            ):
+                raise ProjectError(
+                    f"Data contract {field} for {table!r} must name unique existing columns"
+                )
+            if len(_json_dump(names).encode("utf-8")) > 16_384:
+                raise ProjectError(f"Data contract {field} exceeds the host JSON ceiling")
+        if set(row.get("ignored_columns_json", ())) & set(primary_key):
+            raise ProjectError(
+                f"Data contract ignored columns for {table!r} cannot overlap its primary key"
+            )
+    missing = sorted(domain_tables - declared_tables)
+    if missing:
+        raise ProjectError(
+            "v0.3 requires every ordinary domain table to be classified: "
+            + ", ".join(missing)
+        )
+    empty_datasets = sorted(
+        dataset for dataset, count in tables_per_dataset.items() if count == 0
+    )
+    if empty_datasets:
+        raise ProjectError(
+            "Every v0.3 dataset must classify at least one table: "
+            + ", ".join(empty_datasets)
+        )
+
+    edges: dict[str, set[str]] = {dataset: set() for dataset in known_datasets}
+    for row in contract["dependencies"]:
+        dataset = row.get("dataset_id")
+        dependency = row.get("depends_on_dataset_id")
+        if dataset not in known_datasets or dependency not in known_datasets:
+            raise ProjectError("Data contract dependency references an unknown dataset")
+        if dataset == dependency:
+            raise ProjectError("A dataset cannot depend on itself")
+        reason = row.get("reason")
+        if not isinstance(reason, str) or not (1 <= len(reason.encode("utf-8")) <= 2048):
+            raise ProjectError("Dataset dependency reasons must be 1..2048 UTF-8 bytes")
+        if dependency in edges[dataset]:
+            raise ProjectError("A dataset dependency may be declared only once")
+        edges[dataset].add(dependency)
+        if len(edges[dataset]) > 64:
+            raise ProjectError("A dataset cannot declare more than 64 dependencies")
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(dataset: str) -> None:
+        if dataset in visiting:
+            raise ProjectError("Data contract dataset dependencies must be acyclic")
+        if dataset in visited:
+            return
+        visiting.add(dataset)
+        for dependency in edges[dataset]:
+            visit(dependency)
+        visiting.remove(dataset)
+        visited.add(dataset)
+
+    for dataset in sorted(known_datasets):
+        visit(dataset)
+
+    for child_table, child_dataset in sorted(dataset_by_table.items()):
+        for foreign_key in connection.execute(
+            f"PRAGMA foreign_key_list({_quote_identifier(child_table)})"
+        ).fetchall():
+            parent_table = str(foreign_key[2])
+            parent_dataset = dataset_by_table.get(parent_table)
+            if parent_dataset is None:
+                raise ProjectError(
+                    f"Foreign key from {child_table!r} references an unclassified table"
+                )
+            if parent_dataset == child_dataset:
+                continue
+            if parent_dataset not in edges[child_dataset]:
+                raise ProjectError(
+                    "Every cross-dataset foreign key requires a matching "
+                    "child-to-parent dataset dependency"
+                )
+            on_update = str(foreign_key[5]).upper()
+            on_delete = str(foreign_key[6]).upper()
+            if on_update not in ("NO ACTION", "RESTRICT") or on_delete not in (
+                "NO ACTION",
+                "RESTRICT",
+            ):
+                raise ProjectError(
+                    "Cross-dataset foreign keys must use NO ACTION or RESTRICT"
+                )
+
+
 def _seed_domain(connection: sqlite3.Connection, project: Path) -> int:
     seed = _load_json(project / "source" / "data" / "seed.json")
     if not isinstance(seed, dict):
@@ -771,28 +1167,264 @@ def _seed_domain(connection: sqlite3.Connection, project: Path) -> int:
     return total
 
 
+class _DatasetStateDigest:
+    def __init__(self) -> None:
+        self.digest = hashlib.sha256()
+        self.bytes = 0
+
+    def raw(self, value: bytes) -> None:
+        self.bytes += len(value)
+        if self.bytes > MAX_TEMPLATE_STREAM_BYTES:
+            raise ProjectError("Template dataset-state stream exceeds the host byte ceiling")
+        self.digest.update(value)
+
+    def u32(self, value: int) -> None:
+        self.raw(struct.pack(">I", value))
+
+    def u64(self, value: int) -> None:
+        self.raw(struct.pack(">Q", value))
+
+    def text(self, value: str) -> None:
+        encoded = value.encode("utf-8")
+        self.u64(len(encoded))
+        self.raw(encoded)
+
+    def sqlite_value(self, value: Any) -> None:
+        if value is None:
+            self.raw(b"\x00")
+        elif isinstance(value, int):
+            if not -(1 << 63) <= value < (1 << 63):
+                raise ProjectError("Template dataset integer is outside SQLite signed-64")
+            self.raw(b"\x01")
+            self.raw(struct.pack(">q", value))
+        elif isinstance(value, float):
+            if not math.isfinite(value):
+                raise ProjectError("Template dataset contains a non-finite REAL")
+            self.raw(b"\x02")
+            self.raw(struct.pack(">d", value))
+        elif isinstance(value, str):
+            self.raw(b"\x03")
+            self.text(value)
+        elif isinstance(value, bytes):
+            self.raw(b"\x04")
+            self.u64(len(value))
+            self.raw(value)
+        else:
+            raise ProjectError("Template dataset contains an unsupported SQLite value")
+
+
+def _template_dataset_state(
+    connection: sqlite3.Connection,
+    config: Mapping[str, Any],
+    dataset: Mapping[str, Any],
+    tables: list[Mapping[str, Any]],
+) -> tuple[int, int, str]:
+    stream = _DatasetStateDigest()
+    stream.raw(DATASET_STREAM_CONTEXT)
+    stream.text(str(config["app_id"]))
+    stream.text(str(config["data_schema_id"]))
+    stream.u64(int(config["data_schema_version"]))
+    stream.text(str(dataset["id"]))
+    stream.u32(len(tables))
+    stored_rows = 0
+
+    for table in tables:
+        table_name = str(table["table_name"])
+        primary_key = list(table["primary_key_json"])
+        columns = [
+            str(row[0])
+            for row in connection.execute(
+                "SELECT name FROM pragma_table_xinfo(?1) ORDER BY cid LIMIT 257",
+                (table_name,),
+            ).fetchall()
+        ]
+        if not columns or len(columns) > 256:
+            raise ProjectError("Template dataset table has an invalid column inventory")
+        table_rows = int(
+            connection.execute(
+                f"SELECT count(*) FROM {_quote_identifier(table_name)}"
+            ).fetchone()[0]
+        )
+        stored_rows += table_rows
+        if stored_rows > MAX_TEMPLATE_ROWS:
+            raise ProjectError("Template dataset rows exceed the host row ceiling")
+
+        stream.u32(int(table["sequence"]))
+        stream.text(table_name)
+        stream.u32(len(primary_key))
+        for column in primary_key:
+            stream.text(str(column))
+        stream.u32(len(columns))
+        for column in columns:
+            stream.text(column)
+        stream.u64(table_rows)
+
+        selected = ", ".join(_quote_identifier(column) for column in columns)
+        ordering = ", ".join(
+            f"{_quote_identifier(column)} COLLATE BINARY ASC" for column in primary_key
+        )
+        observed = 0
+        for row in connection.execute(
+            f"SELECT {selected} FROM {_quote_identifier(table_name)} ORDER BY {ordering}"
+        ):
+            observed += 1
+            for value in row:
+                stream.sqlite_value(value)
+        if observed != table_rows:
+            raise ProjectError("Template dataset changed during proof generation")
+    return stored_rows, stream.bytes, stream.digest.hexdigest()
+
+
+def _seed_template_state_proof(
+    connection: sqlite3.Connection,
+    project: Path,
+    config: Mapping[str, Any],
+) -> int:
+    requested = config.get("template_state")
+    if requested is None:
+        return 0
+    if connection.execute(
+        "SELECT EXISTS(SELECT 1 FROM capsule_doc WHERE slug = ?1 COLLATE BINARY)",
+        (TEMPLATE_STATE_DOC_SLUG,),
+    ).fetchone()[0]:
+        raise ProjectError(f"Embedded document slug {TEMPLATE_STATE_DOC_SLUG!r} is reserved")
+
+    contract = _load_v03_data_contract(project)
+    datasets = sorted(contract["datasets"], key=lambda row: str(row["id"]).encode("utf-8"))
+    dataset_ids = [str(row["id"]) for row in datasets]
+    if set(requested) != set(dataset_ids):
+        raise ProjectError("template_state must classify every data-contract dataset exactly once")
+
+    proof_datasets = []
+    total_rows = 0
+    total_bytes = 0
+    for dataset in datasets:
+        dataset_id = str(dataset["id"])
+        tables = sorted(
+            (row for row in contract["tables"] if row["dataset_id"] == dataset_id),
+            key=lambda row: (int(row["sequence"]), str(row["table_name"]).encode("utf-8")),
+        )
+        rows, stream_bytes, state_sha256 = _template_dataset_state(
+            connection, config, dataset, tables
+        )
+        total_rows += rows
+        total_bytes += stream_bytes
+        if total_rows > MAX_TEMPLATE_ROWS or total_bytes > MAX_TEMPLATE_STREAM_BYTES:
+            raise ProjectError("Template state exceeds the host operation budget")
+        disposition = requested[dataset_id]
+        if disposition == "empty" and rows != 0:
+            raise ProjectError(
+                f"Template dataset {dataset_id!r} is declared empty but contains rows"
+            )
+        proof_datasets.append(
+            {
+                "dataset_id": dataset_id,
+                "disposition": disposition,
+                "stored_row_count": rows,
+                "state_sha256": state_sha256,
+            }
+        )
+
+    proof = {
+        "profile": TEMPLATE_STATE_PROFILE,
+        "app_id": config["app_id"],
+        "app_version": config["app_version"],
+        "data_schema_id": config["data_schema_id"],
+        "data_schema_version": config["data_schema_version"],
+        "dataset_state_profile": DATASET_STATE_PROFILE,
+        "mutable_platform_state_profile": TEMPLATE_PLATFORM_RESET_PROFILE,
+        "datasets": proof_datasets,
+    }
+    content = _json_dump(proof)
+    if len(content.encode("utf-8")) > 256 * 1024:
+        raise ProjectError("Template-state proof exceeds the host proof ceiling")
+    _insert_mapping(
+        connection,
+        "capsule_doc",
+        {
+            "slug": TEMPLATE_STATE_DOC_SLUG,
+            "title": "SQLite Capsule authenticated template state",
+            "media_type": "application/vnd.sqlite-capsule.template-state+json",
+            "content": content,
+            "sequence": 0,
+        },
+    )
+    return 1
+
+
 def _seed_platform(
     connection: sqlite3.Connection,
     project: Path,
     resources: Path,
     config: Mapping[str, Any],
 ) -> dict[str, int]:
-    manifest = {
-        "id": 1,
-        "format_id": FORMAT_ID,
-        "format_version": FORMAT_VERSION,
-        "capsule_id": config["capsule_id"],
-        "title": config["title"],
-        "summary": config["summary"],
-        "app_id": config["app_id"],
-        "app_version": config["app_version"],
-        "entry_asset": config["entry_asset"],
-        "runtime_protocol": RUNTIME_PROTOCOL,
-        "permissions_json": config["permissions_json"],
-        "created_at": config["created_at"],
-        "updated_at": config["updated_at"],
-    }
+    format_version = str(config.get("format_version", DEFAULT_FORMAT_VERSION))
+    if format_version == "0.2":
+        manifest = {
+            "id": 1,
+            "format_id": FORMAT_ID,
+            "format_version": format_version,
+            "capsule_id": config["capsule_id"],
+            "title": config["title"],
+            "summary": config["summary"],
+            "app_id": config["app_id"],
+            "app_version": config["app_version"],
+            "entry_asset": config["entry_asset"],
+            "runtime_protocol": RUNTIME_PROTOCOL,
+            "permissions_json": config["permissions_json"],
+            "created_at": config["created_at"],
+            "updated_at": config["updated_at"],
+        }
+        data_contract = None
+    else:
+        manifest = {
+            "id": 1,
+            "format_id": FORMAT_ID,
+            "format_version": format_version,
+            "app_id": config["app_id"],
+            "app_version": config["app_version"],
+            "entry_asset": config["entry_asset"],
+            "runtime_protocol": RUNTIME_PROTOCOL,
+            "permissions_json": config["permissions_json"],
+            "data_schema_id": config["data_schema_id"],
+            "data_schema_version": config["data_schema_version"],
+            "minimum_host_profile": V03_HOST_PROFILE,
+            "released_at": config["released_at"],
+        }
+        data_contract = _load_v03_data_contract(project)
+        _validate_v03_data_contract(connection, data_contract)
     _insert_mapping(connection, "capsule_manifest", manifest, json_fields=("permissions_json",))
+    if format_version == "0.3":
+        _insert_mapping(
+            connection,
+            "capsule_application",
+            {
+                "id": 1,
+                "name": config["title"],
+                "description": config["summary"],
+                "category": config["application_category"],
+                "icon_asset": None,
+                "release_notes_doc": None,
+            },
+        )
+        _insert_mapping(
+            connection,
+            "capsule_instance",
+            {
+                "id": 1,
+                "capsule_id": config["capsule_id"],
+                "revision_id": config["revision_id"],
+                "title": config["title"],
+                "description": config["summary"],
+                "document_kind": config["document_kind"],
+                "tags_json": config["tags_json"],
+                "icon_asset_id": None,
+                "cover_asset_id": None,
+                "created_at": config["created_at"],
+                "content_updated_at": config["content_updated_at"],
+            },
+            json_fields=("tags_json",),
+        )
 
     app_root = project / "source" / "app"
     asset_paths = sorted(path for path in app_root.rglob("*") if path.is_file())
@@ -888,6 +1520,43 @@ def _seed_platform(
     for prompt in prompts:
         _insert_mapping(connection, "capsule_prompt", prompt)
 
+    dataset_count = 0
+    dataset_table_count = 0
+    if data_contract is not None:
+        for dataset in data_contract["datasets"]:
+            _insert_mapping(connection, "capsule_dataset", dataset)
+        for table in data_contract["tables"]:
+            _insert_mapping(
+                connection,
+                "capsule_dataset_table",
+                table,
+                json_fields=(
+                    "primary_key_json",
+                    "ignored_columns_json",
+                    "immutable_columns_json",
+                ),
+            )
+        for dependency in data_contract["dependencies"]:
+            _insert_mapping(connection, "capsule_dataset_dependency", dependency)
+        for migration in data_contract["migrations"]:
+            _insert_mapping(connection, "capsule_migration", migration)
+        for step in data_contract["migration_steps"]:
+            _insert_mapping(
+                connection,
+                "capsule_migration_step",
+                step,
+                json_fields=("definition_json",),
+            )
+        for check in data_contract["migration_checks"]:
+            _insert_mapping(
+                connection,
+                "capsule_migration_check",
+                check,
+                json_fields=("definition_json",),
+            )
+        dataset_count = len(data_contract["datasets"])
+        dataset_table_count = len(data_contract["tables"])
+
     return {
         "assets": len(asset_specs),
         "commands": len(commands),
@@ -896,6 +1565,8 @@ def _seed_platform(
         "endpoints": len(endpoints),
         "checks": len(checks),
         "prompts": len(prompts),
+        "datasets": dataset_count,
+        "dataset_tables": dataset_table_count,
     }
 
 
@@ -927,12 +1598,19 @@ def build_project(
             connection.execute("PRAGMA synchronous = FULL")
             connection.execute("PRAGMA foreign_keys = ON")
             connection.executescript(
-                (resources / "format" / "capsule-v0.2.sql").read_text(encoding="utf-8")
+                (
+                    resources
+                    / "format"
+                    / f"capsule-v{config.get('format_version', DEFAULT_FORMAT_VERSION)}.sql"
+                ).read_text(encoding="utf-8")
             )
             connection.executescript(_domain_sql(project))
             _validate_domain_schema(connection)
             inventory = _seed_platform(connection, project, resources, config)
             inventory["seed_rows"] = _seed_domain(connection, project)
+            inventory["template_state_proofs"] = _seed_template_state_proof(
+                connection, project, config
+            )
             connection.commit()
             foreign_keys = connection.execute("PRAGMA foreign_key_check").fetchall()
             if foreign_keys:
@@ -1001,14 +1679,11 @@ def run_bundled_conformance(
 ) -> int:
     resources = _resource_root(resource_root)
     checker = resources / "format" / "capsule_conformance.py"
-    specification = resources / "format" / "capsule-v0.2.conformance.json"
     completed = subprocess.run(
         [
             sys.executable,
             str(checker),
             str(capsule.expanduser().resolve()),
-            "--spec",
-            str(specification),
         ],
         check=False,
     )
@@ -1025,6 +1700,17 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--app-id", required=True)
     init_parser.add_argument("--summary")
     init_parser.add_argument("--app-version", default="0.1.0")
+    init_parser.add_argument(
+        "--format-version",
+        choices=SUPPORTED_FORMAT_VERSIONS,
+        default=DEFAULT_FORMAT_VERSION,
+        help="Capsule artifact format to author (default: 0.2)",
+    )
+    init_parser.add_argument(
+        "--template",
+        action="store_true",
+        help="Author a v0.3 clean-template proof from the deterministic seed state",
+    )
 
     build_parser = subparsers.add_parser("build", help="Build and verify a capsule project")
     build_parser.add_argument("project", type=Path)
@@ -1077,6 +1763,8 @@ def main(argv: Iterable[str] | None = None) -> int:
                 app_id=args.app_id,
                 summary=args.summary,
                 app_version=args.app_version,
+                format_version=args.format_version,
+                template=args.template,
             )
         elif args.command == "build":
             result = build_project(

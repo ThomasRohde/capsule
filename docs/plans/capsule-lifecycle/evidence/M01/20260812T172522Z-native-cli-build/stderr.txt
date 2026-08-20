@@ -1,0 +1,2 @@
+   Compiling sqlite-capsule-cli v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\crates\capsule-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.51s

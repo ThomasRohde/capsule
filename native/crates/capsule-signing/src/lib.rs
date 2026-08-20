@@ -10,24 +10,24 @@
 use std::{
     fmt, fs,
     fs::File,
-    io::Read,
+    io::{Read, Seek},
     path::{Path, PathBuf},
-    time::Duration,
 };
 
 use ed25519_dalek::{SigningKey, pkcs8::DecodePrivateKey};
-use rusqlite::{Connection, OpenFlags, params};
+use rusqlite::{Connection, params};
 use sha2::{Digest, Sha256};
 use sqlite_capsule_core::InspectError;
 use sqlite_capsule_crypto::{
-    ALGORITHM, CryptoError, PROFILE, application_digest, key_id, publisher_identity, sign_digest,
-    validate_signed_at, verify_signatures,
+    ALGORITHM, CryptoError, application_digest, key_id, publisher_identity,
+    sign_digest_for_profile, signed_app_profile, validate_signed_at, verify_signatures,
 };
-use sqlite_capsule_launch::{LaunchError, verify_structure};
+use sqlite_capsule_launch::{LaunchError, verify_read_only};
 use tempfile::{Builder as TemporaryBuilder, NamedTempFile};
 use thiserror::Error;
 
-const SIGNED_SCHEMA: &str = include_str!("../../../../format/capsule-signed-app-v0.2.sql");
+const SIGNED_SCHEMA_V02: &str = include_str!("../../../../format/capsule-signed-app-v0.2.sql");
+const SIGNED_SCHEMA_V03: &str = include_str!("../../../../format/capsule-signed-app-v0.3.sql");
 pub const MAX_SIGNING_KEY_FILE_BYTES: u64 = 64 * 1024;
 
 #[derive(Debug, Error)]
@@ -185,7 +185,13 @@ impl PreparedCapsule {
         if fresh_digest != self.application_digest {
             return Err(SigningError::PreparedDigestChanged);
         }
-        let envelope = sign_digest(&key.signing_key, fresh_digest, &self.preview.signed_at)?;
+        let profile = signed_app_profile(&transaction)?.profile;
+        let envelope = sign_digest_for_profile(
+            &key.signing_key,
+            fresh_digest,
+            &self.preview.signed_at,
+            profile,
+        )?;
         transaction.execute(
             "INSERT INTO capsule_signature \
              (key_id, algorithm, public_key, application_digest, signature, signed_at) \
@@ -202,9 +208,8 @@ impl PreparedCapsule {
         transaction.commit()?;
         drop(destination);
 
-        verify_structure(self.temporary.path())?;
-        let finished = open_read_only(self.temporary.path())?;
-        let reports = verify_signatures(&finished)?;
+        let finished = verify_read_only(self.temporary.path())?;
+        let reports = verify_signatures(finished.connection())?;
         let key_info = key.info.clone();
         if !reports.iter().any(|report| {
             report.key_id == key_info.key_id
@@ -214,15 +219,22 @@ impl PreparedCapsule {
             return Err(SigningError::SignatureVerification);
         }
         drop(finished);
-        match self.temporary.persist_noclobber(&self.preview.output) {
-            Ok(file) => drop(file),
+        let mut published = match self.temporary.persist_noclobber(&self.preview.output) {
+            Ok(file) => file,
             Err(error) if error.error.kind() == std::io::ErrorKind::AlreadyExists => {
                 return Err(SigningError::ExistingOutput);
             }
             Err(error) => return Err(SigningError::Io(error.error)),
+        };
+        published.sync_all()?;
+        let output_bytes = published.metadata()?.len();
+        let output_sha256 = file_sha256_handle(&mut published)?;
+        let published_verification = verify_read_only(&self.preview.output)?;
+        if lower_hex(&published_verification.source_sha256) != output_sha256 {
+            return Err(SigningError::Launch(LaunchError::SourceRace));
         }
-        let output_bytes = fs::metadata(&self.preview.output)?.len();
-        let output_sha256 = file_sha256(&self.preview.output)?;
+        drop(published_verification);
+        drop(published);
         Ok(SigningReport {
             preview: self.preview.clone(),
             key: key_info,
@@ -235,11 +247,11 @@ impl PreparedCapsule {
 }
 
 pub fn inspect_signing_source(path: &Path) -> Result<SigningSource, SigningError> {
-    let identity = verify_structure(path)?;
+    let verified = verify_read_only(path)?;
     Ok(SigningSource {
-        canonical_path: identity.canonical_path.clone(),
-        bytes: identity.bytes,
-        sha256: file_sha256(&identity.canonical_path)?,
+        canonical_path: verified.identity.canonical_path.clone(),
+        bytes: verified.identity.bytes,
+        sha256: lower_hex(&verified.source_sha256),
     })
 }
 
@@ -251,15 +263,25 @@ pub fn prepare_capsule_signing(
     signed_at: Option<&str>,
 ) -> Result<PreparedCapsule, SigningError> {
     validate_publisher(publisher_id, publisher_name)?;
-    let source = inspect_signing_source(source)?;
-    validate_output_path(&source.canonical_path, output)?;
-    let temporary = temporary_file(output)?;
-    let source_connection = open_read_only(&source.canonical_path)?;
-    let mut destination = Connection::open(temporary.path())?;
-    {
-        let backup = rusqlite::backup::Backup::new(&source_connection, &mut destination)?;
-        backup.run_to_completion(100, Duration::from_millis(1), None)?;
+    let verified_source = verify_read_only(source)?;
+    let source = SigningSource {
+        canonical_path: verified_source.identity.canonical_path.clone(),
+        bytes: verified_source.identity.bytes,
+        sha256: lower_hex(&verified_source.source_sha256),
+    };
+    let output = validate_output_path(&source.canonical_path, output)?;
+    let mut temporary = temporary_file(&output)?;
+    verified_source.copy_snapshot_to_file(temporary.as_file_mut())?;
+    verified_source.assert_source_current()?;
+    let snapshot_sha256 = file_sha256(temporary.path())?;
+    if snapshot_sha256 != source.sha256 {
+        return Err(SigningError::Launch(LaunchError::SourceRace));
     }
+    // Verify the exact private byte snapshot before adding signed-extension
+    // rows. This catches incomplete SQLite sidecar state and binds signing to
+    // the reviewed source hash.
+    verify_read_only(temporary.path())?;
+    let mut destination = Connection::open(temporary.path())?;
     destination.execute_batch("PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON;")?;
     let transaction = destination.transaction()?;
     let publisher_present = has_table(&transaction, "capsule_publisher")?;
@@ -267,12 +289,18 @@ pub fn prepare_capsule_signing(
     if publisher_present != signature_present {
         return Err(SigningError::PartialExtension);
     }
+    let profile = signed_app_profile(&transaction)?;
     if !publisher_present {
-        transaction.execute_batch(SIGNED_SCHEMA)?;
+        let signed_schema = match profile.user_version {
+            2 => SIGNED_SCHEMA_V02,
+            3 => SIGNED_SCHEMA_V03,
+            _ => return Err(SigningError::Crypto(CryptoError::UnsupportedFormat)),
+        };
+        transaction.execute_batch(signed_schema)?;
         transaction.execute(
             "INSERT INTO capsule_publisher \
              (id, profile, publisher_id, publisher_name) VALUES (1, ?1, ?2, ?3)",
-            params![PROFILE, publisher_id, publisher_name],
+            params![profile.profile, publisher_id, publisher_name],
         )?;
     } else {
         let publisher = publisher_identity(&transaction)?;
@@ -292,11 +320,11 @@ pub fn prepare_capsule_signing(
     validate_signed_at(&signed_at)?;
     transaction.commit()?;
     drop(destination);
-    verify_structure(temporary.path())?;
+    verify_read_only(temporary.path())?;
 
     let preview = SigningPreview {
         source,
-        output: output.to_path_buf(),
+        output,
         publisher_id: publisher_id.to_owned(),
         publisher_name: publisher_name.to_owned(),
         application_digest: lower_hex(&digest),
@@ -387,7 +415,7 @@ fn validate_publisher(publisher_id: &str, publisher_name: &str) -> Result<(), Si
     Ok(())
 }
 
-fn validate_output_path(source: &Path, output: &Path) -> Result<(), SigningError> {
+fn validate_output_path(source: &Path, output: &Path) -> Result<PathBuf, SigningError> {
     if output.exists() {
         return Err(SigningError::ExistingOutput);
     }
@@ -395,11 +423,26 @@ fn validate_output_path(source: &Path, output: &Path) -> Result<(), SigningError
     if !parent.is_dir() {
         return Err(SigningError::OutputParent);
     }
+    if fs::symlink_metadata(parent)?.file_type().is_symlink() {
+        return Err(SigningError::OutputParent);
+    }
     let parent = fs::canonicalize(parent)?;
-    if source.parent() == Some(parent.as_path()) && source.file_name() == output.file_name() {
+    let filename = output
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or(SigningError::OutputParent)?;
+    if filename.is_empty()
+        || filename.contains(':')
+        || filename.contains('/')
+        || filename.contains('\\')
+    {
+        return Err(SigningError::OutputParent);
+    }
+    let normalized = parent.join(filename);
+    if source == normalized {
         return Err(SigningError::InPlace);
     }
-    Ok(())
+    Ok(normalized)
 }
 
 fn temporary_file(output: &Path) -> Result<NamedTempFile, SigningError> {
@@ -423,17 +466,22 @@ fn has_table(connection: &Connection, name: &str) -> rusqlite::Result<bool> {
     )
 }
 
-fn open_read_only(path: &Path) -> rusqlite::Result<Connection> {
-    let connection = Connection::open_with_flags(
-        path,
-        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )?;
-    connection.execute_batch("PRAGMA trusted_schema=OFF; PRAGMA query_only=ON;")?;
-    Ok(connection)
-}
-
 fn file_sha256(path: &Path) -> Result<String, SigningError> {
     let mut file = File::open(path)?;
+    let mut digest = Sha256::new();
+    let mut buffer = vec![0_u8; 1024 * 1024];
+    loop {
+        let count = file.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        digest.update(&buffer[..count]);
+    }
+    Ok(lower_hex(&digest.finalize()))
+}
+
+fn file_sha256_handle(file: &mut File) -> Result<String, SigningError> {
+    file.seek(std::io::SeekFrom::Start(0))?;
     let mut digest = Sha256::new();
     let mut buffer = vec![0_u8; 1024 * 1024];
     loop {
@@ -500,6 +548,26 @@ mod tests {
             .join("capsules/diagram-studio.capsule.sqlite")
     }
 
+    fn v03_capsule(directory: &TestDirectory) -> PathBuf {
+        let path = directory.path().join("vector-v03.sqlitecapsule");
+        let connection = Connection::open(&path).expect("create v0.3 fixture");
+        connection
+            .execute_batch(include_str!("../../../../format/capsule-v0.3.sql"))
+            .expect("v0.3 schema");
+        connection
+            .execute_batch(include_str!(
+                "../../../../format/capsule-signed-app-v0.3.sql"
+            ))
+            .expect("v0.3 signed extension");
+        connection
+            .execute_batch(include_str!(
+                "../../../../compatibility/signed-app-v0.3/fixture-v0.3.sql"
+            ))
+            .expect("v0.3 fixture data");
+        drop(connection);
+        path
+    }
+
     #[test]
     fn loads_raw_hex_and_pkcs8_keys_without_changing_identity() {
         let directory = TestDirectory::new("key-formats");
@@ -560,6 +628,43 @@ mod tests {
     }
 
     #[test]
+    fn signs_and_verifies_a_conformant_v03_capsule_without_mutating_the_source() {
+        let directory = TestDirectory::new("v03-prepare-sign");
+        let source = v03_capsule(&directory);
+        let source_before = fs::read(&source).expect("v0.3 source bytes");
+        let key_path = directory.path().join("publisher.seed");
+        fs::write(&key_path, [43_u8; 32]).expect("key");
+        let output = directory.path().join("signed-v03.sqlitecapsule");
+        let report = prepare_capsule_signing(
+            &source,
+            &output,
+            "org.example.vector",
+            "Vector Publisher",
+            Some("2026-08-08T12:34:56Z"),
+        )
+        .expect("prepare v0.3")
+        .sign(LoadedSigningKey::from_file(&key_path).expect("load key"))
+        .expect("sign v0.3");
+        assert!(report.signature_valid);
+        assert_eq!(
+            source_before,
+            fs::read(&source).expect("unchanged v0.3 source")
+        );
+        let verified = verify_read_only(&output).expect("verify v0.3 output");
+        assert_eq!(verified.identity.user_version, 3);
+        assert_eq!(
+            verified.identity.overview.instance.revision_id.as_deref(),
+            Some("22222222-2222-4222-8222-222222222222")
+        );
+        assert!(
+            verify_signatures(verified.connection())
+                .expect("v0.3 signatures")
+                .iter()
+                .any(|item| item.cryptographically_valid && item.digest_matches)
+        );
+    }
+
+    #[test]
     fn prepared_copy_is_removed_when_signing_is_cancelled() {
         let directory = TestDirectory::new("cancel");
         let output = directory.path().join("signed.sqlitecapsule");
@@ -576,6 +681,94 @@ mod tests {
         drop(prepared);
         assert!(!temporary.exists());
         assert!(!output.exists());
+    }
+
+    #[test]
+    fn direct_signing_rejects_a_runtime_invalid_source_before_preparation() {
+        let directory = TestDirectory::new("invalid-runtime-source");
+        let source = directory.path().join("invalid.sqlitecapsule");
+        fs::copy(checked_capsule(), &source).expect("copy source");
+        let connection = Connection::open(&source).expect("open mutable source");
+        connection
+            .execute(
+                "UPDATE capsule_asset SET sha256 = printf('%064d', 0) \
+                 WHERE path = (SELECT path FROM capsule_asset ORDER BY path LIMIT 1)",
+                [],
+            )
+            .expect("invalidate asset hash");
+        drop(connection);
+
+        let output = directory.path().join("must-not-exist.sqlitecapsule");
+        let error = match prepare_capsule_signing(
+            &source,
+            &output,
+            "org.example.publisher",
+            "Example Publisher",
+            Some("2026-08-08T12:34:56Z"),
+        ) {
+            Ok(_) => panic!("invalid source must not reach signing preparation"),
+            Err(error) => error,
+        };
+        assert!(
+            matches!(
+                &error,
+                SigningError::Launch(LaunchError::Structure(message))
+                    if message.contains("hash mismatch")
+            ),
+            "unexpected signing error: {error}"
+        );
+        assert!(!output.exists());
+    }
+
+    #[test]
+    fn direct_signing_rejects_a_failing_error_check_without_publishing() {
+        let directory = TestDirectory::new("failing-declared-check");
+        let source = directory.path().join("invalid-check.sqlitecapsule");
+        fs::copy(checked_capsule(), &source).expect("copy source");
+        let connection = Connection::open(&source).expect("open mutable source");
+        connection
+            .execute(
+                "UPDATE capsule_check \
+                 SET severity = 'error', sql_text = 'SELECT 1', \
+                     result_mode = 'scalar', expected_json = '2' \
+                 WHERE id = (SELECT id FROM capsule_check ORDER BY id LIMIT 1)",
+                [],
+            )
+            .expect("make declared check fail");
+        drop(connection);
+
+        let assert_rejected = |output: &Path| {
+            let error = match prepare_capsule_signing(
+                &source,
+                output,
+                "org.example.publisher",
+                "Example Publisher",
+                Some("2026-08-08T12:34:56Z"),
+            ) {
+                Ok(_) => panic!("failing error check must not reach signing preparation"),
+                Err(error) => error,
+            };
+            assert!(
+                matches!(
+                    &error,
+                    SigningError::Launch(LaunchError::Structure(message))
+                        if message.contains("declared checks failed")
+                ),
+                "unexpected signing error: {error}"
+            );
+        };
+
+        let absent = directory.path().join("must-not-exist.sqlitecapsule");
+        assert_rejected(&absent);
+        assert!(!absent.exists());
+
+        let existing = directory.path().join("preserve.sqlitecapsule");
+        fs::write(&existing, b"preserve existing destination").expect("existing output");
+        assert_rejected(&existing);
+        assert_eq!(
+            fs::read(existing).expect("preserved existing output"),
+            b"preserve existing destination"
+        );
     }
 
     #[test]

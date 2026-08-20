@@ -1,0 +1,74 @@
+{
+  "profile": "org.sqlite-capsule.diagram-studio-reconcile-fixtures/1",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "dataset_id": "diagram-content",
+  "table": "diagram_node",
+  "orientation": "source-to-target-new-copy",
+  "clean_changes": [
+    {
+      "kind": "update",
+      "primary_key": {"id": "node-clean"},
+      "ancestor_state": {"label": "Original"},
+      "source_state": {"label": "Source clean"},
+      "target_state": {"label": "Original"},
+      "expected_state": {"label": "Source clean"}
+    }
+  ],
+  "conflicts": [
+    {
+      "kind": "update-update",
+      "primary_key": {"id": "node-update"},
+      "ancestor_state": {"label": "Original"},
+      "source_state": {"label": "Source edit"},
+      "target_state": {"label": "Target edit"},
+      "allowed_choices": ["keep-target", "take-source"],
+      "resolution": "take-source",
+      "expected_state": {"label": "Source edit"}
+    },
+    {
+      "kind": "delete-update",
+      "deleted_side": "source",
+      "primary_key": {"id": "node-delete"},
+      "ancestor_state": {"label": "Original"},
+      "source_state": null,
+      "target_state": {"label": "Target retained"},
+      "allowed_choices": ["keep-target", "take-source"],
+      "resolution": "keep-target",
+      "expected_state": {"label": "Target retained"}
+    },
+    {
+      "kind": "insert-insert",
+      "primary_key": {"id": "node-insert"},
+      "ancestor_state": null,
+      "source_state": {"label": "Source insert"},
+      "target_state": {"label": "Target insert"},
+      "allowed_choices": ["keep-target", "take-source"],
+      "resolution": "keep-target",
+      "expected_state": {"label": "Target insert"}
+    },
+    {
+      "kind": "immutable-field",
+      "primary_key": {"id": "node-immutable"},
+      "ancestor_state": {"diagram_id": "diagram-main"},
+      "source_state": {"diagram_id": "diagram-source"},
+      "target_state": {"diagram_id": "diagram-target"},
+      "allowed_choices": ["keep-target"],
+      "resolution": "keep-target",
+      "expected_state": {"diagram_id": "diagram-target"}
+    }
+  ],
+  "two_way_actions": [
+    "insert-from-source",
+    "delete-from-target",
+    "replace-row-from-source",
+    "set-fields"
+  ],
+  "expected_output": {
+    "derives_from": "target",
+    "capsule_id": "preserved-from-target",
+    "revision_id": "new-uuid-v4",
+    "application_digest": "preserved-from-target",
+    "lineage_parents": ["target-derived-from", "changes-applied-from"],
+    "published": "create-new-after-verification"
+  }
+}

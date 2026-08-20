@@ -1,0 +1,36 @@
+{
+  "command": [
+    "python",
+    "tools/check_signed_app_vectors.py",
+    "--all"
+  ],
+  "completed_at": "2026-08-12T20:02:39Z",
+  "cwd": ".",
+  "duration_ms": 387,
+  "exit_code": 0,
+  "milestone": "M02",
+  "name": "gate-final-signed-vectors",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T20:02:38Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-signed-vectors/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 1303,
+    "original_bytes": 1303,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-signed-vectors/stdout.txt",
+    "sha256_captured": "2f5dfbe80ba1e7cef2ee66893686defbfd2b50ef7480c0744c748cec9103f52e",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

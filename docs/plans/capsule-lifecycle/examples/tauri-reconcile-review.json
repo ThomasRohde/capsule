@@ -1,0 +1,61 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-review/1",
+  "confirmation_nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "review_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "payload_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "compare_report_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "source": {
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440001",
+    "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "signature_count": 1,
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "target": {
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440010",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440011",
+    "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "signature_count": 1,
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "output": {
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440010",
+    "revision_id": "550e8400-e29b-41d4-a716-446655440012",
+    "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "signature_count": 1,
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "operation_count": 1,
+  "operations": [
+    {
+      "sequence": 1,
+      "dataset_label": "Diagram content",
+      "table_label": "Diagram nodes",
+      "action": "set-fields",
+      "field_count": 1,
+      "sensitive_confirmed": false
+    }
+  ],
+  "lineage_parent_count": 2,
+  "destination": {
+    "destination_token": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+    "parent_display": "Selected local folder",
+    "leaf_display": "diagram-merged.sqlitecapsule",
+    "expires_at": "2026-08-20T12:00:30Z"
+  },
+  "checks": [
+    "exact-plan-and-payload-bound",
+    "both-inputs-reverified",
+    "target-derived-private-stage",
+    "transactional-named-write-set",
+    "foreign-keys-checked",
+    "all-dataset-states-matched",
+    "signed-application-and-signatures-preserved",
+    "no-replace-publish",
+    "postpublish-reopen-and-final-rebind"
+  ],
+  "expires_at": "2026-08-20T12:00:30Z"
+}

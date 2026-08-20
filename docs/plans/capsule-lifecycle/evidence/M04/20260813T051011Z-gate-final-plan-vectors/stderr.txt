@@ -1,0 +1,3 @@
+usage: check_lifecycle_plan_vectors.py [-h] [--vector-dir VECTOR_DIR]
+                                       [--rewrite-canonical]
+check_lifecycle_plan_vectors.py: error: unrecognized arguments: --all

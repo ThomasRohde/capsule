@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/reconcile-plan-v1.schema.json",
+  "title": "Apply-to-copy reconciliation plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "plan_id",
+    "compare_report_digest",
+    "source",
+    "target",
+    "output",
+    "operations",
+    "conflicts",
+    "limits",
+    "plan_digest"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.reconcile-plan/1"
+    },
+    "plan_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "compare_report_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source": {
+      "$ref": "#/$defs/ref"
+    },
+    "target": {
+      "$ref": "#/$defs/ref"
+    },
+    "ancestor": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "capsule_id",
+        "revision_id",
+        "must_not_exist"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "capsule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "must_not_exist": {
+          "const": true
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/operation"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/conflict"
+      }
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_sha256",
+        "capsule_id",
+        "revision_id",
+        "application_digest",
+        "data_schema_version"
+      ],
+      "properties": {
+        "file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "capsule_id": {
+          "type": "string"
+        },
+        "revision_id": {
+          "type": "string"
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "dataset_id",
+        "table",
+        "key",
+        "action"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dataset_id": {
+          "type": "string"
+        },
+        "table": {
+          "type": "string"
+        },
+        "key": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16
+        },
+        "action": {
+          "enum": [
+            "insert-from-source",
+            "delete-from-target",
+            "replace-row-from-source",
+            "set-fields"
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "column",
+              "source_value_digest",
+              "target_value_digest"
+            ],
+            "properties": {
+              "column": {
+                "type": "string"
+              },
+              "source_value_digest": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "target_value_digest": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "precondition_target_row_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "dataset_id",
+        "table",
+        "key",
+        "kind",
+        "resolution"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "dataset_id": {
+          "type": "string"
+        },
+        "table": {
+          "type": "string"
+        },
+        "key": {
+          "type": "object"
+        },
+        "kind": {
+          "enum": [
+            "update-update",
+            "delete-update",
+            "insert-insert",
+            "immutable-field",
+            "policy-forbidden"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "unresolved",
+            "keep-target",
+            "take-source",
+            "set-fields",
+            "skip"
+          ]
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_operations",
+        "max_rows_written",
+        "deadline_ms"
+      ],
+      "properties": {
+        "max_operations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_rows_written": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        }
+      }
+    }
+  }
+}

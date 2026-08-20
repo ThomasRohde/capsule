@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/lifecycle-plan-v1.schema.json",
+  "title": "Capsule lifecycle operation plan",
+  "description": "Canonical, reviewable plan produced before any lifecycle write. A plan pins every input, identifies the create-new output and records policy decisions. The host calculates plan_digest over canonical JSON excluding plan_digest itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "plan_id",
+    "operation",
+    "created_at",
+    "inputs",
+    "output",
+    "decisions",
+    "limits",
+    "plan_digest"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.lifecycle-plan/1"
+    },
+    "plan_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "operation": {
+      "enum": [
+        "duplicate",
+        "compact-duplicate",
+        "fork",
+        "create-from-template",
+        "selective-fork",
+        "reconcile-to-copy",
+        "application-upgrade"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/input"
+      }
+    },
+    "output": {
+      "$ref": "#/$defs/output"
+    },
+    "decisions": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capsule_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "revision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "app_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_schema_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "data_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "path_hint",
+        "file_sha256",
+        "size_bytes",
+        "capsule"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "source",
+            "target",
+            "ancestor",
+            "template",
+            "application-release"
+          ]
+        },
+        "path_hint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filesystem_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "platform": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "volume_or_device": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "file_id_or_inode": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "modified_ns": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "capsule": {
+          "$ref": "#/$defs/capsule_identity"
+        }
+      }
+    },
+    "capsule_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_version",
+        "app_id",
+        "app_version",
+        "application_digest",
+        "data_schema_id",
+        "data_schema_version"
+      ],
+      "properties": {
+        "format_version": {
+          "type": "string"
+        },
+        "capsule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "revision_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "app_id": {
+          "type": "string"
+        },
+        "app_version": {
+          "type": "string"
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_schema_id": {
+          "type": "string"
+        },
+        "data_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "publisher_key_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "must_not_exist",
+        "publish_mode"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "must_not_exist": {
+          "const": true
+        },
+        "publish_mode": {
+          "enum": [
+            "atomic-rename",
+            "create-new-no-replace"
+          ]
+        },
+        "temporary_directory": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "subject",
+        "action",
+        "reason"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "dataset",
+            "table",
+            "row",
+            "field",
+            "application",
+            "profile"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "parameters": {
+          "type": "object",
+          "maxProperties": 128
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_input_bytes",
+        "max_output_bytes",
+        "max_rows_inspected",
+        "max_rows_written",
+        "deadline_ms"
+      ],
+      "properties": {
+        "max_input_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_rows_inspected": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_rows_written": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        }
+      }
+    }
+  }
+}

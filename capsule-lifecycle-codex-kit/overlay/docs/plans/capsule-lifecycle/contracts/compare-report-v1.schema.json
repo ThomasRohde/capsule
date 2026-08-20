@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/compare-report-v1.schema.json",
+  "title": "Capsule comparison report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "report_id",
+    "created_at",
+    "left",
+    "right",
+    "compatibility",
+    "lineage",
+    "application",
+    "schema",
+    "datasets",
+    "limits",
+    "truncated",
+    "report_digest"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.compare-report/1"
+    },
+    "report_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "left": {
+      "$ref": "#/$defs/ref"
+    },
+    "right": {
+      "$ref": "#/$defs/ref"
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "can_compare_data",
+        "can_reconcile",
+        "reasons"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "same-release-same-schema",
+            "same-app-same-schema",
+            "same-app-migration-available",
+            "same-app-incompatible-schema",
+            "different-application",
+            "invalid-input"
+          ]
+        },
+        "can_compare_data": {
+          "type": "boolean"
+        },
+        "can_reconcile": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "lineage": {
+      "$ref": "#/$defs/section"
+    },
+    "application": {
+      "$ref": "#/$defs/section"
+    },
+    "schema": {
+      "$ref": "#/$defs/section"
+    },
+    "datasets": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/dataset_diff"
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_rows_per_table",
+        "max_total_rows",
+        "max_value_bytes"
+      ],
+      "properties": {
+        "max_rows_per_table": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_rows": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_value_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "report_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_sha256",
+        "capsule_id",
+        "revision_id",
+        "app_id",
+        "application_digest",
+        "data_schema_id",
+        "data_schema_version"
+      ],
+      "properties": {
+        "file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "capsule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "revision_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "app_id": {
+          "type": "string"
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_schema_id": {
+          "type": "string"
+        },
+        "data_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "kind",
+        "summary"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "kind": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "ignored",
+            "conflict"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "left_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "right_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "changes"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "same",
+            "different",
+            "unavailable",
+            "invalid"
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/change"
+          }
+        }
+      }
+    },
+    "dataset_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "policy",
+        "state",
+        "summary",
+        "tables"
+      ],
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "policy": {
+          "enum": [
+            "ignore",
+            "summary",
+            "row",
+            "field"
+          ]
+        },
+        "state": {
+          "enum": [
+            "same",
+            "different",
+            "ignored",
+            "unavailable",
+            "truncated"
+          ]
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "conflicts"
+          ],
+          "properties": {
+            "added": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "removed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "changed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unchanged": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "conflicts": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "tables": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/table_diff"
+          }
+        }
+      }
+    },
+    "table_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "table",
+        "primary_key",
+        "state",
+        "summary",
+        "rows"
+      ],
+      "properties": {
+        "table": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "primary_key": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "string"
+          }
+        },
+        "state": {
+          "enum": [
+            "same",
+            "different",
+            "ignored",
+            "truncated",
+            "invalid"
+          ]
+        },
+        "summary": {
+          "$ref": "#/$defs/counts"
+        },
+        "rows": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "$ref": "#/$defs/row_diff"
+          }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added",
+        "removed",
+        "changed",
+        "unchanged",
+        "conflicts"
+      ],
+      "properties": {
+        "added": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unchanged": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "conflicts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "row_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "kind",
+        "left_digest",
+        "right_digest",
+        "fields"
+      ],
+      "properties": {
+        "key": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16
+        },
+        "kind": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "conflict"
+          ]
+        },
+        "left_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "right_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fields": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "column",
+              "kind",
+              "left",
+              "right"
+            ],
+            "properties": {
+              "column": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "same",
+                  "changed",
+                  "added",
+                  "removed",
+                  "redacted",
+                  "truncated"
+                ]
+              },
+              "left": {},
+              "right": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

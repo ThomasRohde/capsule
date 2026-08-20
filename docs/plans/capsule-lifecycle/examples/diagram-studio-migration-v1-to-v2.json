@@ -1,0 +1,66 @@
+{
+  "profile": "org.sqlite-capsule.migration-ops/1",
+  "migration_id": "diagram-data-1-to-2",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+  "from_version": 1,
+  "to_version": 2,
+  "description": "Carry the live Diagram Studio datasets into the v2 signed lifecycle contract without application endpoint execution.",
+  "reversible": false,
+  "preconditions": [
+    {
+      "kind": "schema_version_equals",
+      "severity": "error",
+      "description": "The source must use Diagram Studio data schema version 1.",
+      "version": 1
+    },
+    {
+      "kind": "table_exists",
+      "severity": "error",
+      "description": "The live document table must be present.",
+      "table": "diagram_document"
+    },
+    {
+      "kind": "dataset_declared",
+      "severity": "error",
+      "description": "The source content dataset must be signed and complete.",
+      "dataset_id": "diagram-content"
+    },
+    {
+      "kind": "foreign_keys_clean",
+      "severity": "error",
+      "description": "The source capsule must have no foreign-key violations."
+    }
+  ],
+  "steps": [
+    {
+      "operation": "copy_dataset",
+      "dataset_id": "diagram-content",
+      "mode": "replace-empty-target"
+    },
+    {
+      "operation": "copy_dataset",
+      "dataset_id": "edit-history",
+      "mode": "replace-empty-target"
+    }
+  ],
+  "postconditions": [
+    {
+      "kind": "schema_version_equals",
+      "severity": "error",
+      "description": "The output must use Diagram Studio data schema version 2.",
+      "version": 2
+    },
+    {
+      "kind": "table_exists",
+      "severity": "error",
+      "description": "The output retains the document table.",
+      "table": "diagram_document"
+    },
+    {
+      "kind": "foreign_keys_clean",
+      "severity": "error",
+      "description": "The migrated output must have no foreign-key violations."
+    }
+  ]
+}

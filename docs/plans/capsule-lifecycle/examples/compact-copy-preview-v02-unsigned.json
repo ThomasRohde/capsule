@@ -1,0 +1,16 @@
+{
+  "profile": "org.sqlite-capsule.compact-copy-preview/1",
+  "format_version": "0.2",
+  "signature_state": "unsigned",
+  "signature_count": 0,
+  "source_size_bytes": 4096,
+  "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "logical_state_profile": "org.sqlite-capsule.compact-logical-state/1",
+  "logical_state_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "page_size": 4096,
+  "capsule_identity": "preserved",
+  "revision_identity": "preserved",
+  "physical_bytes": "repacked-not-byte-exact",
+  "destination": "create-new-no-replace",
+  "overwrite_allowed": false
+}

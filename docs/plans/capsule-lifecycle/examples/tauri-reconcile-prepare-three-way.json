@@ -1,0 +1,11 @@
+{
+  "review_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "destination_token": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "selection_tokens": [],
+  "ancestor_token": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "resolution_tokens": [
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFG",
+    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+    "2345678901abcdefghijklmnopqrstuvwxyzABCDEFG"
+  ]
+}

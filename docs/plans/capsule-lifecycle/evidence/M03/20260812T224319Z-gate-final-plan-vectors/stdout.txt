@@ -1,0 +1,6 @@
+lifecycle plan vectors: plan digest 9dab67429be79e39820c777d45376a00fd2cdfbd077b7b66f4221478463fb34d
+lifecycle plan vectors: canonical plan 1860 bytes d3c409ba89ddd1f5cc4fe185254f949130d5e9fbdb933329b680791ae777c1d8
+lifecycle plan vectors: Unicode scalar ordering daec79d8b6582badd3b46bd783a72379bc0b5ae29f5d59f6133025aad69bc8d4
+lifecycle plan vectors: primitives-integer-bounds-and-escaping 1048d746fd60ac5a16ab06931f1fec141ed14c8d4588dde047898f2480795b8a
+lifecycle plan vectors: combining-forms-remain-distinct c2635d7e15e25b90abc8b3543d92f0ffcee0644372d8b662a0775f88d43278e5
+lifecycle plan vectors: PASS

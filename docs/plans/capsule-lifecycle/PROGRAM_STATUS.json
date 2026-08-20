@@ -1,0 +1,244 @@
+{
+  "programme_id": "org.sqlite-capsule.lifecycle-program/1",
+  "title": "Capsule lifecycle, comparison and application upgrade",
+  "baseline_expected_commit": "f67da560fb4baaa13144cea220c9329df87ad534",
+  "baseline_observed_at": "2026-08-12",
+  "baseline_observed_commit": "e73cf948fba233ef84d4680930b61549012020a7",
+  "baseline_evidence_path": "evidence/M00/baseline-20260812T143205Z.json",
+  "current_milestone": "M07",
+  "overall_state": "not_started",
+  "rules": {
+    "advance_only_after_acceptance": true,
+    "inputs_are_read_only": true,
+    "outputs_are_create_new": true,
+    "raw_renderer_has_lifecycle_commands": false,
+    "v0_2_signed_capsules_are_never_silently_rewritten": true
+  },
+  "milestones": [
+    {
+      "id": "M00",
+      "slug": "baseline-and-decisions",
+      "title": "Reconcile live repository and freeze architecture",
+      "depends_on": [],
+      "state": "complete",
+      "started_at": "2026-08-12T14:41:17Z",
+      "completed_at": "2026-08-12T15:30:59Z",
+      "result_path": "milestones/M00-baseline-and-decisions/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M00/baseline-20260812T143205Z.json",
+        "docs/plans/capsule-lifecycle/evidence/M00/live-architecture-and-contract-reconciliation.md",
+        "docs/plans/capsule-lifecycle/evidence/M00/implementation-path-map.md",
+        "docs/plans/capsule-lifecycle/evidence/M00/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M00/20260812T152821Z-final-integrated-jsonschema/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M00/20260812T152119Z-gate-python-suite/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M00/20260812T152402Z-gate-rust-tests/evidence.json"
+      ],
+      "last_test_summary": "Live v0.2 architecture reconciled; ADRs 0021-0028 accepted; draft contracts, examples, error taxonomy and path map frozen; 144 Python and 125 Rust tests plus all repository gates pass.",
+      "handoff": "Start M01 by factoring exhaustive non-executing native verification and proving direct signing rejects runtime-invalid capsules; correct native admission to 64 MiB with compatibility evidence; lock v0.2 vectors before adding v0.3 dispatch."
+    },
+    {
+      "id": "M01",
+      "slug": "format-identity-profile-signature",
+      "title": "Format v0.3 identity, profile and signature compartment",
+      "depends_on": [
+        "M00"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-12T15:31:32Z",
+      "completed_at": "2026-08-12T17:31:24Z",
+      "result_path": "milestones/M01-format-identity-profile-signature/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M01/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M01/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T171904Z-gate-final-python-rerun/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T172105Z-gate-final-rust-workspace-rerun/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T172310Z-gate-final-vectors/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T172310Z-gate-final-specs/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T172343Z-gate-final-exports-rerun/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M01/20260812T172611Z-gate-nsis-installer-rerun/evidence.json"
+      ],
+      "last_test_summary": "Format v0.3, identity/profile separation, exhaustive snapshot verification, Python-Rust signed vectors and standalone v0.3 authoring delivered; 164 Python and 142 Rust tests plus all repository/installer gates pass.",
+      "handoff": "Create capsule-workspace with no public renderer surface; first parse and validate signed v0.3 dataset contracts only from VerifiedReadOnlyCapsule, map failures to lifecycle-errors/1, and add duplicate/undeclared/PK/cycle hostile tests before plan or publication APIs."
+    },
+    {
+      "id": "M02",
+      "slug": "data-contract-lineage-workspace-core",
+      "title": "Data contract, lineage and workspace service foundation",
+      "depends_on": [
+        "M01"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-12T17:31:24Z",
+      "completed_at": "2026-08-12T20:10:53Z",
+      "result_path": "milestones/M02-data-contract-lineage-workspace-core/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M02/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M02/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T195846Z-gate-final-rust-workspace/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200041Z-gate-final-python-rerun/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-specs/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-plan-vectors/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-signed-vectors/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200239Z-gate-final-example/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200239Z-gate-final-exports/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200254Z-gate-final-sbom/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200256Z-gate-final-license/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M02/20260812T200303Z-gate-nsis-installer/evidence.json"
+      ],
+      "last_test_summary": "Verified v0.3 data contracts, redacted lineage, deterministic plans and held-handle create-new publication delivered; 168 Python and 191 Rust tests plus schemas, vectors, generated artefacts and installer gates pass.",
+      "handoff": "Start M03 by adding a host-owned CapsuleOverviewViewModel in trusted Tauri from bounded inspected data, with no raw Wry registration; prove Overview renders before capsule assets and add v0.2 fallback plus icon adversarial tests."
+    },
+    {
+      "id": "M03",
+      "slug": "tauri-overview-cabinet",
+      "title": "Capsule Overview and Cabinet trusted shell UX",
+      "depends_on": [
+        "M02"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-12T20:11:12Z",
+      "completed_at": "2026-08-12T22:48:22Z",
+      "result_path": "milestones/M03-tauri-overview-cabinet/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M03/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M03/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T223941Z-gate-final-python-post-review/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T223941Z-gate-final-rust-post-review/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T224735Z-gate-native-overview-visual-viewport-final/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T223833Z-gate-native-raw-final/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T224524Z-gate-native-trusted-shell-final/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M03/20260812T224330Z-gate-final-nsis-post-review/evidence.json"
+      ],
+      "last_test_summary": "Trusted retained-snapshot Capsule Overview, safe PNG/WebP projection, owner-private non-authoritative Cabinet recents and explicit selection-bound activation/recovery delivered; 169 Python and 210 Rust tests plus native Overview/raw/WebDriver, specs, vectors, generated artefact, security and NSIS gates pass.",
+      "handoff": "Start M04 by implementing a dry-run prepare_copy planner over VerifiedWorkspaceSource that returns identity effects, signed-dataset decisions/dependencies, sensitivity prompts, row estimates, expected application digest and create-new constraints. Keep execution limited to exact duplicate until the copy truth table and hostile policy tests pass."
+    },
+    {
+      "id": "M04",
+      "slug": "copy-fork-template",
+      "title": "Duplicate, compact duplicate, fork and template creation",
+      "depends_on": [
+        "M03"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-12T22:48:30Z",
+      "completed_at": "2026-08-13T05:17:13Z",
+      "result_path": "milestones/M04-copy-fork-template/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M04/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M04/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T050716Z-gate-final-python-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T050716Z-gate-final-rust-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T051046Z-gate-final-specs/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T051101Z-gate-final-plugin-diagram/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T051225Z-gate-final-native-raw-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T051341Z-gate-final-native-copy-shell-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M04/20260813T051416Z-gate-final-nsis-settled/evidence.json"
+      ],
+      "last_test_summary": "All five copy modes delivered with retained read-only inputs, create-new verified publication, signed policy/template enforcement, trusted-shell workflow and raw-renderer denial; 176 Python and 277 Rust tests plus final Windows E2E/NSIS gates pass.",
+      "handoff": "Start M05 by adding a read-only capsule-workspace compare module over two retained verified sources, first freezing compatibility classification and typed value/row digest vectors before detail pagination or Tauri commands."
+    },
+    {
+      "id": "M05",
+      "slug": "compare-engine-and-ui",
+      "title": "Bounded compare engine and trusted shell comparison",
+      "depends_on": [
+        "M04"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-13T05:17:14Z",
+      "completed_at": "2026-08-13T07:30:30Z",
+      "result_path": "milestones/M05-compare-engine-and-ui/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M05/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M05/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T071416Z-gate-final-python-suite/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072154Z-gate-final-rust-workspace-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072408Z-gate-final-clippy-workspace-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T073221Z-gate-final-status-jsonschema/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072556Z-gate-final-native-compare-shell-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072635Z-gate-final-native-raw-compare-boundary-settled/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-compare-vectors/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-example-check/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-exports-check/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-capsule-verify/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-sbom/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-license/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072730Z-gate-final-rustsec/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M05/20260813T072434Z-gate-final-nsis-settled/evidence.json"
+      ],
+      "last_test_summary": "Bounded streaming Compare, opaque pagination, sensitive reveal and 13-family application detail delivered; 178 Python and 314 Rust tests plus strict schemas, vectors, real trusted/raw Windows E2E, generated artefacts, supply-chain and NSIS gates pass.",
+      "handoff": "Start M06 by freezing a target-derived reconciliation operation/precondition grammar over a non-truncated retained Compare report. Keep review authority non-serializable, preserve the target application/capsule identity, mint only a new revision, and implement no writes until policy, immutable-field, conflict and stale-row hostile tests pass."
+    },
+    {
+      "id": "M06",
+      "slug": "reconcile-to-copy",
+      "title": "Apply selected changes to a new target-derived copy",
+      "depends_on": [
+        "M05"
+      ],
+      "state": "complete",
+      "started_at": "2026-08-13T07:30:30Z",
+      "completed_at": "2026-08-20T06:47:39Z",
+      "result_path": "milestones/M06-reconcile-to-copy/RESULT.md",
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M06/final-gates.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/critic-report.md",
+        "docs/plans/capsule-lifecycle/evidence/M06/security-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M06/ui/native-m06-reconcile-evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T063633Z-final-lifecycle-specs/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T063633Z-final-reconcile-contracts/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T063754Z-final-nsis-installer/release-evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T063907Z-final-rustsec/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T064807Z-final-status/evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M06/20260820T064808Z-final-completed-lifecycle-specs/evidence.json"
+      ],
+      "last_test_summary": "Target-derived two-/three-way reconciliation, exact typed preconditions, restrictive FK ordering, opaque trusted-shell authority and create-new verified publication delivered; 202 Python, 373 Rust, 63 browser, trusted/raw Windows E2E, contracts, generated artefacts, supply-chain and NSIS gates pass.",
+      "handoff": "Start M07 by freezing a non-serializable upgrade review over an exact retained working capsule and clean signed release capsule with the same signed data-schema ID/version; bind publisher/signature evidence, application digests and exhaustive preserved dataset states before any executor."
+    },
+    {
+      "id": "M07",
+      "slug": "application-upgrade-same-schema",
+      "title": "Application release upgrade with unchanged data schema",
+      "depends_on": [
+        "M06"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M07-application-upgrade-same-schema/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M08",
+      "slug": "declarative-migration-engine",
+      "title": "Restricted declarative data migrations",
+      "depends_on": [
+        "M07"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M08-declarative-migration-engine/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M09",
+      "slug": "ecosystem-hardening-release",
+      "title": "Plugin sync, hardening, qualification and release",
+      "depends_on": [
+        "M08"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M09-ecosystem-hardening-release/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    }
+  ]
+}

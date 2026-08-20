@@ -1,7 +1,7 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE diagram_document (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     slug            TEXT NOT NULL UNIQUE,
     title           TEXT NOT NULL,
     description     TEXT NOT NULL DEFAULT '',
@@ -13,7 +13,7 @@ CREATE TABLE diagram_document (
 );
 
 CREATE TABLE diagram_layer (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     name            TEXT NOT NULL,
     position        INTEGER NOT NULL CHECK (position > 0),
@@ -25,7 +25,7 @@ CREATE TABLE diagram_layer (
 );
 
 CREATE TABLE diagram_node (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     layer_id        TEXT NOT NULL DEFAULT 'layer-content' REFERENCES diagram_layer(id) ON DELETE RESTRICT,
     kind            TEXT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE diagram_node (
 );
 
 CREATE TABLE diagram_edge (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     layer_id        TEXT NOT NULL DEFAULT 'layer-connectors' REFERENCES diagram_layer(id) ON DELETE RESTRICT,
     source_id       TEXT NOT NULL REFERENCES diagram_node(id) ON DELETE CASCADE,
@@ -60,7 +60,7 @@ CREATE TABLE diagram_edge (
 );
 
 CREATE TABLE diagram_group (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     layer_id        TEXT NOT NULL REFERENCES diagram_layer(id) ON DELETE RESTRICT,
     name            TEXT NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE diagram_group_member (
 );
 
 CREATE TABLE diagram_scene (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     position        INTEGER NOT NULL,
     title           TEXT NOT NULL,
@@ -104,14 +104,14 @@ CREATE TABLE diagram_scene_override (
 );
 
 CREATE TABLE diagram_history (
-    diagram_id      TEXT PRIMARY KEY REFERENCES diagram_document(id) ON DELETE CASCADE,
+    diagram_id      TEXT PRIMARY KEY NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     cursor          INTEGER NOT NULL DEFAULT 0 CHECK (cursor >= 0),
     tip             INTEGER NOT NULL DEFAULT 0 CHECK (tip >= cursor),
     updated_at      TEXT NOT NULL
 );
 
 CREATE TABLE diagram_operation (
-    id              TEXT PRIMARY KEY,
+    id              TEXT PRIMARY KEY NOT NULL,
     diagram_id      TEXT NOT NULL REFERENCES diagram_document(id) ON DELETE CASCADE,
     sequence        INTEGER NOT NULL CHECK (sequence > 0),
     command_kind    TEXT NOT NULL,

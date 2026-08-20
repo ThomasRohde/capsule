@@ -1,0 +1,8 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-status/1",
+  "operation_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "phase": "succeeded",
+  "cancellable": false,
+  "output_leaf": "diagram-merged.sqlitecapsule",
+  "output_bytes": 1048576
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/cli-reconcile-v1.schema.json",
+  "title": "Capsule workspace reconciliation CLI projections",
+  "description": "Bounded, value-free CLI review and result projections. Review JSON is not execution authority; plan and payload members additionally conform to their dedicated versioned schemas.",
+  "oneOf": [
+    {"$ref": "#/$defs/candidates"},
+    {"$ref": "#/$defs/three_way_candidates"},
+    {"$ref": "#/$defs/review"},
+    {"$ref": "#/$defs/result"}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "label": {"type": "string", "maxLength": 512, "x-maxUtf8Bytes": 2048},
+    "row_kind": {"enum": ["added", "removed", "changed", "unchanged"]},
+    "field_kind": {"enum": ["same", "added", "removed", "changed", "redacted", "truncated"]},
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_index", "column", "kind", "source_value_digest", "target_value_digest"],
+      "properties": {
+        "field_index": {"type": "integer", "minimum": 0, "maximum": 255},
+        "column": {"$ref": "#/$defs/label"},
+        "kind": {"$ref": "#/$defs/field_kind"},
+        "source_value_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "target_value_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "key_digest", "source_row_digest", "target_row_digest", "fields"],
+      "properties": {
+        "kind": {"$ref": "#/$defs/row_kind"},
+        "key_digest": {"$ref": "#/$defs/sha256"},
+        "source_row_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "target_row_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "fields": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/field"}}
+      }
+    },
+    "candidates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "compare_report_digest", "dataset_index", "table_index", "dataset_label", "table_label", "rows", "truncated", "note"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-cli-candidates/1"},
+        "compare_report_digest": {"$ref": "#/$defs/sha256"},
+        "dataset_index": {"type": "integer", "minimum": 0, "maximum": 255},
+        "table_index": {"type": "integer", "minimum": 0, "maximum": 255},
+        "dataset_label": {"$ref": "#/$defs/label"},
+        "table_label": {"$ref": "#/$defs/label"},
+        "rows": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/row"}},
+        "truncated": {"const": false},
+        "note": {"type": "string", "maxLength": 512, "x-maxUtf8Bytes": 2048}
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "dataset_id", "table", "key_digest", "kind", "deleted_side", "source_row_digest", "target_row_digest", "ancestor_row_digest", "allowed_choices"],
+      "properties": {
+        "id": {"$ref": "#/$defs/sha256"},
+        "dataset_id": {"$ref": "#/$defs/label"},
+        "table": {"$ref": "#/$defs/label"},
+        "key_digest": {"$ref": "#/$defs/sha256"},
+        "kind": {"enum": ["insert-insert", "update-update", "delete-update", "immutable-field"]},
+        "deleted_side": {"type": ["string", "null"], "enum": ["source", "target", null]},
+        "source_row_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "target_row_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "ancestor_row_digest": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "allowed_choices": {"type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": {"enum": ["keep-target", "take-source"]}}
+      }
+    },
+    "three_way_candidates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "compare_report_digest", "clean_change_count", "conflicts", "executable_authority", "note"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-cli-three-way-candidates/1"},
+        "compare_report_digest": {"$ref": "#/$defs/sha256"},
+        "clean_change_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "conflicts": {"type": "array", "maxItems": 10000, "items": {"$ref": "#/$defs/conflict"}},
+        "executable_authority": {"const": false},
+        "note": {"type": "string", "maxLength": 512, "x-maxUtf8Bytes": 2048}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "compare_report_digest", "review_digest", "operation_count", "plan", "payload", "executable_authority", "note"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-cli-review/1"},
+        "compare_report_digest": {"$ref": "#/$defs/sha256"},
+        "review_digest": {"$ref": "#/$defs/sha256"},
+        "operation_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "plan": {"type": "object", "required": ["profile"], "properties": {"profile": {"const": "org.sqlite-capsule.lifecycle-plan/1"}}},
+        "payload": {"type": "object", "required": ["profile"], "properties": {"profile": {"const": "org.sqlite-capsule.reconcile-payload/1"}}},
+        "executable_authority": {"const": false},
+        "note": {"type": "string", "maxLength": 512, "x-maxUtf8Bytes": 2048}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "operation_count", "plan_digest", "payload_digest", "compare_report_digest", "output_leaf", "output_bytes", "capsule_id", "revision_id", "application_digest", "preserves_target_application_digest", "verified_reopened"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-cli-result/1"},
+        "operation_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "plan_digest": {"$ref": "#/$defs/sha256"},
+        "payload_digest": {"$ref": "#/$defs/sha256"},
+        "compare_report_digest": {"$ref": "#/$defs/sha256"},
+        "output_leaf": {"type": "string", "minLength": 1, "maxLength": 255, "x-maxUtf8Bytes": 255},
+        "output_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "capsule_id": {"type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+        "revision_id": {"type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+        "application_digest": {"$ref": "#/$defs/sha256"},
+        "preserves_target_application_digest": {"const": true},
+        "verified_reopened": {"const": true}
+      }
+    }
+  }
+}

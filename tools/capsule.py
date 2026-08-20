@@ -32,7 +32,7 @@ def permissions_main(argv: list[str]) -> int:
 def main() -> int:
     if len(sys.argv) == 2 and sys.argv[1] in {"-h", "--help"}:
         print(
-            "SQLite Capsule v0.2 repository CLI\n\n"
+            "SQLite Capsule v0.2/v0.3 repository CLI\n\n"
             "Runtime commands:\n"
             "  inspect, instructions, assets, verify, extract-host, run, start, status, stop\n\n"
             "Conformance commands:\n"

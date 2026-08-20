@@ -1,0 +1,465 @@
+
+running 6 tests
+test tests::duplicate_sign_options_are_rejected ... ok
+test tests::oversized_lifecycle_plan_is_rejected_before_unbounded_read ... ok
+test tests::signing_rejects_a_structurally_invalid_source ... ok
+test tests::signing_never_replaces_source_or_existing_output ... ok
+test tests::schema_tampering_breaks_the_application_digest ... ok
+test tests::signs_a_copy_and_separates_domain_edits_from_application_tampering ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+
+
+running 12 tests
+test protocol::tests::rejects_stale_sessions_sequences_and_ids ... ok
+test protocol::tests::rejects_unknown_params_and_oversized_bodies ... ok
+test protocol::tests::accepts_exact_manifest_and_named_endpoint_requests ... ok
+test protocol::tests::rejects_unknown_and_duplicate_fields ... ok
+test tests::validates_exact_utc_seconds_as_calendar_timestamps ... ok
+test tests::rejects_non_sqlite_input_before_opening_it ... ok
+test tests::enforces_the_normative_64_mib_capsule_boundary ... ok
+test tests::rejects_non_object_permission_declarations ... ok
+test tests::inspects_supported_capsule_metadata_read_only ... ok
+test tests::rejects_unsupported_format_triples ... ok
+test tests::rejects_v03_with_the_wrong_minimum_host_profile ... ok
+test tests::rejects_every_v03_identity_metadata_boundary_family ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.96s
+
+
+running 1 test
+test checked_example_has_expected_native_identity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test tests::signed_at_requires_a_real_utc_calendar_second ... ok
+test tests::ed25519_envelope_verifies_and_detects_tampering ... ok
+test tests::signed_extension_rejects_extra_or_mistyped_columns ... ok
+test tests::digest_ignores_domain_grant_change_and_signature_rows ... ok
+test tests::canonical_json_ignores_property_order_and_rejects_duplicates ... ok
+test tests::digest_changes_for_application_or_schema_mutation ... ok
+test tests::signature_inventory_reports_digest_match_separately ... ok
+test tests::rust_matches_the_independent_v02_golden_vector ... ok
+test tests::rust_matches_the_independent_v03_golden_vector_and_context ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+
+running 55 tests
+test copy_flow::tests::retained_preview_preserves_v02_format_and_native_blockers ... ok
+test copy_flow::tests::prepared_authority_expiry_matches_the_retained_source_budget ... ok
+test copy_flow::tests::running_copy_is_cancelled_without_orphaning_its_operation_id ... ok
+test copy_flow::tests::tokens_and_constant_time_comparison_are_closed ... ok
+test copy_flow::tests::terminal_copy_state_never_traps_process_close ... ok
+test copy_flow::tests::expired_destination_authority_has_the_exact_session_code ... ok
+test safe_image::tests::rejects_declared_animation_before_reencoding ... ok
+test tests::authority_actions_are_bound_to_the_current_overview_selection ... ok
+test tests::child_navigation_is_confined_to_the_custom_origin ... ok
+test tests::automatic_association_never_claims_the_generic_sqlite_suffix ... ok
+test tests::asset_paths_decode_without_allowing_traversal_or_encoded_separators ... ok
+test safe_image::tests::accepts_static_png_and_webp_and_reencodes_both_as_metadata_free_png ... ok
+test tests::compiled_updater_configuration_is_complete_https_and_redacted ... ok
+test tests::install_preparation_selects_only_the_exact_one_confirmed_prepared_stage ... ok
+test tests::later_sandbox_navigation_uses_the_webview2_protocol_mapping ... ok
+test tests::locked_bridge_releases_only_the_probe_and_security_headers ... ok
+test safe_image::tests::rejects_hash_type_magic_size_dimension_and_decode_failures ... ok
+test cabinet::tests::unsafe_root_and_unbounded_observations_fail_without_touching_trust_store ... ok
+test tests::platform_package_names_are_class_specific_before_staging ... ok
+test tests::native_e2e_support_override_is_json_and_confined_to_isolated_cdp_state ... ok
+test tests::native_e2e_update_preflight_requires_the_isolated_exact_fault_guard ... ok
+test tests::rollback_execution_selects_only_the_exact_required_stage ... ok
+test tests::rpc_errors_are_stable_and_accepted_requests_remain_correlated ... ok
+test tests::runtime_rpc_uses_a_fixed_worker_stack_and_fails_closed_while_locked ... ok
+test tests::native_e2e_restore_override_is_new_and_confined_to_isolated_state ... ok
+test tests::secondary_launch_accepts_only_one_explicit_path ... ok
+test tests::session_tokens_are_url_safe_fixed_length_and_fresh ... ok
+test cabinet::tests::record_is_private_bounded_rebuildable_and_non_authoritative ... ok
+test tests::signing_session_report_exposes_public_metadata_but_not_key_material_or_path ... ok
+test cabinet::tests::windows_junction_cache_root_is_rejected_without_touching_target ... ok
+test tests::update_check_gate_releases_on_scope_exit_and_rejects_overlap ... ok
+test tests::webdriver_candidate_path_does_not_bypass_normal_launch_selection ... ok
+test tests::webdriver_state_root_cannot_redirect_ordinary_host_authority ... ok
+test tests::writable_open_failures_fall_back_only_for_safe_read_only_cases ... ok
+test tests::always_scopes_trust_and_each_grant_to_the_exact_signed_release ... ok
+test tests::deny_is_persisted_and_manifest_capability_broadening_is_rejected ... ok
+test tests::signed_update_announcement_binds_every_transport_field_and_sidecar_origin ... ok
+test tests::allow_once_authorizes_only_the_current_evaluation ... ok
+test tests::same_signed_application_may_continue_read_only_after_domain_only_change ... ok
+test cabinet::tests::too_many_snapshots_and_crash_temps_rebuild_to_one_valid_generation ... ok
+test cabinet::tests::corrupt_oversized_future_and_missing_cache_are_empty ... ok
+test tests::launch_inspection_uses_the_fixed_worker_stack ... ok
+test overview::tests::legacy_v02_is_explicit_and_never_synthesizes_mutable_identity ... ok
+test safe_image::tests::legacy_v02_has_no_safe_image_projection ... ok
+test tests::host_owned_open_path_accepts_capsule_content_and_rejects_non_sqlite_drop ... ok
+test tests::support_bundle_redacts_selected_paths_and_refuses_replacement ... ok
+test tests::remembered_signed_release_stops_at_overview_until_explicit_open ... ok
+test tests::rejected_multi_file_drop_deactivates_the_prior_runtime ... ok
+test cabinet::tests::exact_entry_ceiling_evicts_oldest_and_updates_are_create_new ... ok
+test tests::host_update_preflight_quiesces_only_after_a_writable_recovery_point_exists ... ok
+test overview::tests::oversized_v03_metadata_fails_before_a_view_model_exists ... ok
+test overview::tests::verified_v03_projects_application_and_mutable_instance_without_assets ... ok
+test safe_image::tests::stale_source_requires_reinspection_instead_of_reusing_the_derivative ... ok
+test safe_image::tests::projects_application_and_instance_icons_from_the_retained_snapshot ... ok
+test overview::tests::signature_and_host_trust_states_remain_visibly_separate ... ok
+
+test result: ok. 55 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.99s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test tests::release_policy_bounds_in_memory_artifact_downloads ... ok
+test tests::candidate_review_is_distinct_from_install_authorization ... ok
+test tests::revocations_are_monotonic_and_stale_bundles_still_block_known_entries ... ok
+test tests::historical_release_proves_exact_installed_identity_after_expiry ... ok
+test tests::revocation_signature_clock_and_entries_fail_closed ... ok
+test tests::signed_release_requires_consent_quiescence_backup_and_exact_artifact ... ok
+test tests::release_policy_binds_canonical_platform_and_sigstore_identities ... ok
+test tests::release_rejects_tamper_downgrade_expiry_target_and_unsafe_url ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 5 tests
+test tests::installer_kind_is_class_and_suffix_specific ... ok
+test tests::windows_integration::bundled_windows_installers_declare_only_unambiguous_association_when_available ... ok
+test tests::windows_integration::signed_bootstrap_cache_requires_exact_package_version ... ok
+test tests::windows_integration::real_platform_evidence_guards_success_and_failure_transitions ... ok
+test tests::windows_integration::real_platform_evidence_guards_rollback_handoff_and_health ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+
+running 10 tests
+test tests::source_capture_rejects_growth_after_the_header_probe ... ok
+test tests::source_capture_rejects_adjacent_sidecars_and_wal_header_state ... ok
+test tests::source_capture_rejects_change_capture_restore_aba ... ok
+test tests::checked_capsule_produces_unsigned_bounded_launch_evidence ... ok
+test tests::verified_connection_detects_a_source_change_before_handoff ... ok
+test tests::declared_check_results_are_a_separate_bounded_launch_phase ... ok
+test tests::exhaustive_verifier_rejects_each_non_executing_conformance_surface ... ok
+test tests::retained_inspection_projects_only_from_the_verified_read_only_snapshot ... ok
+test tests::exhaustive_verifier_rejects_an_invalid_later_v03_endpoint_step ... ok
+test tests::retained_inspection_keeps_launch_evidence_bound_to_its_snapshot ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.37s
+
+
+running 15 tests
+test tests::windows_drive_types_and_writable_policy_fail_closed ... ok
+test tests::pins_a_regular_source_and_reports_stable_identity ... ok
+test tests::publication_rejects_unsafe_leaves_and_cleans_unpublished_private_files ... ok
+test tests::replacement_is_blocked_or_detected ... ok
+test tests::windows_identity_binds_full_file_id_and_observed_mtime ... ok
+test tests::one_writer_lease_is_released_on_drop ... ok
+test tests::windows_writable_open_matches_the_classified_volume_policy ... ok
+test tests::host_write_may_refresh_size_but_not_file_identity ... ok
+test tests::windows_staging_dacl_is_owner_only_and_protected_from_hostile_inheritance ... ok
+test tests::parent_substitution_is_blocked_or_detected_before_staging ... ok
+test tests::last_moment_destination_race_fails_without_replacement ... ok
+test tests::final_leaf_substitution_during_verification_never_reports_success ... ok
+test tests::low_level_publication_is_private_create_new_and_no_replace ... ok
+test tests::postpublish_failure_is_never_reported_as_success ... ok
+test tests::windows_intermediate_junction_is_rejected ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 2 tests
+test tests::signing_identities_are_class_specific_and_canonical ... ok
+test tests::authenticode_adapter_pins_a_real_signer_and_rejects_unsigned_bytes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+
+running 17 tests
+test tests::release_and_complete_grant_set_commit_atomically ... ok
+test tests::key_ids_are_derived_and_cannot_be_rebound ... ok
+test tests::allow_once_is_ephemeral_and_prompt_cannot_be_persisted ... ok
+test tests::forgetting_a_signed_release_removes_only_its_exact_release_and_grants ... ok
+test tests::stale_last_known_good_is_reported_without_forgetting_known_revocations ... ok
+test tests::revocation_overrides_trust_and_grants ... ok
+test tests::grants_are_scoped_to_capsule_application_and_digest ... ok
+test tests::exact_file_trust_does_not_cross_a_source_hash_change ... ok
+test tests::migrates_backs_up_and_reopens_the_host_local_store ... ok
+test tests::signed_remote_revocations_install_atomically_and_override_local_trust ... ok
+test tests::redacted_export_and_audit_contain_no_private_key_material ... ok
+test tests::reset_requires_exact_confirmation_and_can_follow_a_verified_backup ... ok
+test tests::optional_prompts_do_not_block_required_capabilities_or_persist_session_trust ... ok
+test tests::forgetting_an_unsigned_decision_is_confirmed_exact_and_does_not_grant_authority ... ok
+test tests::launch_states_do_not_confuse_valid_signatures_with_trust ... ok
+test tests::explicit_denies_are_persisted_and_exactly_scoped ... ok
+test tests::migrates_an_existing_v1_store_atomically ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+
+running 10 tests
+test tests::asset_paths_reject_control_characters ... ok
+test tests::lifecycle_fault_crash_worker ... ok
+test endpoint::tests::write_returning_drains_rows_before_changes_are_observed ... ok
+test tests::debug_fault_request_requires_an_isolated_dual_port_guard ... ok
+test endpoint::tests::v03_write_advances_revision_and_failure_rolls_back_both ... ok
+test endpoint::tests::commit_failure_explicitly_rolls_back_domain_revision_and_change_log ... ok
+
+running 1 test
+
+running 1 test
+test tests::retention_bounds_count_and_age_without_deleting_the_last_copy ... ok
+test tests::writer_released_at_verification_handoff_is_rejected_before_asset_release ... ok
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+test tests::abrupt_runtime_open_releases_the_writer_and_leaves_source_and_inventory_clean ... ok
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+test tests::abrupt_backup_checkpoint_restore_and_close_leave_bounded_recovery_evidence ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.00s
+
+
+running 10 tests
+test rollback_journal_crash_worker ... ok
+
+running 1 test
+test verified_read_only_runtime_returns_assets_manifest_and_named_rows ... ok
+test an_external_sqlite_commit_stops_the_session_before_another_host_write ... ok
+test hot_rollback_journal_is_recovered_then_fully_reverified_before_runtime_open ... ok
+test a_second_native_writer_is_denied_until_the_first_session_closes ... ok
+test failed_compound_precondition_rolls_back_every_step_and_log ... ok
+test native_runtime_keeps_declared_foreign_key_cascades_reversible ... ok
+test compound_named_write_is_atomic_and_records_one_change_log_row ... ok
+test a_verified_backup_restores_only_to_a_new_path_and_detects_tampering ... ok
+test host_update_preflight_establishes_a_current_verified_backup_before_quiescence ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.16s
+
+
+running 9 tests
+test tests::loads_raw_hex_and_pkcs8_keys_without_changing_identity ... ok
+test tests::rejects_encrypted_or_oversized_key_files ... ok
+test tests::direct_signing_rejects_a_runtime_invalid_source_before_preparation ... ok
+test tests::direct_signing_rejects_a_failing_error_check_without_publishing ... ok
+test tests::signing_refuses_existing_or_in_place_output ... ok
+test tests::prepared_copy_is_removed_when_signing_is_cancelled ... ok
+test tests::signing_never_clobbers_an_output_created_after_review ... ok
+test tests::prepares_exact_digest_then_signs_a_new_verified_copy ... ok
+test tests::signs_and_verifies_a_conformant_v03_capsule_without_mutating_the_source ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+
+
+running 2 tests
+test tests::malformed_and_unbounded_inputs_fail_closed ... ok
+test tests::public_bundle_binds_artifact_identity_issuer_and_transparency ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 7 tests
+test tests::update_fault_crash_worker ... ok
+
+running 1 test
+
+running 1 test
+test tests::tamper_and_unverified_input_fail_closed ... ok
+test tests::prepared_installation_reverifies_the_persisted_release_envelope ... ok
+
+running 1 test
+
+running 1 test
+test tests::stages_verified_bytes_preserves_previous_and_records_health ... ok
+test tests::rollback_health_mismatch_is_terminal_and_preserves_reason ... ok
+test tests::rollback_exposes_only_the_preserved_exact_installer ... ok
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+
+running 1 test
+test tests::process_exit_inventory_distinguishes_incomplete_and_recoverable_stages ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.38s
+
+
+running 96 tests
+test compact_copy::tests::compact_crash_worker ... ok
+test compact_state::tests::real_bits_preserve_signed_zero_and_reject_non_finite_values ... ok
+test compact_copy::tests::compact_plan_vector_is_canonical_and_uses_the_versioned_operation ... ok
+test compact_state::tests::rowid_projection_detects_without_rowid_and_shadowed_aliases ... ok
+test compact_state::tests::deleted_gap_rowid_renumbering_changes_digest_without_primary_key_assumptions ... ok
+test copy::tests::truth_table_keeps_v02_to_duplicate_modes_and_new_identity_to_v03_forks ... ok
+test compact_state::tests::rust_matches_the_independent_compact_logical_state_vector ... ok
+test compact_state::tests::known_sqlite_statistics_are_included_and_survive_storage_compaction ... ok
+test compact_state::tests::digest_covers_rows_platform_signature_sequence_and_schema_but_not_storage_layout ... ok
+test copy::tests::exact_duplicate_report_is_bounded_review_data_and_does_not_mutate_source ... ok
+
+running 1 test
+test copy::tests::fork_report_projects_dependencies_and_new_identity_without_paths ... ok
+test copy_source::tests::adjacent_sidecars_fail_before_copy_admission ... ok
+test error::tests::rust_error_catalogue_exactly_matches_the_versioned_json_contract ... ok
+test error::tests::serialized_error_contains_only_stable_safe_fields ... ok
+test copy::tests::choices_limits_and_cancellation_fail_closed ... ok
+test copy::tests::row_estimates_share_one_total_budget_and_expose_no_values ... ok
+
+running 1 test
+test copy::tests::full_fork_never_copies_a_dependent_while_omitting_its_prerequisite ... ok
+test copy::tests::selective_fork_adds_dependencies_and_rejects_policy_invalid_omissions ... ok
+test copy::tests::reset_semantics_for_one_source_forks_remain_unavailable ... ok
+test copy::tests::signed_sensitive_copy_stays_copy_but_blocks_until_explicit_confirmation ... ok
+
+running 1 test
+test copy_source::tests::live_source_change_after_review_is_stale_and_private_snapshot_is_not_reopened ... ok
+test compact_copy::tests::implicit_rowid_renumbering_fails_logical_validation_without_publication ... ok
+
+running 1 test
+test copy::tests::authenticated_template_preview_is_ready_and_stale_or_missing_proofs_fail_closed ... ok
+test plan::tests::canonical_key_order_is_unicode_scalar_order_not_utf16_jcs_order ... ok
+test plan::tests::plan_digest_is_deterministic_and_verified ... ok
+test plan::tests::rejects_duplicate_keys_floats_and_unsafe_publication_modes ... ok
+test plan::tests::required_nullable_members_may_be_null_but_may_not_be_missing ... ok
+test plan::tests::rust_matches_the_external_python_canonical_vectors ... ok
+test compact_copy::tests::deleted_high_entropy_sentinel_and_freelist_are_removed ... ok
+test copy_source::tests::partial_signed_extensions_are_rejected ... ok
+
+running 1 test
+test compact_copy::tests::destination_sidecars_are_preserved_and_never_reported_as_success ... ok
+test publication::tests::publication_crash_worker ... ok
+test copy_source::tests::accepts_only_complete_valid_signed_v02_and_v03_inventories ... ok
+test copy_source::tests::accepts_unsigned_v02_and_v03_without_synthesizing_signature_trust ... ok
+test copy_source::tests::digest_mismatch_and_malformed_envelope_schema_are_rejected ... ok
+test exact_copy::tests::existing_and_racing_destinations_are_never_overwritten ... ok
+test copy_source::tests::one_absolute_cancellation_control_survives_admission ... ok
+test exact_copy::tests::invalid_mixed_signature_source_never_reaches_plan_or_destination ... ok
+test exact_copy::tests::recomputed_same_parent_leaf_rewrite_cannot_use_held_destination_authority ... ok
+test exact_copy::tests::plan_round_trip_is_immutable_and_semantic_edits_do_not_gain_authority ... ok
+test compact_copy::tests::destination_aba_cancellation_and_drop_paths_fail_closed ... ok
+test compact_copy::tests::abrupt_compact_stages_never_mutate_input_or_report_incomplete_success ... ok
+test semantic_copy::tests::semantic_crash_worker ... ok
+test semantic_copy::tests::semantic_plan_vector_is_canonical_and_binds_dataset_state_profile ... ok
+test exact_copy::tests::dropping_staged_or_validated_typestate_cleans_private_output ... ok
+test compact_copy::tests::compact_plan_tampering_and_late_source_change_never_report_success ... ok
+
+running 1 test
+
+running 1 test
+test publication::tests::plan_time_boundaries_use_the_exact_stable_codes ... ok
+
+running 1 test
+test publication::tests::invalid_or_tampered_staging_never_reaches_the_final_name ... ok
+
+running 1 test
+
+running 1 test
+test publication::tests::safe_publication_requires_full_validation_and_preserves_the_source ... ok
+
+running 1 test
+test publication::tests::substituted_prepared_destination_maps_to_stale_plan ... ok
+test semantic_copy::tests::edited_recomputed_plan_never_remints_authority_and_basic_races_fail_closed ... ok
+
+running 1 test
+test exact_copy::tests::source_race_and_cancellation_stop_before_publication ... ok
+test publication::tests::source_mutation_before_capture_and_during_transform_fails_closed ... ok
+test publication::tests::abrupt_publication_stages_never_mutate_input_or_report_incomplete_success ... ok
+test copy_source::tests::invalid_empty_and_mixed_signature_inventories_fail_closed ... ok
+
+running 1 test
+test semantic_copy::tests::template_forbid_policy_is_unsupported_before_destination_or_mutation ... ok
+test exact_copy::tests::late_source_mutation_or_cancellation_is_quarantined_before_success ... ok
+test publication::tests::source_mutation_in_the_final_publication_window_fails_closed ... ok
+
+running 1 test
+test semantic_copy::tests::semantic_copy_rebuilds_sequence_from_exact_schema_allowlist ... ok
+test semantic_copy::tests::fork_publishes_new_ids_preserves_signed_application_and_source ... ok
+
+running 1 test
+test tests::caller_limits_and_cancellation_apply_to_the_complete_open ... ok
+test semantic_copy::tests::template_uses_only_signed_app_defaults_and_scrubs_mutable_sentinels ... ok
+test tests::authenticated_template_state_matches_then_domain_edits_fail_closed ... ok
+test semantic_copy::tests::abrupt_semantic_stages_preserve_source_and_never_leave_invalid_final_output ... ok
+test tests::duplicate_planner_refuses_existing_output_without_changing_it ... ok
+test tests::duplicate_plan_is_deterministic_review_data_and_prepares_without_writes ... ok
+test semantic_copy::tests::reset_policy_fork_and_selective_require_a_separate_clean_source ... ok
+test tests::dataset_enumeration_limits_accept_exact_boundary_and_reject_plus_one ... ok
+test semantic_copy::tests::v02_is_unsupported_operation_and_mixed_signature_inventory_is_rejected ... ok
+test tests::mutable_lineage_details_are_redacted_and_do_not_authenticate_publishers ... ok
+test semantic_copy::tests::source_race_and_late_cancellation_never_report_publication_success ... ok
+test tests::opens_only_a_pinned_verified_signed_v03_snapshot ... ok
+test compact_copy::tests::signed_and_unsigned_v02_v03_compact_in_owner_private_storage ... ok
+test exact_copy::tests::actual_exact_preview_is_path_free_for_all_format_and_signature_states ... ok
+test semantic_copy::tests::selective_sensitive_prompt_defaults_omit_and_dependency_closure_blocks_gap ... ok
+test tests::source_journal_state_has_its_own_stable_code ... ok
+test tests::rejects_a_structural_capsule_without_a_matching_signature ... ok
+test tests::same_object_same_size_source_mutation_is_always_stale ... ok
+test tests::duplicate_classification_and_undeclared_tables_fail_closed ... ok
+test tests::source_replacement_after_open_is_stale ... ok
+test tests::rust_matches_the_independent_template_state_vectors ... ok
+test tests::recomputed_duplicate_plan_edits_never_gain_execution_authority ... ok
+test tests::verified_snapshot_connection_is_read_only ... ok
+test tests::template_state_limits_cancellation_and_live_source_race_fail_closed ... ok
+test exact_copy::tests::signed_and_unsigned_v02_v03_publish_byte_exact_without_mutating_source ... ok
+test tests::lineage_details_depth_properties_and_bytes_are_bounded ... ok
+test tests::signed_dependencies_must_cover_restrictive_cross_dataset_foreign_keys ... ok
+test tests::sqlite_table_and_column_names_are_bounded_utf8_but_dataset_ids_remain_restricted ... ok
+test tests::composite_nullable_and_nonbinary_or_descending_keys_are_rejected ... ok
+test tests::policy_and_json_shape_fail_closed_without_role_inference ... ok
+test tests::lineage_parent_ordinals_relations_and_caps_fail_closed ... ok
+test tests::wrong_primary_key_ignored_key_and_dependency_cycle_fail_closed ... ok
+test tests::template_state_rejects_noncanonical_duplicate_oversize_and_wrong_doc_metadata ... ok
+test tests::accepted_primary_key_shapes_and_exact_declared_order_are_enforced ... ok
+test tests::malformed_mutable_lineage_maps_to_invalid_capsule ... ok
+test tests::template_state_proof_mutations_fail_closed_with_stable_codes ... ok
+
+test result: ok. 96 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 54.46s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test cli_rejects_unknown_commands_with_only_the_safe_error_envelope ... ok
+test cli_plan_duplicate_returns_repeatable_canonical_review_json_without_writing ... ok
+test cli_executes_exact_compact_and_fork_through_workspace_typestates ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.40s
+

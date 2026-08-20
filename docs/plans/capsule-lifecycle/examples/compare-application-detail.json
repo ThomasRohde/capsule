@@ -1,0 +1,31 @@
+{
+  "profile": "org.sqlite-capsule.compare-application/1",
+  "comparison_report_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "left_file_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "right_file_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "families": [
+    {"family":"manifest-permissions","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"application-identity","state":"same","table_count":2,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"publisher-identity","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"assets","state":"different","table_count":1,"left_rows":2,"right_rows":2,"left_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","right_digest":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","change_count":1},
+    {"family":"commands","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"runbooks","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"documents","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"prompts","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"checks","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"endpoints","state":"same","table_count":2,"left_rows":2,"right_rows":2,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"data-contracts","state":"same","table_count":3,"left_rows":3,"right_rows":3,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"migration-contracts","state":"same","table_count":3,"left_rows":0,"right_rows":0,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0},
+    {"family":"signature-inventory","state":"same","table_count":1,"left_rows":1,"right_rows":1,"left_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","right_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","change_count":0}
+  ],
+  "limits": {
+    "max_tables": 32,
+    "max_rows_per_table": 100000,
+    "max_total_rows": 100000,
+    "max_value_bytes": 1048576,
+    "max_stream_bytes": 268435456,
+    "max_report_bytes": 1048576,
+    "deadline_ms": 30000
+  },
+  "detail_digest": "9999999999999999999999999999999999999999999999999999999999999999"
+}

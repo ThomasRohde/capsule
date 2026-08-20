@@ -1,0 +1,13 @@
+{
+  "profile": "org.sqlite-capsule.compact-logical-state-vectors/1",
+  "logical_state_profile": "org.sqlite-capsule.compact-logical-state/1",
+  "fixture": "compatibility/compact-logical-state-v1/fixture.sql",
+  "baseline": {
+    "digest_sha256": "b36508016be9290d3e89321608a195c116b42535ffc16e903b8f004380a58180",
+    "schema_objects": 7,
+    "tables": 4,
+    "rows": 5,
+    "stream_bytes": 2461,
+    "page_size": 4096
+  }
+}

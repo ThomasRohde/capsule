@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/capsule-application-profile-v0.3.schema.json",
+  "title": "SQLite Capsule signed application display profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "app_id",
+    "app_version",
+    "name",
+    "description",
+    "category",
+    "icon_asset",
+    "release_notes_doc",
+    "data_schema",
+    "minimum_host_profile"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.application-profile/0.3"
+    },
+    "app_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "app_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[0-9A-Za-z][0-9A-Za-z.+_-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "icon_asset": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "release_notes_doc": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1024
+    },
+    "data_schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "minimum_host_profile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

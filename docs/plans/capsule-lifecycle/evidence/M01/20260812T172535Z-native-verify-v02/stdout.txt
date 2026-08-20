@@ -1,0 +1,89 @@
+{
+  "executable_allowed": false,
+  "identity": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "application_id": 1129337676,
+    "bytes": 884736,
+    "canonical_path": "\\\\?\\C:\\Users\\thoma\\Projects\\sqlite-capsule\\capsules\\diagram-studio.capsule.sqlite",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "overview": {
+      "application": {
+        "app_id": "org.sqlite-capsule.diagram-studio",
+        "app_version": "0.3.0",
+        "category": null,
+        "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+        "icon_asset": null,
+        "legacy_fallback": true,
+        "name": "Diagram Studio — SQLite Capsule",
+        "release_notes_doc": null,
+        "released_at": null
+      },
+      "data_schema": null,
+      "instance": {
+        "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+        "content_updated_at": "2026-08-08T12:00:00Z",
+        "cover_asset_id": null,
+        "created_at": "2026-08-07T19:00:00Z",
+        "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+        "document_kind": "legacy-v0.2",
+        "icon_asset_id": null,
+        "revision_id": null,
+        "tags": [],
+        "title": "Diagram Studio — SQLite Capsule"
+      }
+    },
+    "permissions": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "user_version": 2
+  },
+  "integrity_ok": true,
+  "note": "Structure verification does not authenticate or trust a publisher.",
+  "ok": true,
+  "publisher_known": false,
+  "publisher_trusted": false,
+  "revocation_status": "not_checked",
+  "signature_extension_present": false,
+  "signature_extension_valid": false,
+  "signature_valid": null,
+  "structure_ok": true
+}

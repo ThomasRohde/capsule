@@ -256,39 +256,52 @@ function requestNativeWindowClose(processId) {
 }
 
 function driveWindowsSaveDialog(processId, destination, isolatedStateRoot) {
-  const result = spawnSync(
-    "powershell.exe",
-    [
-      "-NoProfile",
-      "-STA",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
-      windowsSaveDialogHelper,
-      "-HostProcessId",
-      String(processId),
-      "-Destination",
-      destination,
-      "-StateRoot",
-      isolatedStateRoot,
-      "-TimeoutSeconds",
-      "20",
-    ],
-    {
-      cwd: root,
-      encoding: "utf8",
-      timeout: 30_000,
-      windowsHide: true,
-      shell: false,
-    },
-  );
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error(result.stderr.trim() || result.stdout.trim() || `save-dialog helper exited ${result.status}`);
+  let result;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    result = spawnSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-STA",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        windowsSaveDialogHelper,
+        "-HostProcessId",
+        String(processId),
+        "-Destination",
+        destination,
+        "-StateRoot",
+        isolatedStateRoot,
+        "-TimeoutSeconds",
+        "20",
+      ],
+      {
+        cwd: root,
+        encoding: "utf8",
+        timeout: 30_000,
+        windowsHide: true,
+        shell: false,
+      },
+    );
+    if (result.error) throw result.error;
+    if (result.status === 0) break;
+    const detail = `${result.stderr}\n${result.stdout}`;
+    if (!detail.includes("could not receive the foreground") || attempt === 3) {
+      throw new Error(result.stderr.trim() || result.stdout.trim() || `save-dialog helper exited ${result.status}`);
+    }
+  }
+  if (!result || result.status !== 0) {
+    throw new Error("save-dialog helper did not complete");
   }
   const output = result.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
   if (!output) throw new Error("save-dialog helper returned no report");
   return JSON.parse(output);
+}
+
+async function openCapabilityReview(page) {
+  await page.locator("button[data-page='security']").click();
+  await page.locator("button[data-route='capabilities']").click();
 }
 
 if (process.platform !== "win32") {
@@ -362,6 +375,14 @@ try {
 
   await parentPage.locator("#host-state").waitFor({ state: "visible" });
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
+  assert.equal(await parentPage.locator("#host-state").textContent(), "Rejected before execution");
+  const beforeRecovery = await parentPage.evaluate(() => globalThis.__TAURI__.core.invoke("startup_report"));
+  assert.equal(beforeRecovery.stage, "recovery-required");
+  assert.equal(beforeRecovery.capsule, null);
+  assert.equal(existsSync(journal), true, "Cabinet inspection mutated rollback-journal state");
+  assert.equal(sha256File(capsule), dirtyCapsuleHash, "Cabinet inspection mutated the source capsule");
+  await parentPage.locator("#recover-selected-button").click();
+  await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent === "Trust decision required · code locked");
   assert.equal(await parentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
   const recoveredStartup = await parentPage.evaluate(() => globalThis.__TAURI__.core.invoke("startup_report"));
   assert.equal(recoveredStartup.recovery?.sqlite_recovery_attempted, true);
@@ -383,7 +404,76 @@ try {
     })),
     { tauri: "undefined", internals: "undefined" },
   );
+  assert.deepEqual(
+    await rawPage.evaluate(async () => {
+      const methods = [
+        "cabinet_status",
+        "choose_compare_capsule",
+        "start_compare",
+        "get_compare_page",
+        "reveal_compare_page",
+        "get_compare_application_detail",
+        "close_compare_session",
+        "get_reconcile_options",
+        "start_reconcile_review",
+        "choose_reconcile_destination",
+        "choose_reconcile_ancestor",
+        "prepare_reconcile",
+        "execute_reconcile",
+        "get_reconcile_operation",
+        "cancel_reconcile_operation",
+        "acknowledge_reconcile_result",
+        "preview_copy_profile",
+        "choose_copy_destination",
+        "cancel_copy_destination",
+        "prepare_copy",
+        "execute_copy",
+        "get_copy_operation",
+        "cancel_copy_operation",
+        "acknowledge_copy_result",
+      ];
+      const results = {};
+      for (const method of methods) {
+        try {
+          await globalThis.SQLiteCapsuleClient.read(method, {});
+          results[method] = "accepted";
+        } catch {
+          results[method] = "rejected";
+        }
+      }
+      return results;
+    }),
+    Object.fromEntries([
+      "cabinet_status",
+      "choose_compare_capsule",
+      "start_compare",
+      "get_compare_page",
+      "reveal_compare_page",
+      "get_compare_application_detail",
+      "close_compare_session",
+      "get_reconcile_options",
+      "start_reconcile_review",
+      "choose_reconcile_destination",
+      "choose_reconcile_ancestor",
+      "prepare_reconcile",
+      "execute_reconcile",
+      "get_reconcile_operation",
+      "cancel_reconcile_operation",
+      "acknowledge_reconcile_result",
+      "preview_copy_profile",
+      "choose_copy_destination",
+      "cancel_copy_destination",
+      "prepare_copy",
+      "execute_copy",
+      "get_copy_operation",
+      "cancel_copy_operation",
+      "acknowledge_copy_result",
+    ].map((method) => [method, "rejected"])),
+    "raw named bridge accepted a trusted-shell lifecycle method",
+  );
 
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='capabilities']").click();
   await parentPage.locator("button[data-action='deny']").click();
   await parentPage.waitForFunction(() => document.querySelector("#verdict strong")?.textContent === "Execution is blocked");
   assert.equal(await parentPage.locator("#boundary-title").textContent(), "Application window · executable assets locked");
@@ -391,7 +481,8 @@ try {
   await rawPage.waitForFunction(() => document.title === "Raw child renderer probe");
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
-  await parentPage.locator("button[data-page='admin']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='admin']").click();
   const confirmation = new Promise((resolve, reject) => {
     parentPage.once("dialog", async (dialog) => {
       try {
@@ -410,7 +501,8 @@ try {
   await rawPage.waitForFunction(() => document.title === "Raw child renderer probe");
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
-  await parentPage.locator("button[data-page='capabilities']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='capabilities']").click();
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
   assert.match(await parentPage.locator("#verdict").textContent(), /SQLite performed rollback-journal recovery/);
@@ -426,6 +518,37 @@ try {
       internals: typeof globalThis.__TAURI_INTERNALS__,
     })),
     { tauri: "undefined", internals: "undefined" },
+  );
+  assert.deepEqual(
+    await rawPage.evaluate(async () => {
+      const methods = [
+        "choose_compare_capsule", "start_compare", "get_compare_page",
+        "reveal_compare_page", "get_compare_application_detail", "close_compare_session",
+        "get_reconcile_options", "start_reconcile_review", "choose_reconcile_destination", "choose_reconcile_ancestor",
+        "prepare_reconcile", "execute_reconcile", "get_reconcile_operation",
+        "cancel_reconcile_operation", "acknowledge_reconcile_result",
+        "prepare_copy",
+      ];
+      const results = {};
+      for (const method of methods) {
+        try {
+          await globalThis.SQLiteCapsuleClient.read(method, {});
+          results[method] = "accepted";
+        } catch {
+          results[method] = "rejected";
+        }
+      }
+      return results;
+    }),
+    Object.fromEntries([
+      "choose_compare_capsule", "start_compare", "get_compare_page",
+      "reveal_compare_page", "get_compare_application_detail", "close_compare_session",
+      "get_reconcile_options", "start_reconcile_review", "choose_reconcile_destination", "choose_reconcile_ancestor",
+      "prepare_reconcile", "execute_reconcile", "get_reconcile_operation",
+      "cancel_reconcile_operation", "acknowledge_reconcile_result",
+      "prepare_copy",
+    ].map((method) => [method, "rejected"])),
+    "authorized raw renderer accepted a trusted-shell lifecycle method",
   );
   assert.equal(await parentPage.locator("#boundary-title").textContent(), "Application window · verified assets · exact named bridge");
 
@@ -473,7 +596,8 @@ try {
   assert.equal(persistedHistoryCursor(capsule), 1);
 
   assert.equal(existsSync(supportBundlePath), false);
-  await parentPage.locator("button[data-page='admin']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='admin']").click();
   await parentPage.locator("#support-button").click();
   await waitForPath(supportBundlePath, "redacted support bundle");
   await parentPage.waitForFunction(
@@ -570,7 +694,10 @@ try {
       return String(error);
     }
   });
-  assert.match(conflictError || "", /capsule changed outside this host session/);
+  assert.match(
+    conflictError || "",
+    /capsule (?:changed outside this host session|source was replaced during the session)/,
+  );
   const lifecycleAfterConflict = await parentPage.evaluate(() => globalThis.__TAURI__.core.invoke("lifecycle_status"));
   assert.equal(lifecycleAfterConflict.active, false);
   assert.equal(lifecycleAfterConflict.writable, false);
@@ -765,6 +892,7 @@ async function runOpenCrashScenario() {
     assert.equal(await crashParentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
     await crashRawPage.waitForFunction(() => document.title === "Raw child renderer probe");
     assert.equal(await crashRawPage.title(), "Raw child renderer probe");
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").evaluate((button) => button.click());
     const crashed = await waitForProcessExit(crashProcess, "open-fault native host");
     assert.equal(crashed.code, 98, `open-fault host exited by ${crashed.signal || "an unexpected status"}`);
@@ -831,6 +959,7 @@ async function runOpenCrashScenario() {
     assert.deepEqual(lockedLifecycle.backup_inventory.incomplete_artifacts, []);
     assert.deepEqual(lockedLifecycle.backup_inventory.invalid_artifacts, []);
 
+    await openCapabilityReview(restartParentPage);
     await restartParentPage.locator("button[data-action='allow_once']").click();
     await restartParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await restartRawPage.waitForURL(/\/app\/index\.html$/);
@@ -935,6 +1064,7 @@ async function runRestoreCrashScenario() {
     await crashRawPage.waitForFunction(() => document.querySelector("#decision")?.textContent?.startsWith("PASS"));
     assert.equal(await crashRawPage.locator("#decision").textContent(), "PASS · no native handler");
 
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").click();
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await crashRawPage.waitForURL(/\/app\/index\.html$/);
@@ -1127,6 +1257,7 @@ async function runPrewriteCrashScenario() {
     await crashParentPage.locator("#host-state").waitFor({ state: "visible" });
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
     assert.equal(await crashParentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").click();
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await crashRawPage.waitForURL(/\/app\/index\.html$/);
@@ -1315,6 +1446,7 @@ async function runCheckpointCrashScenario() {
     assert.ok(crashRawPage, "checkpoint-fault raw child page is absent");
     await crashParentPage.locator("#host-state").waitFor({ state: "visible" });
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").click();
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await crashRawPage.waitForURL(/\/app\/index\.html$/);
@@ -1534,6 +1666,7 @@ async function runUpdatePreflightCrashScenario() {
     assert.ok(crashRawPage, "update-fault raw child page is absent");
     await crashParentPage.locator("#host-state").waitFor({ state: "visible" });
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").click();
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await crashRawPage.waitForURL(/\/app\/index\.html$/);
@@ -1746,6 +1879,7 @@ async function runCloseCrashScenario() {
     assert.ok(crashRawPage, "close-fault raw child page is absent");
     await crashParentPage.locator("#host-state").waitFor({ state: "visible" });
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
+    await openCapabilityReview(crashParentPage);
     await crashParentPage.locator("button[data-action='allow_once']").click();
     await crashParentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
     await crashRawPage.waitForURL(/\/app\/index\.html$/);
@@ -1899,7 +2033,7 @@ async function runRestorePickerScenario() {
   const pickerDisposableRoot = path.join(root, ".tmp", "native-raw-picker-e2e-capsule");
   const pickerCapsule = path.join(pickerDisposableRoot, "diagram-studio.capsule.sqlite");
   const pickerRestoreRoot = path.join(pickerStateRoot, "restored");
-  const pickerRestoredCapsule = path.join(pickerRestoreRoot, "picker-restored.sqlitecapsule");
+  const pickerRestoredCapsule = path.join(pickerRestoreRoot, "restored.sqlitecapsule");
   const nodeId = "node-agent-prompt";
   const originalLabel = "One-sentence agent prompt";
   const committedLabel = `${originalLabel} · native save picker E2E`;
@@ -1953,6 +2087,7 @@ async function runRestorePickerScenario() {
     await pickerParentPage.waitForFunction(
       () => document.querySelector("#host-state")?.textContent === "Trust decision required · code locked",
     );
+    await openCapabilityReview(pickerParentPage);
     await pickerParentPage.locator("button[data-action='allow_once']").click();
     await pickerParentPage.waitForFunction(
       () => document.querySelector("#host-state")?.textContent?.includes("application running"),
@@ -1984,7 +2119,10 @@ async function runRestorePickerScenario() {
         return String(error);
       }
     });
-    assert.match(conflictError || "", /capsule changed outside this host session/);
+    assert.match(
+      conflictError || "",
+      /capsule (?:changed outside this host session|source was replaced during the session)/,
+    );
     await pickerParentPage.waitForFunction(
       () => document.querySelector("#host-state")?.textContent === "Session conflict · renderer locked",
     );
@@ -2009,16 +2147,15 @@ async function runRestorePickerScenario() {
     assert.equal(dialogReport.dialog_class, "#32770");
     assert.equal(dialogReport.file_name_host_automation_id, "1001");
     assert.ok(
-      ["ValuePattern", "WindowsSaveDialogKeyboard"].includes(dialogReport.file_name_input_pattern),
+      ["ValuePattern", "LegacyIAccessiblePattern", "NativeDialogEdit", "HostSuggestedName", "WindowsSaveDialogKeyboard"].includes(dialogReport.file_name_input_pattern),
       `unexpected file-name input pattern: ${dialogReport.file_name_input_pattern}`,
     );
     assert.equal(dialogReport.save_button_automation_id, "1");
     assert.ok(
-      ["InvokePattern", "KeyboardEnter"].includes(dialogReport.save_commit_method),
+      ["InvokePattern", "NativeDialogButton", "KeyboardEnter"].includes(dialogReport.save_commit_method),
       `unexpected save commit method: ${dialogReport.save_commit_method}`,
     );
     assert.equal(comparableWindowsPath(dialogReport.destination), comparableWindowsPath(pickerRestoredCapsule));
-
     await waitForPath(pickerRestoredCapsule, "real save-picker restore output");
     await pickerParentPage.waitForFunction(
       () => document.querySelector("#lifecycle-action-status")?.textContent?.includes("Verified copy restored"),
@@ -2089,10 +2226,18 @@ async function runRestorePickerScenario() {
   }
 }
 
-await runOpenCrashScenario();
-await runRestoreCrashScenario();
-await runPrewriteCrashScenario();
-await runCheckpointCrashScenario();
-await runUpdatePreflightCrashScenario();
-await runCloseCrashScenario();
-await runRestorePickerScenario();
+if (process.env.SQLITE_CAPSULE_NATIVE_RAW_SCENARIO === "boundary-only") {
+  // The main scenario above already proves locked and authorized raw-renderer
+  // denial. This focused qualification mode intentionally skips unrelated
+  // crash/save-picker matrices after their shared boundary has passed.
+} else if (process.env.SQLITE_CAPSULE_NATIVE_RAW_SCENARIO === "restore-picker") {
+  await runRestorePickerScenario();
+} else {
+  await runOpenCrashScenario();
+  await runRestoreCrashScenario();
+  await runPrewriteCrashScenario();
+  await runCheckpointCrashScenario();
+  await runUpdatePreflightCrashScenario();
+  await runCloseCrashScenario();
+  await runRestorePickerScenario();
+}

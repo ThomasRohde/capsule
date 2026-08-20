@@ -11,6 +11,7 @@ Capsule repository checkout is not required.
 | `capsule-project.json` | Stable identity, version, summary, entry asset, UTC timestamps, permissions, executable-asset overrides |
 | `domain.sql` | Application tables, indexes, and views |
 | `source/data/seed.json` | Deterministic seed rows keyed by domain table |
+| `source/data-contract.json` | V0.3-only dataset classification and restricted migration declarations |
 | `source/app/` | Offline HTML, CSS, JavaScript, images, JSON, fonts, and WASM |
 | `source/endpoints.json` | Named, parameterised reads and writes |
 | `source/checks.json` | Bounded read-only application invariants |
@@ -22,10 +23,20 @@ Do not hand-edit a built `.capsule.sqlite`. Change these files and rebuild.
 
 ## Stable identity
 
-Keep `capsule_id`, `app_id`, and `created_at` stable across releases. Increment
-`app_version` and `updated_at` intentionally. `app_id` is lowercase and dotted
-or hyphenated, for example `org.example.field-notes`. `entry_asset` is normally
-`app/index.html`.
+The default source project contract and output remain v0.2. Its `capsule_id` is
+the legacy `urn:uuid:...` identity; keep it, `app_id`, and `created_at` stable
+across releases. Increment `app_version` and `updated_at` intentionally.
+
+An explicit v0.3 project uses source contract
+`org.sqlite-capsule.source-project/0.3`. It separates stable application
+identity from mutable instance identity: `capsule_id` and `revision_id` are
+canonical RFC 4122 UUID strings without an `urn:` prefix. Keep `capsule_id` and
+`created_at` stable. Advance `revision_id` and `content_updated_at` for instance
+content changes, and advance `app_version` and `released_at` for application
+releases. Never silently rewrite a signed v0.2 capsule as v0.3.
+
+For both versions, `app_id` is lowercase and dotted or hyphenated, for example
+`org.example.field-notes`. `entry_asset` is normally `app/index.html`.
 
 Declare only capabilities the enabled endpoints require:
 
@@ -39,6 +50,142 @@ Declare only capabilities the enabled endpoints require:
 
 Omit `database.write` for read-only applications. `network.value` must remain
 `none`.
+
+## V0.3 lifecycle data contract
+
+Only projects initialized with `--format-version 0.3` carry
+`source/data-contract.json`. Every ordinary domain table must occur exactly once
+under `tables`, and `primary_key_json` must match the ordered SQLite primary key.
+`ignored_columns_json` and `immutable_columns_json` may name only real columns.
+Every ordinary table is limited to 256 actual columns, including generated
+columns reported by `PRAGMA table_xinfo`, and every SQLite table or column name
+is limited to 256 UTF-8 bytes. Each compact serialized ignored/immutable column
+array is also limited to 16,384 UTF-8 bytes in addition to its 64-item ceiling.
+Dataset dependencies must be acyclic.
+Every dataset classifies at least one table. A required dataset cannot use
+`fork_policy: "omit"`, and three-way reconciliation requires row or field
+comparison. Ignored columns cannot overlap the primary key. Non-`INTEGER
+PRIMARY KEY` key columns must be explicitly `NOT NULL`; the workspace accepts
+only deterministic ascending BINARY primary-key order.
+
+`compare_policy` is a signed disclosure boundary in the native trusted host:
+
+- `ignore` reports only bounded declared inventory and row counts;
+- `summary` adds same/different dataset/table digests but no row classes;
+- `row` adds added/removed/changed/unchanged counts and bounded row-digest pages;
+- `field` alone permits bounded scalar field projections.
+
+Ignored columns never enter digests or detail. Sensitive datasets remain
+counts-only until an explicit trusted-shell reveal. BLOBs are always shown as length/hash
+rather than raw bytes. Pick the least-disclosing policy that
+supports the application's reconciliation needs; do not use `field` merely for
+authoring convenience.
+
+`reconcile_policy` is a separate signed transformation ceiling:
+
+| Policy | Reconciliation meaning |
+| --- | --- |
+| `ignore` | Never emit or apply operations for this dataset. |
+| `forbid` | Reject the whole reconciliation transform. |
+| `manual` | Permit only explicit two-way insert/delete/replace/set-fields decisions reviewed from Compare. |
+| `three-way` | Permit clean-change classification only with a separately pinned, fully verified ancestor; requires `compare_policy` `row` or `field`. |
+
+Mutable lineage claims do not prove an ancestor. Ignored columns never enter
+row/value preconditions. Primary-key and immutable columns cannot be changed by
+set-fields, and a three-way immutable-field conflict permits keep-target only.
+The host always begins from a private target copy, retains the target capsule
+and signed application identity, and publishes a new revision to a new path.
+The standalone authoring plugin validates declarations but has no reconcile
+executor or Tauri dependency.
+
+Application-compartment expansion is separate from dataset comparison. It is a
+fixed, value-free host projection of bounded counts and digests; Capsule
+metadata cannot select its tables or columns or turn it into a value disclosure
+surface.
+
+```json
+{
+  "datasets": [{
+    "id": "notes",
+    "role": "user-content",
+    "description": "User-authored notes.",
+    "fork_policy": "copy",
+    "compare_policy": "field",
+    "reconcile_policy": "three-way",
+    "upgrade_policy": "copy",
+    "sensitivity": "normal",
+    "required": 1
+  }],
+  "tables": [{
+    "dataset_id": "notes",
+    "table_name": "note",
+    "sequence": 10,
+    "primary_key_json": ["id"],
+    "ignored_columns_json": [],
+    "immutable_columns_json": ["id"]
+  }],
+  "dependencies": [],
+  "migrations": [],
+  "migration_steps": [],
+  "migration_checks": []
+}
+```
+
+Migration steps are declarations interpreted by the lifecycle host, never SQL
+or application endpoints. The only v0.3 operations are `copy_rows`,
+`copy_dataset`, and `discard_dataset`; their `definition_json` is explicit data.
+
+### Clean template authoring
+
+Use `init ... --format-version 0.3 --template` only when the deterministic
+source seed is an intentional clean release state. This writes a reviewable
+`template_state` map in `capsule-project.json`; every dataset must be classified
+as `seed` or `empty`. The builder rejects an `empty` dataset that has rows and
+derives the reserved `org.sqlite-capsule.template-state` document from the
+actual generated database after seeding. It streams every declared table and
+stored value in primary-key order under
+`org.sqlite-capsule.dataset-state/1`, so authors do not supply counts or hashes.
+
+The generated document is part of the signed application compartment, but an
+unsigned build is still an unsigned template candidate. Template creation is
+enabled only after native signing authenticates that proof and the lifecycle
+host reproduces all dataset digests from the exact verified snapshot. A title,
+tag, `document_kind`, or ordinary signed application release is never a clean
+template designation.
+
+### Native copy and fork truth table
+
+The native lifecycle host treats authoring policy as signed authority, not UI
+advice. Exact and compact duplicates accept verified v0.2 or v0.3 sources,
+whether unsigned or fully validly signed; if any signature envelope is present,
+the complete inventory must be valid and digest-matching. Fork, template and
+selective-fork require signed v0.3 plus the exhaustive data contract.
+
+For fork and selective-fork, `copy` is copied and cannot be weakened to omit;
+`omit` is omitted; `prompt` requires a closed include/omit choice (sensitive
+include also requires explicit confirmation); and `forbid` rejects the operation.
+The first one-source executor deliberately rejects `reset` for fork and selective-fork
+because a working source cannot authenticate clean reset rows. Template creation
+instead resets every non-forbidden dataset to the exact
+state authenticated by the reproduced template-state proof; any `forbid`
+dataset rejects template creation. Required datasets and dependency closure are
+always enforced, and actual cross-dataset foreign keys must be restrictive and
+covered by declarations.
+
+Omitted data is not merely deleted: the host clears the applicable mutable
+instance/profile/media, grants, change log, prior lineage and sequence state,
+then compacts the owner-private output and proves zero freelist pages before
+create-new publication. The authoring plugin does not itself execute lifecycle copies
+and never depends on the Tauri client.
+
+For reconciliation, the current native executor additionally requires the
+complete foreign-key graph to be acyclic and all update/delete actions to be
+`NO ACTION` or `RESTRICT`. It supports restrictive acyclic edges within one
+dataset and declared cross-dataset dependencies, orders writes parent-first
+and deletes child-first, and checks all foreign keys before publication.
+Cascades, `SET NULL`, `SET DEFAULT`, self-references and cycles remain valid
+SQLite schema choices but are an explicit `unsupported_operation` limitation
+for this reconcile profile.
 
 ## Domain model
 
@@ -141,6 +288,7 @@ inspect, verify, start, status, and stop commands.
 
 ```text
 python <skill>/scripts/capsule_project.py init <project> --title "…" --app-id org.example.app
+python <skill>/scripts/capsule_project.py init <project-v03> --title "…" --app-id org.example.app-v03 --format-version 0.3
 python <skill>/scripts/capsule_project.py build <project> <app.capsule.sqlite>
 python <skill>/scripts/capsule_project.py host instructions <app.capsule.sqlite>
 python <skill>/scripts/capsule_project.py host verify <app.capsule.sqlite>

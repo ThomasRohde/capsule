@@ -1,0 +1,37 @@
+{
+  "command": [
+    "python",
+    "native/tools/check_rustsec.py",
+    "--advisory-db",
+    ".tmp/rustsec-advisory-db-20260813"
+  ],
+  "completed_at": "2026-08-12T22:44:22Z",
+  "cwd": ".",
+  "duration_ms": 36024,
+  "exit_code": 0,
+  "milestone": "M03",
+  "name": "gate-final-rustsec",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T22:43:45Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T224345Z-gate-final-rustsec/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 983,
+    "original_bytes": 983,
+    "path": "docs/plans/capsule-lifecycle/evidence/M03/20260812T224345Z-gate-final-rustsec/stdout.txt",
+    "sha256_captured": "c21d3c1867ba08c0022a1c5a9bce2c51fa0b05fc410d835c8ea4a7aeef5dad21",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 180
+}

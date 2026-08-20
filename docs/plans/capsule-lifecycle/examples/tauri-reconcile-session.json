@@ -1,0 +1,29 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-session/1",
+  "review_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "source_label": "Branch A",
+  "target_label": "Branch B",
+  "output_capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+  "output_application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "output_signature_count": 1,
+  "selections": [
+    {
+      "selection_token": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "dataset_label": "Diagram content",
+      "table_label": "Diagram nodes",
+      "action": "set-fields",
+      "field_count": 1,
+      "sensitivity": "normal",
+      "sensitive_reveal_confirmed": true
+    }
+  ],
+  "expires_at": "2026-08-20T12:05:00Z",
+  "checks": [
+    "source-and-target-rebound",
+    "new-copy-only",
+    "target-identity-preserved",
+    "signed-application-preserved",
+    "all-datasets-validated",
+    "two-parent-lineage"
+  ]
+}

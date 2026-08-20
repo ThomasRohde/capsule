@@ -1,0 +1,17 @@
+{
+  "profile": "org.sqlite-capsule.instance-profile/0.3",
+  "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+  "revision_id": "80b1d11e-76fe-45be-a941-a448614d1a59",
+  "title": "Payments architecture sketch",
+  "description": "Working visual model created during the August workshop.",
+  "document_kind": "diagram",
+  "tags": [
+    "payments",
+    "workshop",
+    "draft"
+  ],
+  "icon_asset_id": null,
+  "cover_asset_id": null,
+  "created_at": "2026-08-12T02:30:00Z",
+  "content_updated_at": "2026-08-12T03:42:17Z"
+}

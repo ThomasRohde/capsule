@@ -1,0 +1,156 @@
+{
+  "profile": "org.sqlite-capsule.lifecycle-errors/1",
+  "description": "Stable product-independent error codes. Human wording may improve; codes and security semantics remain compatible.",
+  "errors": [
+    {
+      "code": "unsupported_format",
+      "category": "compatibility",
+      "retryable": false,
+      "safe_detail": "The capsule format or profile is not supported by this host."
+    },
+    {
+      "code": "invalid_capsule",
+      "category": "input",
+      "retryable": false,
+      "safe_detail": "The capsule failed structural or integrity inspection."
+    },
+    {
+      "code": "invalid_signature",
+      "category": "trust",
+      "retryable": false,
+      "safe_detail": "The signed application could not be verified."
+    },
+    {
+      "code": "invalid_contract",
+      "category": "input",
+      "retryable": false,
+      "safe_detail": "The signed data or migration contract is invalid."
+    },
+    {
+      "code": "undeclared_table",
+      "category": "contract",
+      "retryable": false,
+      "safe_detail": "A table required for this operation is not covered by the signed data contract."
+    },
+    {
+      "code": "missing_primary_key",
+      "category": "contract",
+      "retryable": false,
+      "safe_detail": "A compared or reconciled table lacks a supported stable primary key."
+    },
+    {
+      "code": "incompatible_application",
+      "category": "compatibility",
+      "retryable": false,
+      "safe_detail": "The capsules use different application identities."
+    },
+    {
+      "code": "incompatible_schema",
+      "category": "compatibility",
+      "retryable": false,
+      "safe_detail": "The data schemas are not directly compatible."
+    },
+    {
+      "code": "publisher_mismatch",
+      "category": "trust",
+      "retryable": false,
+      "safe_detail": "The target release is not signed by the accepted publisher identity."
+    },
+    {
+      "code": "capability_review_required",
+      "category": "trust",
+      "retryable": true,
+      "safe_detail": "The target release requests changed capabilities that require review."
+    },
+    {
+      "code": "migration_path_missing",
+      "category": "migration",
+      "retryable": false,
+      "safe_detail": "No verified migration path exists between the data schema versions."
+    },
+    {
+      "code": "migration_path_ambiguous",
+      "category": "migration",
+      "retryable": false,
+      "safe_detail": "More than one migration path exists; the host will not choose implicitly."
+    },
+    {
+      "code": "migration_operation_unsupported",
+      "category": "migration",
+      "retryable": false,
+      "safe_detail": "The migration contains an operation outside the supported declarative profile."
+    },
+    {
+      "code": "migration_assertion_failed",
+      "category": "migration",
+      "retryable": false,
+      "safe_detail": "A required migration precondition or postcondition failed."
+    },
+    {
+      "code": "stale_plan",
+      "category": "concurrency",
+      "retryable": true,
+      "safe_detail": "An input changed after the operation was reviewed. Prepare a new plan."
+    },
+    {
+      "code": "destination_exists",
+      "category": "filesystem",
+      "retryable": true,
+      "safe_detail": "The chosen destination already exists. Select a new path."
+    },
+    {
+      "code": "destination_aliases_input",
+      "category": "filesystem",
+      "retryable": true,
+      "safe_detail": "The destination refers to an input file or alias."
+    },
+    {
+      "code": "output_publish_failed",
+      "category": "filesystem",
+      "retryable": true,
+      "safe_detail": "The verified temporary output could not be published safely."
+    },
+    {
+      "code": "limit_exceeded",
+      "category": "resource",
+      "retryable": true,
+      "safe_detail": "The operation exceeded a configured row, byte or time limit."
+    },
+    {
+      "code": "cancelled",
+      "category": "operation",
+      "retryable": true,
+      "safe_detail": "The operation was cancelled before publication."
+    },
+    {
+      "code": "conflicts_unresolved",
+      "category": "reconcile",
+      "retryable": true,
+      "safe_detail": "All reconciliation conflicts must be resolved before execution."
+    },
+    {
+      "code": "row_precondition_failed",
+      "category": "reconcile",
+      "retryable": true,
+      "safe_detail": "A reviewed target row changed. Refresh the comparison and plan."
+    },
+    {
+      "code": "signature_changed",
+      "category": "verification",
+      "retryable": false,
+      "safe_detail": "The output application digest does not match the expected release."
+    },
+    {
+      "code": "verification_failed",
+      "category": "verification",
+      "retryable": false,
+      "safe_detail": "The output failed required verification and was not published."
+    },
+    {
+      "code": "internal_error",
+      "category": "internal",
+      "retryable": false,
+      "safe_detail": "The host could not complete the operation. Inputs were not changed."
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/capsule-instance-profile-v0.3.schema.json",
+  "title": "SQLite Capsule mutable instance profile",
+  "description": "User-owned profile. This profile is integrity-checked but is not publisher authentication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "capsule_id",
+    "revision_id",
+    "title",
+    "description",
+    "document_kind",
+    "tags",
+    "icon_asset_id",
+    "cover_asset_id",
+    "created_at",
+    "content_updated_at"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.instance-profile/0.3"
+    },
+    "capsule_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "revision_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "x-maxUtf8Bytes": 512
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 8192,
+      "x-maxUtf8Bytes": 8192
+    },
+    "document_kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "x-maxUtf8Bytes": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "x-maxUtf8Bytes": 128
+      }
+    },
+    "icon_asset_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 256,
+      "x-maxUtf8Bytes": 256
+    },
+    "cover_asset_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 256,
+      "x-maxUtf8Bytes": 256
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "content_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    }
+  }
+}

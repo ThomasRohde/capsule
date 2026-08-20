@@ -1,0 +1,16 @@
+Removed stale generated installer: C:\Users\thoma\Projects\sqlite-capsule\native\target\x86_64-pc-windows-msvc\debug\bundle\nsis\SQLite Capsule Host_0.3.0_x64-setup.exe
+Using tauri-cli 2.11.4: C:\Users\thoma\.cargo\bin\cargo-tauri.exe
+Installer mode: debug build
+{
+  "ok": true,
+  "development_unsigned": true,
+  "installers": [
+    {
+      "kind": "windows-nsis",
+      "source": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\native\\target\\x86_64-pc-windows-msvc\\debug\\bundle\\nsis\\SQLite Capsule Host_0.3.0_x64-setup.exe",
+      "output": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\capsules\\sqlite-capsule-host-setup.exe",
+      "bytes": 6822950,
+      "sha256": "273dbe88f7afe6bc33f0f27d734d3b32a591b8ad38e3c0196bd3f91399913687"
+    }
+  ]
+}

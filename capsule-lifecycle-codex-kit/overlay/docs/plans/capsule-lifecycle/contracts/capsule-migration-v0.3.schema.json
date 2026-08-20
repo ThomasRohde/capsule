@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/capsule-migration-v0.3.schema.json",
+  "title": "SQLite Capsule restricted migration declaration",
+  "description": "Draft declarative migration format. No field accepts executable code or arbitrary SQL. The trusted lifecycle engine interprets only the enumerated operations under bounded resource limits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "migration_id",
+    "app_id",
+    "data_schema_id",
+    "from_version",
+    "to_version",
+    "description",
+    "reversible",
+    "preconditions",
+    "steps",
+    "postconditions"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.migration-ops/1"
+    },
+    "migration_id": {
+      "$ref": "#/$defs/id"
+    },
+    "app_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "data_schema_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "from_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "to_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "reversible": {
+      "type": "boolean"
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    },
+    "preconditions": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "postconditions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]{0,255}$"
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_rows_read": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        },
+        "max_rows_written": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000000
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        }
+      },
+      "required": [
+        "max_rows_read",
+        "max_rows_written",
+        "max_output_bytes",
+        "deadline_ms"
+      ]
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "severity",
+        "description"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "table_exists",
+            "table_absent",
+            "column_exists",
+            "column_absent",
+            "primary_key_equals",
+            "foreign_keys_clean",
+            "row_count_between",
+            "column_values_in",
+            "dataset_declared",
+            "schema_version_equals"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "table": {
+          "$ref": "#/$defs/id"
+        },
+        "column": {
+          "$ref": "#/$defs/id"
+        },
+        "columns": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "values": {
+          "type": "array",
+          "maxItems": 1024
+        },
+        "minimum": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "value_source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_column"
+          ],
+          "properties": {
+            "source_column": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ],
+          "properties": {
+            "literal": {}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_column",
+            "value_map",
+            "unmapped"
+          ],
+          "properties": {
+            "source_column": {
+              "$ref": "#/$defs/id"
+            },
+            "value_map": {
+              "type": "object",
+              "maxProperties": 1024,
+              "additionalProperties": {}
+            },
+            "unmapped": {
+              "enum": [
+                "error",
+                "keep",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "column_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_column",
+        "value"
+      ],
+      "properties": {
+        "target_column": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "$ref": "#/$defs/value_source"
+        }
+      }
+    },
+    "copy_rows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "source_table",
+        "target_table",
+        "columns",
+        "conflict_policy"
+      ],
+      "properties": {
+        "operation": {
+          "const": "copy_rows"
+        },
+        "source_table": {
+          "$ref": "#/$defs/id"
+        },
+        "target_table": {
+          "$ref": "#/$defs/id"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/column_mapping"
+          }
+        },
+        "conflict_policy": {
+          "enum": [
+            "error",
+            "ignore-identical"
+          ]
+        },
+        "batch_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "copy_dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "dataset_id",
+        "mode"
+      ],
+      "properties": {
+        "operation": {
+          "const": "copy_dataset"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/id"
+        },
+        "mode": {
+          "enum": [
+            "replace-empty-target",
+            "append-empty-target-only"
+          ]
+        }
+      }
+    },
+    "rebuild_dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "dataset_id",
+        "rebuild_endpoint"
+      ],
+      "properties": {
+        "operation": {
+          "const": "rebuild_dataset"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/id"
+        },
+        "rebuild_endpoint": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "discard_dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "dataset_id"
+      ],
+      "properties": {
+        "operation": {
+          "const": "discard_dataset"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "step": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/copy_rows"
+        },
+        {
+          "$ref": "#/$defs/copy_dataset"
+        },
+        {
+          "$ref": "#/$defs/rebuild_dataset"
+        },
+        {
+          "$ref": "#/$defs/discard_dataset"
+        }
+      ]
+    }
+  }
+}

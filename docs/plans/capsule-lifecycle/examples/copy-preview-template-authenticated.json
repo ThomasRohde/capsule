@@ -1,0 +1,63 @@
+{
+  "profile": "org.sqlite-capsule.copy-preview/1",
+  "mode": "create-from-template",
+  "availability": "ready",
+  "identity": {
+    "capsule_id": "generate-new",
+    "revision_id": "generate-new",
+    "instance_profile": "verified-template-policy",
+    "grants": "clear",
+    "change_log": "clear",
+    "lineage_operation": "created-from-template"
+  },
+  "datasets": [
+    {
+      "dataset_id": "content",
+      "role": "user-content",
+      "sensitivity": "normal",
+      "required": true,
+      "signed_fork_policy": "copy",
+      "action": "reset",
+      "row_estimate": { "rows": 1, "exact": true, "truncated": false },
+      "dependencies": [
+        {
+          "dataset_id": "settings",
+          "reason": "Content interpretation uses settings.",
+          "auto_selected": false
+        }
+      ]
+    },
+    {
+      "dataset_id": "settings",
+      "role": "settings",
+      "sensitivity": "normal",
+      "required": true,
+      "signed_fork_policy": "copy",
+      "action": "reset",
+      "row_estimate": { "rows": 1, "exact": true, "truncated": false },
+      "dependencies": []
+    }
+  ],
+  "prompts": [],
+  "blockers": [],
+  "expected_application_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "output": {
+    "format_version": "0.3",
+    "signed_application_profile": "org.sqlite-capsule.signed-app/0.3",
+    "source_is_read_only": true,
+    "create_new": true,
+    "overwrite_allowed": false,
+    "application_digest_must_match_source": true,
+    "application_digest_from": "source",
+    "publish_only_after_full_verification": true
+  },
+  "execution_availability": "existing-semantic-executor",
+  "execution_blockers": [
+    {
+      "code": "preview-not-execution-authority",
+      "safe_reason": "This report is advisory and never authorizes execution."
+    }
+  ],
+  "execution_must_rederive_decisions": true,
+  "execution_authority_issued": false
+}

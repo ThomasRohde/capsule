@@ -1,0 +1,13 @@
+{
+  "profile": "org.sqlite-capsule.reconcile-plan-vectors/1",
+  "payload": {
+    "payload_digest": "04fe9f6381457e94fb4f778a076a75dbc8d74d1361209b8d0e86e044eb141486",
+    "canonical_size": 6992,
+    "canonical_sha256": "2c2d11e7c0c9fa315eb489f689f7d2031b40f410e35b30f4a6e89d4ffffd4a39"
+  },
+  "lifecycle_plan": {
+    "plan_digest": "899ce7b66378adac5251f85bbbdb4008d109d2a9f21f4c56d426644b3d539fc7",
+    "canonical_size": 3584,
+    "canonical_sha256": "72daf2c03eee5412c9997b3a9890f3c92f7702eb982a3f77f19367d803d120e4"
+  }
+}

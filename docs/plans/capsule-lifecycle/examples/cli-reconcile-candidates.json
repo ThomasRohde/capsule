@@ -1,0 +1,27 @@
+{
+  "profile": "org.sqlite-capsule.reconcile-cli-candidates/1",
+  "compare_report_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "dataset_index": 0,
+  "table_index": 0,
+  "dataset_label": "Diagram content",
+  "table_label": "Diagram nodes",
+  "rows": [
+    {
+      "kind": "changed",
+      "key_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_row_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "target_row_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "fields": [
+        {
+          "field_index": 2,
+          "column": "title",
+          "kind": "changed",
+          "source_value_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "target_value_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        }
+      ]
+    }
+  ],
+  "truncated": false,
+  "note": "Value displays are omitted. Candidate digests are review data, not execution authority."
+}

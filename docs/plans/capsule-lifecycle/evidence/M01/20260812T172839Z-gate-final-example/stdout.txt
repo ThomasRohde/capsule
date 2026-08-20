@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "output": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\capsules\\diagram-studio.capsule.sqlite",
+  "current_sha256": "cb7869032d6e017429fff3ea738018791d5df91b3f7013f64285f299edb2be21",
+  "expected_sha256": "cb7869032d6e017429fff3ea738018791d5df91b3f7013f64285f299edb2be21",
+  "bytes": 884736
+}

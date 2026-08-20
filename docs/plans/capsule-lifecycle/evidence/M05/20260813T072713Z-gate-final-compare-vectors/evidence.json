@@ -1,0 +1,35 @@
+{
+  "command": [
+    "python",
+    "tools\\check_compare_row_vectors.py"
+  ],
+  "completed_at": "2026-08-13T07:27:13Z",
+  "cwd": ".",
+  "duration_ms": 73,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-compare-vectors",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:27:13Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-compare-vectors/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 41,
+    "original_bytes": 41,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072713Z-gate-final-compare-vectors/stdout.txt",
+    "sha256_captured": "7702fedac6877b497e97faf18d9ab4bc9c18407d15c26aabe4e46d11adcceb7c",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

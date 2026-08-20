@@ -1,0 +1,36 @@
+json: contracts\capsule-application-profile-v0.3.schema.json
+json: contracts\capsule-data-contract-v0.3.schema.json
+json: contracts\capsule-instance-profile-v0.3.schema.json
+json: contracts\capsule-lifecycle-v0.3.conformance.draft.json
+json: contracts\capsule-lineage-v0.3.schema.json
+json: contracts\capsule-migration-v0.3.schema.json
+json: contracts\compare-report-v1.schema.json
+json: contracts\lifecycle-error-codes-v1.json
+json: contracts\lifecycle-plan-v1.schema.json
+json: contracts\reconcile-plan-v1.schema.json
+json: contracts\upgrade-plan-v1.schema.json
+json: evidence\M00\20260812T143408Z-python-suite\evidence.json
+json: evidence\M00\20260812T143537Z-capsule-conformance\evidence.json
+json: evidence\M00\20260812T143537Z-capsule-verify\evidence.json
+json: evidence\M00\20260812T143537Z-generated-capsule-check\evidence.json
+json: evidence\M00\20260812T143537Z-generated-exports-check\evidence.json
+json: evidence\M00\20260812T143553Z-license-check\evidence.json
+json: evidence\M00\20260812T143553Z-rust-fmt\evidence.json
+json: evidence\M00\20260812T143553Z-sbom-check\evidence.json
+json: evidence\M00\20260812T143620Z-rust-check\evidence.json
+json: evidence\M00\20260812T143734Z-rust-tests\evidence.json
+json: evidence\M00\20260812T143915Z-rust-clippy\evidence.json
+json: evidence\M00\baseline-20260812T143205Z.json
+json: examples\diagram-studio-application-profile.json
+json: examples\diagram-studio-data-contract.json
+json: examples\diagram-studio-instance-profile.json
+json: examples\diagram-studio-lineage-example.json
+json: examples\diagram-studio-migration-v1-to-v2.json
+json: examples\diagram-studio-upgrade-plan-same-schema.json
+json: PROGRAM_STATUS.json
+json: templates\TEST_EVIDENCE.template.json
+sql: capsule-v0.3-draft.sql + capsule-signed-app-v0.3-draft.sql
+status: ten ordered milestone directories and valid dependencies
+markdown: 0 local links checked
+jsonschema: optional dependency unavailable; syntax checks only
+ok: 35 checks/records

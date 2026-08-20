@@ -1,0 +1,453 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/reconcile-plan-v1.schema.json",
+  "title": "Reconciliation payload v1",
+  "description": "Canonical, value-free reconciliation effects bound by exactly one reconcile_payload_digest decision in an org.sqlite-capsule.lifecycle-plan/1 envelope. This payload has no filesystem authority and is not independently executable. payload_digest is SHA-256 over canonical JSON after omitting both equal aliases at payload_digest and lineage.details.payload_digest.",
+  "x-maxCanonicalUtf8Bytes": 16777216,
+  "x-maxNestingDepth": 32,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "compare_report_digest",
+    "source_side",
+    "target_side",
+    "mode",
+    "signature_inventories",
+    "lineage",
+    "operations",
+    "resolved_conflicts",
+    "expected_dataset_states",
+    "sensitive_confirmation",
+    "payload_digest"
+  ],
+  "properties": {
+    "profile": {"const": "org.sqlite-capsule.reconcile-payload/1"},
+    "compare_report_digest": {"$ref": "#/$defs/sha256"},
+    "source_side": {"const": "source"},
+    "target_side": {"const": "target"},
+    "mode": {"enum": ["two-way-explicit", "three-way"]},
+    "signature_inventories": {"$ref": "#/$defs/signature_inventories"},
+    "lineage": {"$ref": "#/$defs/lineage"},
+    "operations": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {"$ref": "#/$defs/operation"}
+    },
+    "resolved_conflicts": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {"$ref": "#/$defs/resolved_conflict"}
+    },
+    "expected_dataset_states": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {"$ref": "#/$defs/expected_dataset_state"}
+    },
+    "sensitive_confirmation": {"$ref": "#/$defs/sensitive_confirmation"},
+    "payload_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "two-way-explicit"}}},
+      "then": {
+        "properties": {
+          "signature_inventories": {
+            "required": ["source", "target"],
+            "not": {"required": ["ancestor"]}
+          },
+          "resolved_conflicts": {"maxItems": 0},
+          "lineage": {
+            "properties": {
+              "details": {"not": {"required": ["ancestor_evidence"]}}
+            }
+          },
+          "operations": {
+            "items": {
+              "allOf": [
+                {"properties": {"basis": {"const": "user-selected"}}},
+                {"not": {"required": ["ancestor_state"]}},
+                {"not": {"required": ["conflict_id"]}}
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "signature_inventories": {"required": ["source", "target", "ancestor"]},
+          "lineage": {
+            "properties": {
+              "details": {"required": ["ancestor_evidence"]}
+            }
+          },
+          "operations": {"items": {"required": ["ancestor_state"]}}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "bounded_identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "x-maxUtf8Bytes": 2048
+    },
+    "signature_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "sha256"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "signature_inventories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target"],
+      "properties": {
+        "source": {"$ref": "#/$defs/signature_inventory"},
+        "target": {"$ref": "#/$defs/signature_inventory"},
+        "ancestor": {"$ref": "#/$defs/signature_inventory"}
+      }
+    },
+    "capsule_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file_sha256", "capsule_id", "revision_id"],
+      "properties": {
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "capsule_id": {"$ref": "#/$defs/bounded_identifier"},
+        "revision_id": {"$ref": "#/$defs/bounded_identifier"}
+      }
+    },
+    "target_parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ordinal", "relation", "file_sha256", "capsule_id", "revision_id"],
+      "properties": {
+        "ordinal": {"const": 1},
+        "relation": {"const": "target-derived-from"},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "capsule_id": {"$ref": "#/$defs/bounded_identifier"},
+        "revision_id": {"$ref": "#/$defs/bounded_identifier"}
+      }
+    },
+    "source_parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ordinal", "relation", "file_sha256", "capsule_id", "revision_id"],
+      "properties": {
+        "ordinal": {"const": 2},
+        "relation": {"const": "changes-applied-from"},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "capsule_id": {"$ref": "#/$defs/bounded_identifier"},
+        "revision_id": {"$ref": "#/$defs/bounded_identifier"}
+      }
+    },
+    "ancestor_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "file_sha256", "capsule_id", "revision_id", "evidence_digest"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-ancestor-evidence/1"},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "capsule_id": {"$ref": "#/$defs/bounded_identifier"},
+        "revision_id": {"$ref": "#/$defs/bounded_identifier"},
+        "evidence_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "lineage_details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "compare_report_digest",
+        "payload_digest",
+        "operation_count",
+        "resolved_conflict_count"
+      ],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.reconcile-lineage-details/1"},
+        "compare_report_digest": {"$ref": "#/$defs/sha256"},
+        "payload_digest": {"$ref": "#/$defs/sha256"},
+        "operation_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "resolved_conflict_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+        "ancestor_evidence": {"$ref": "#/$defs/ancestor_evidence"}
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "occurred_at", "operation", "result", "parents", "details"],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "operation": {"const": "reconcile-to-copy"},
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capsule_id", "revision_id"],
+          "properties": {
+            "capsule_id": {"$ref": "#/$defs/bounded_identifier"},
+            "revision_id": {"$ref": "#/$defs/bounded_identifier"}
+          }
+        },
+        "parents": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            {"$ref": "#/$defs/target_parent"},
+            {"$ref": "#/$defs/source_parent"}
+          ],
+          "items": false
+        },
+        "details": {"$ref": "#/$defs/lineage_details"}
+      }
+    },
+    "row_state": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state"],
+          "properties": {"state": {"const": "absent"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "row_digest"],
+          "properties": {
+            "state": {"const": "present"},
+            "row_digest": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      ]
+    },
+    "field_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column", "source_value_digest", "target_value_digest"],
+      "properties": {
+        "column": {"$ref": "#/$defs/bounded_identifier"},
+        "source_value_digest": {"$ref": "#/$defs/sha256"},
+        "target_value_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "insert_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_write_set_digest"],
+      "properties": {
+        "kind": {"const": "insert-source-row"},
+        "source_write_set_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "delete_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {"kind": {"const": "delete-target-row"}}
+    },
+    "replace_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source_write_set_digest"],
+      "properties": {
+        "kind": {"const": "replace-target-row-from-source"},
+        "source_write_set_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "set_fields_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "fields"],
+      "properties": {
+        "kind": {"const": "set-target-fields-from-source"},
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/field_effect"}
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "dataset_id",
+        "table",
+        "key_digest",
+        "basis",
+        "source_state",
+        "target_state",
+        "action"
+      ],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "dataset_id": {"$ref": "#/$defs/bounded_identifier"},
+        "table": {"$ref": "#/$defs/bounded_identifier"},
+        "key_digest": {"$ref": "#/$defs/sha256"},
+        "basis": {"enum": ["user-selected", "three-way-clean", "conflict-resolution"]},
+        "source_state": {"$ref": "#/$defs/row_state"},
+        "target_state": {"$ref": "#/$defs/row_state"},
+        "ancestor_state": {"$ref": "#/$defs/row_state"},
+        "conflict_id": {"$ref": "#/$defs/sha256"},
+        "action": {
+          "oneOf": [
+            {"$ref": "#/$defs/insert_action"},
+            {"$ref": "#/$defs/delete_action"},
+            {"$ref": "#/$defs/replace_action"},
+            {"$ref": "#/$defs/set_fields_action"}
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"action": {"properties": {"kind": {"const": "insert-source-row"}}}}},
+          "then": {
+            "properties": {
+              "source_state": {"properties": {"state": {"const": "present"}}},
+              "target_state": {"properties": {"state": {"const": "absent"}}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"action": {"properties": {"kind": {"const": "delete-target-row"}}}}},
+          "then": {
+            "properties": {
+              "source_state": {"properties": {"state": {"const": "absent"}}},
+              "target_state": {"properties": {"state": {"const": "present"}}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"action": {"properties": {"kind": {"enum": ["replace-target-row-from-source", "set-target-fields-from-source"]}}}}},
+          "then": {
+            "properties": {
+              "source_state": {"properties": {"state": {"const": "present"}}},
+              "target_state": {"properties": {"state": {"const": "present"}}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"basis": {"const": "conflict-resolution"}}},
+          "then": {"required": ["conflict_id"]},
+          "else": {"not": {"required": ["conflict_id"]}}
+        }
+      ]
+    },
+    "resolved_conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "dataset_id",
+        "table",
+        "key_digest",
+        "kind",
+        "source_state",
+        "target_state",
+        "ancestor_state",
+        "allowed_choices",
+        "resolution"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/sha256"},
+        "dataset_id": {"$ref": "#/$defs/bounded_identifier"},
+        "table": {"$ref": "#/$defs/bounded_identifier"},
+        "key_digest": {"$ref": "#/$defs/sha256"},
+        "kind": {"enum": ["insert-insert", "update-update", "delete-update", "immutable-field"]},
+        "deleted_side": {"enum": ["source", "target"]},
+        "source_state": {"$ref": "#/$defs/row_state"},
+        "target_state": {"$ref": "#/$defs/row_state"},
+        "ancestor_state": {"$ref": "#/$defs/row_state"},
+        "allowed_choices": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"enum": ["keep-target", "take-source"]}
+        },
+        "resolution": {"enum": ["keep-target", "take-source"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "delete-update"}}},
+          "then": {"required": ["deleted_side"]},
+          "else": {"not": {"required": ["deleted_side"]}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "immutable-field"}}},
+          "then": {
+            "properties": {
+              "allowed_choices": {
+                "minItems": 1,
+                "maxItems": 1,
+                "prefixItems": [{"const": "keep-target"}]
+              },
+              "resolution": {"const": "keep-target"}
+            }
+          }
+        }
+      ]
+    },
+    "dataset_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "row_count", "sha256"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.dataset-state/1"},
+        "row_count": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "expected_dataset_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "source", "target", "output"],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/bounded_identifier"},
+        "source": {"$ref": "#/$defs/dataset_state"},
+        "target": {"$ref": "#/$defs/dataset_state"},
+        "output": {"$ref": "#/$defs/dataset_state"}
+      }
+    },
+    "sensitive_confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_dataset_ids", "confirmed_dataset_ids"],
+      "properties": {
+        "required_dataset_ids": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/bounded_identifier"}
+        },
+        "confirmed_dataset_ids": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/bounded_identifier"}
+        }
+      }
+    }
+  }
+}

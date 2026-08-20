@@ -2,21 +2,38 @@ use std::{
     collections::BTreeMap,
     env,
     path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde_json::{Value, json};
 use sqlite_capsule_core::inspect_metadata;
 use sqlite_capsule_crypto::{
-    PROFILE, application_digest, publisher_identity, signature_inventory, verify_signatures,
+    application_digest, publisher_identity, signature_inventory, signed_app_profile,
+    verify_signatures,
 };
-use sqlite_capsule_launch::{inspect_launch, verify_structure as verify_launch_structure};
+use sqlite_capsule_launch::{
+    VerificationControl, VerifiedReadOnlyCapsule, inspect_launch, verify_read_only_with_control,
+};
 use sqlite_capsule_policy::{CapabilityDecision, EvaluationContext, LaunchEvidence, TrustStore};
 use sqlite_capsule_signing::{LoadedSigningKey, SigningReport, sign_capsule_from_file};
+use sqlite_capsule_workspace::{
+    CancellationToken, CompareLimits, LifecyclePlan, TemplateStateLimits, VerifiedWorkspaceSource,
+    WorkspaceError, WorkspaceErrorCode, WorkspaceLimits, compare_sources, verify_template_state,
+};
 
 fn main() {
     if let Err(error) = run() {
-        eprintln!("{}", json!({"ok": false, "error": error.to_string()}));
+        if let Some(workspace) = error.downcast_ref::<sqlite_capsule_workspace::WorkspaceError>() {
+            eprintln!(
+                "{}",
+                serde_json::to_string(workspace).unwrap_or_else(|_| {
+                    r#"{"profile":"org.sqlite-capsule.lifecycle-errors/1","code":"internal_error","category":"internal","retryable":false,"safe_detail":"The host could not complete the operation. Inputs were not changed."}"#.to_owned()
+                })
+            );
+        } else {
+            eprintln!("{}", json!({"ok": false, "error": error.to_string()}));
+        }
         std::process::exit(1);
     }
 }
@@ -33,6 +50,18 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         "verify" if remaining.len() == 1 => verify(Path::new(&remaining[0])),
         "digest" if remaining.len() == 1 => digest(Path::new(&remaining[0])),
         "verify-signature" if remaining.len() == 1 => verify_signature(Path::new(&remaining[0])),
+        "overview" if remaining.len() == 1 => workspace_overview(Path::new(&remaining[0])),
+        "data-contract" if remaining.len() == 1 => {
+            workspace_data_contract(Path::new(&remaining[0]))
+        }
+        "lineage" if remaining.len() == 1 => workspace_lineage(Path::new(&remaining[0])),
+        "compare" if remaining.len() == 2 => {
+            workspace_compare(Path::new(&remaining[0]), Path::new(&remaining[1]))
+        }
+        "template-state" if remaining.len() == 1 => {
+            workspace_template_state(Path::new(&remaining[0]))
+        }
+        "validate-plan" if remaining.len() == 1 => validate_plan(Path::new(&remaining[0])),
         "key-id" if remaining.len() == 1 => print_key_id(Path::new(&remaining[0])),
         "sign" => sign_command(&remaining),
         "trust" => trust_command(&remaining),
@@ -41,23 +70,165 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn usage() -> &'static str {
-    "usage: capsule-native <inspect|verify|digest|verify-signature|key-id|sign|trust> ...\n\
+    "usage: capsule-native <inspect|verify|digest|verify-signature|overview|data-contract|lineage|compare|template-state|validate-plan|key-id|sign|trust> ...\n\
      sign <source> <output> --publisher-id <id> --publisher-name <name> \
      --key <raw-seed|hex-seed|pkcs8-key-file> --signed-at <YYYY-MM-DDTHH:MM:SSZ>\n\
      trust <init|inspect|trust-key|trust-release|trust-file|deny-file|grant|\
      revoke-key|audit|export|backup|reset> ..."
 }
 
+fn workspace_compare(left: &Path, right: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let started = Instant::now();
+    let deadline = Duration::from_secs(30);
+    let cancellation = CancellationToken::new();
+    let remaining_limits = || -> Result<WorkspaceLimits, WorkspaceError> {
+        let remaining = deadline
+            .checked_sub(started.elapsed())
+            .filter(|remaining| !remaining.is_zero())
+            .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::LimitExceeded))?;
+        Ok(WorkspaceLimits {
+            deadline: remaining,
+            ..WorkspaceLimits::default()
+        })
+    };
+    let left =
+        VerifiedWorkspaceSource::open_with_control(left, &remaining_limits()?, &cancellation)?;
+    let right =
+        VerifiedWorkspaceSource::open_with_control(right, &remaining_limits()?, &cancellation)?;
+    let remaining = deadline
+        .checked_sub(started.elapsed())
+        .filter(|remaining| !remaining.is_zero())
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::LimitExceeded))?;
+    let report = compare_sources(
+        &left,
+        &right,
+        &CompareLimits {
+            operation_deadline: Some(remaining),
+            ..CompareLimits::default()
+        },
+        &cancellation,
+    )?;
+    println!("{}", serde_json::to_string_pretty(&report)?);
+    Ok(())
+}
+
+fn workspace_overview(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let workspace = VerifiedWorkspaceSource::open(path)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "profile": "org.sqlite-capsule.workspace-overview-response/1",
+            "ok": true,
+            "verified": true,
+            "identity": workspace.identity(),
+            "note": "Overview is derived from an exact verified signed v0.3 snapshot; publisher trust remains separate."
+        }))?
+    );
+    Ok(())
+}
+
+fn workspace_data_contract(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let workspace = VerifiedWorkspaceSource::open(path)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "profile": "org.sqlite-capsule.workspace-data-contract-response/1",
+            "ok": true,
+            "verified_signed_contract": true,
+            "data_contract": workspace.data_contract()
+        }))?
+    );
+    Ok(())
+}
+
+fn workspace_lineage(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let workspace = VerifiedWorkspaceSource::open(path)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "profile": "org.sqlite-capsule.workspace-lineage-response/1",
+            "ok": true,
+            "lineage": workspace.lineage(),
+            "note": "Lineage is mutable untrusted provenance and does not authenticate a publisher."
+        }))?
+    );
+    Ok(())
+}
+
+fn workspace_template_state(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let workspace = VerifiedWorkspaceSource::open(path)?;
+    let proof = verify_template_state(
+        &workspace,
+        &TemplateStateLimits::default(),
+        &CancellationToken::new(),
+    )?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "profile": "org.sqlite-capsule.workspace-template-state-response/1",
+            "ok": true,
+            "verified_signed_template_state": true,
+            "template_state": proof,
+            "note": "Every signed dataset-state count and digest was reproduced from the same verified snapshot."
+        }))?
+    );
+    Ok(())
+}
+
+fn validate_plan(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    use std::io::Read;
+    let invalid = || {
+        Box::new(sqlite_capsule_workspace::WorkspaceError::new(
+            sqlite_capsule_workspace::WorkspaceErrorCode::InvalidContract,
+        )) as Box<dyn std::error::Error>
+    };
+    let metadata = std::fs::symlink_metadata(path).map_err(|_| invalid())?;
+    if !metadata.is_file() || metadata.len() > sqlite_capsule_workspace::MAX_PLAN_BYTES as u64 {
+        return Err(invalid());
+    }
+    let mut file = std::fs::File::open(path).map_err(|_| invalid())?;
+    let opened = file.metadata().map_err(|_| invalid())?;
+    if !opened.is_file() || opened.len() != metadata.len() {
+        return Err(invalid());
+    }
+    let mut bytes = Vec::with_capacity(opened.len() as usize);
+    file.by_ref()
+        .take(sqlite_capsule_workspace::MAX_PLAN_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| invalid())?;
+    if bytes.len() > sqlite_capsule_workspace::MAX_PLAN_BYTES {
+        return Err(invalid());
+    }
+    let plan = LifecyclePlan::parse(&bytes)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&json!({
+            "ok": true,
+            "profile": "org.sqlite-capsule.lifecycle-plan/1",
+            "plan_id": plan.plan_id(),
+            "operation": plan.operation(),
+            "expires_at": plan.expires_at(),
+            "plan_digest": plan.plan_digest(),
+            "canonical_bytes": plan.canonical_bytes()?.len(),
+            "prepared": false,
+            "note": "The serialized plan is structurally valid and digest-matching, but is not execution authority until host preparation rebinds every input and destination."
+        }))?
+    );
+    Ok(())
+}
+
 fn verify(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let identity = verify_structure(path)?;
-    let connection = open_read_only(path)?;
-    let publisher_present = has_table(&connection, "capsule_publisher")?;
-    let signature_present = has_table(&connection, "capsule_signature")?;
+    let (verified, control) = controlled_verified(path)?;
+    let _guard = verified.start_control(&control)?;
+    let identity = &verified.identity;
+    let connection = verified.connection();
+    let publisher_present = has_table(connection, "capsule_publisher")?;
+    let signature_present = has_table(connection, "capsule_signature")?;
     let signed_extension_valid = if publisher_present || signature_present {
         publisher_present
             && signature_present
-            && publisher_identity(&connection).is_ok()
-            && signature_inventory(&connection).is_ok()
+            && publisher_identity(connection).is_ok()
+            && signature_inventory(connection).is_ok()
     } else {
         false
     };
@@ -114,14 +285,16 @@ fn inspect(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn digest(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    inspect_metadata(path)?;
-    let connection = open_read_only(path)?;
-    let digest = application_digest(&connection)?;
+    let (verified, control) = controlled_verified(path)?;
+    let _guard = verified.start_control(&control)?;
+    let connection = verified.connection();
+    let profile = signed_app_profile(connection)?.profile;
+    let digest = application_digest(connection)?;
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
             "ok": true,
-            "profile": PROFILE,
+            "profile": profile,
             "application_digest_sha256": lower_hex(&digest)
         }))?
     );
@@ -129,10 +302,10 @@ fn digest(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn verify_signature(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    inspect_metadata(path)?;
-    let connection = open_read_only(path)?;
-    if !has_table(&connection, "capsule_publisher")?
-        && !has_table(&connection, "capsule_signature")?
+    let (verified, control) = controlled_verified(path)?;
+    let _guard = verified.start_control(&control)?;
+    let connection = verified.connection();
+    if !has_table(connection, "capsule_publisher")? && !has_table(connection, "capsule_signature")?
     {
         println!(
             "{}",
@@ -149,9 +322,10 @@ fn verify_signature(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    let publisher = publisher_identity(&connection)?;
-    let digest = application_digest(&connection)?;
-    let reports = verify_signatures(&connection)?;
+    let publisher = publisher_identity(connection)?;
+    let profile = signed_app_profile(connection)?.profile;
+    let digest = application_digest(connection)?;
+    let reports = verify_signatures(connection)?;
     let signatures: Vec<Value> = reports
         .iter()
         .map(|report| {
@@ -170,7 +344,7 @@ fn verify_signature(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         "{}",
         serde_json::to_string_pretty(&json!({
             "ok": true,
-            "profile": PROFILE,
+            "profile": profile,
             "publisher": {
                 "id": publisher.publisher_id,
                 "name": publisher.publisher_name
@@ -185,6 +359,14 @@ fn verify_signature(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         }))?
     );
     Ok(())
+}
+
+fn controlled_verified(
+    path: &Path,
+) -> Result<(VerifiedReadOnlyCapsule, VerificationControl), Box<dyn std::error::Error>> {
+    let control = VerificationControl::default();
+    let verified = verify_read_only_with_control(path, &control)?;
+    Ok((verified, control))
 }
 
 fn print_key_id(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
@@ -217,13 +399,15 @@ fn sign_command(arguments: &[std::ffi::OsString]) -> Result<(), Box<dyn std::err
         &options.key,
         &options.signed_at,
     )?;
+    let connection = open_read_only(&output)?;
+    let profile = signed_app_profile(&connection)?.profile;
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({
             "ok": true,
             "source": source,
             "output": output,
-            "profile": PROFILE,
+            "profile": profile,
             "publisher_id": options.publisher_id,
             "signed_at": options.signed_at,
             "key_id": report.key.key_id,
@@ -587,12 +771,6 @@ fn print_json(value: Value) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn verify_structure(
-    path: &Path,
-) -> Result<sqlite_capsule_core::CapsuleIdentity, Box<dyn std::error::Error>> {
-    Ok(verify_launch_structure(path)?)
-}
-
 fn open_read_only(path: &Path) -> rusqlite::Result<Connection> {
     let connection = Connection::open_with_flags(
         path,
@@ -669,6 +847,58 @@ mod tests {
         let path = directory.path().join("publisher.seed");
         fs::write(&path, [42_u8; 32]).expect("write test seed");
         path
+    }
+
+    fn signed_v03_fixture(directory: &TestDirectory, leaf: &str) -> PathBuf {
+        let path = directory.path().join(leaf);
+        let connection = Connection::open(&path).expect("create v0.3 fixture");
+        connection
+            .execute_batch(include_str!("../../../../format/capsule-v0.3.sql"))
+            .expect("apply v0.3 format");
+        connection
+            .execute_batch(include_str!(
+                "../../../../format/capsule-signed-app-v0.3.sql"
+            ))
+            .expect("apply signed extension");
+        connection
+            .execute_batch(include_str!(
+                "../../../../compatibility/signed-app-v0.3/fixture-v0.3.sql"
+            ))
+            .expect("apply signed fixture");
+        drop(connection);
+        path
+    }
+
+    #[test]
+    fn compare_command_uses_the_versioned_read_only_workspace_report() {
+        let directory = TestDirectory::new("compare");
+        let left = signed_v03_fixture(&directory, "left.sqlitecapsule");
+        let right = directory.path().join("right.sqlitecapsule");
+        fs::copy(&left, &right).expect("copy comparison fixture");
+        let left_before = fs::read(&left).expect("read left before");
+        let right_before = fs::read(&right).expect("read right before");
+
+        workspace_compare(&left, &right).expect("compare same signed pair");
+
+        assert_eq!(fs::read(&left).expect("read left after"), left_before);
+        assert_eq!(fs::read(&right).expect("read right after"), right_before);
+    }
+
+    #[test]
+    fn oversized_lifecycle_plan_is_rejected_before_unbounded_read() {
+        let directory = TestDirectory::new("oversized-plan");
+        let path = directory.path().join("oversized.json");
+        let file = fs::File::create(&path).expect("create oversized plan");
+        file.set_len(sqlite_capsule_workspace::MAX_PLAN_BYTES as u64 + 1)
+            .expect("size oversized plan");
+        let error = validate_plan(&path).expect_err("oversized plan rejected");
+        let workspace = error
+            .downcast_ref::<sqlite_capsule_workspace::WorkspaceError>()
+            .expect("stable workspace error");
+        assert_eq!(
+            workspace.kind(),
+            sqlite_capsule_workspace::WorkspaceErrorCode::InvalidContract
+        );
     }
 
     #[test]

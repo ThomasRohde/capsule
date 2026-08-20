@@ -1016,6 +1016,32 @@
       "version": "1.25.2"
     },
     {
+      "bom-ref": "pkg:cargo/byteorder-lite@0.1.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Unlicense OR MIT"
+          }
+        }
+      ],
+      "name": "byteorder-lite",
+      "purl": "pkg:cargo/byteorder-lite@0.1.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "type": "library",
+      "version": "0.1.0"
+    },
+    {
       "bom-ref": "pkg:cargo/byteorder@1.5.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
       "externalReferences": [
         {
@@ -5150,6 +5176,58 @@
       "version": "1.2.2"
     },
     {
+      "bom-ref": "pkg:cargo/image-webp@0.2.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e031e8e3d94711a9ccb5d6ea357439ef3dcbed361798bd4071dc4d9793fbe22f"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT OR Apache-2.0"
+          }
+        }
+      ],
+      "name": "image-webp",
+      "purl": "pkg:cargo/image-webp@0.2.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "type": "library",
+      "version": "0.2.0"
+    },
+    {
+      "bom-ref": "pkg:cargo/image@0.25.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cd6f44aed642f18953a158afeb30206f4d50da59fbc66ecb53c66488de73563b"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT OR Apache-2.0"
+          }
+        }
+      ],
+      "name": "image",
+      "purl": "pkg:cargo/image@0.25.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "type": "library",
+      "version": "0.25.5"
+    },
+    {
       "bom-ref": "pkg:cargo/indexmap@1.9.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
       "externalReferences": [
         {
@@ -7906,6 +7984,32 @@
       "version": "1.0.107"
     },
     {
+      "bom-ref": "pkg:cargo/quick-error@2.0.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT/Apache-2.0"
+          }
+        }
+      ],
+      "name": "quick-error",
+      "purl": "pkg:cargo/quick-error@2.0.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+      "type": "library",
+      "version": "2.0.1"
+    },
+    {
       "bom-ref": "pkg:cargo/quick-xml@0.41.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
       "externalReferences": [
         {
@@ -10374,6 +10478,21 @@
       ],
       "name": "sqlite-capsule-update",
       "purl": "pkg:cargo/sqlite-capsule-update@0.3.0",
+      "type": "library",
+      "version": "0.3.0"
+    },
+    {
+      "bom-ref": "pkg:cargo/sqlite-capsule-workspace@0.3.0",
+      "group": "sqlite-capsule",
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT"
+          }
+        }
+      ],
+      "name": "sqlite-capsule-workspace",
+      "purl": "pkg:cargo/sqlite-capsule-workspace@0.3.0",
       "type": "library",
       "version": "0.3.0"
     },
@@ -15565,6 +15684,10 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:cargo/byteorder-lite@0.1.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:cargo/byteorder@1.5.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
     },
     {
@@ -16764,6 +16887,23 @@
     },
     {
       "dependsOn": [
+        "pkg:cargo/byteorder-lite@0.1.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/quick-error@2.0.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+      ],
+      "ref": "pkg:cargo/image-webp@0.2.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+    },
+    {
+      "dependsOn": [
+        "pkg:cargo/bytemuck@1.25.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/byteorder-lite@0.1.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/image-webp@0.2.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/num-traits@0.2.19?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/png@0.17.16?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+      ],
+      "ref": "pkg:cargo/image@0.25.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+    },
+    {
+      "dependsOn": [
         "pkg:cargo/autocfg@1.5.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/hashbrown@0.12.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
@@ -17543,6 +17683,10 @@
       "ref": "pkg:cargo/proc-macro2@1.0.107?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
     },
     {
+      "dependsOn": [],
+      "ref": "pkg:cargo/quick-error@2.0.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+    },
+    {
       "dependsOn": [
         "pkg:cargo/memchr@2.8.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
@@ -18318,7 +18462,8 @@
         "pkg:cargo/sqlite-capsule-crypto@0.3.0",
         "pkg:cargo/sqlite-capsule-launch@0.3.0",
         "pkg:cargo/sqlite-capsule-policy@0.3.0",
-        "pkg:cargo/sqlite-capsule-signing@0.3.0"
+        "pkg:cargo/sqlite-capsule-signing@0.3.0",
+        "pkg:cargo/sqlite-capsule-workspace@0.3.0"
       ],
       "ref": "pkg:cargo/sqlite-capsule-cli@0.3.0"
     },
@@ -18349,6 +18494,7 @@
         "pkg:cargo/base64@0.22.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/ed25519-dalek@3.0.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/getrandom@0.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/image@0.25.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/minisign-verify@0.2.5?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/reqwest@0.13.4?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18368,6 +18514,7 @@
         "pkg:cargo/sqlite-capsule-signing@0.3.0",
         "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
         "pkg:cargo/sqlite-capsule-update@0.3.0",
+        "pkg:cargo/sqlite-capsule-workspace@0.3.0",
         "pkg:cargo/tauri-build@2.6.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/tauri-plugin-dialog@2.7.2?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/tauri-plugin-single-instance@2.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18407,17 +18554,20 @@
     {
       "dependsOn": [
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sqlite-capsule-core@0.3.0",
         "pkg:cargo/sqlite-capsule-crypto@0.3.0",
         "pkg:cargo/sqlite-capsule-policy@0.3.0",
+        "pkg:cargo/tempfile@3.27.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
       "ref": "pkg:cargo/sqlite-capsule-launch@0.3.0"
     },
     {
       "dependsOn": [
+        "pkg:cargo/getrandom@0.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/libc@0.2.189?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18451,6 +18601,7 @@
     },
     {
       "dependsOn": [
+        "pkg:cargo/getrandom@0.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
         "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
@@ -18499,6 +18650,22 @@
         "pkg:cargo/thiserror@2.0.20?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
       ],
       "ref": "pkg:cargo/sqlite-capsule-update@0.3.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:cargo/ed25519-dalek@3.0.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/getrandom@0.4.3?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/rusqlite@0.40.1?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/serde@1.0.229?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/serde_json@1.0.151?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/sha2@0.11.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index",
+        "pkg:cargo/sqlite-capsule-core@0.3.0",
+        "pkg:cargo/sqlite-capsule-crypto@0.3.0",
+        "pkg:cargo/sqlite-capsule-launch@0.3.0",
+        "pkg:cargo/sqlite-capsule-lifecycle@0.3.0",
+        "pkg:cargo/tempfile@3.27.0?repository_url=registry%2Bhttps%3A%2F%2Fgithub.com%2Frust-lang%2Fcrates.io-index"
+      ],
+      "ref": "pkg:cargo/sqlite-capsule-workspace@0.3.0"
     },
     {
       "dependsOn": [
@@ -20117,7 +20284,8 @@
         "pkg:cargo/sqlite-capsule-runtime@0.3.0",
         "pkg:cargo/sqlite-capsule-signing@0.3.0",
         "pkg:cargo/sqlite-capsule-sigstore@0.3.0",
-        "pkg:cargo/sqlite-capsule-update@0.3.0"
+        "pkg:cargo/sqlite-capsule-update@0.3.0",
+        "pkg:cargo/sqlite-capsule-workspace@0.3.0"
       ],
       "ref": "pkg:generic/sqlite-capsule-native-workspace@0.3.0"
     }
@@ -20140,7 +20308,7 @@
       }
     ]
   },
-  "serialNumber": "urn:uuid:71e010c0-9e89-5612-9653-40376522e88c",
+  "serialNumber": "urn:uuid:3c460a8e-fb43-5b58-97d4-19fe009aa879",
   "specVersion": "1.5",
   "version": 1
 }

@@ -1,0 +1,27 @@
+{
+  "profile": "org.sqlite-capsule.compare-page/1",
+  "session_id": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "report_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "dataset_label": "private notes",
+  "table_label": "notes",
+  "sensitivity": "sensitive",
+  "revealed": true,
+  "rows": [
+    {
+      "kind": "changed",
+      "key_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "left_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "right_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "fields": [
+        {
+          "column": "body",
+          "kind": "changed",
+          "left": {"storage_class": "text", "display": "Example old value", "byte_count": 17, "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "truncated": false, "redacted": false},
+          "right": {"storage_class": "text", "display": "Example new value", "byte_count": 17, "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "truncated": false, "redacted": false}
+        }
+      ]
+    }
+  ],
+  "next_page_token": null,
+  "expires_at": "2026-08-13T07:45:00Z"
+}

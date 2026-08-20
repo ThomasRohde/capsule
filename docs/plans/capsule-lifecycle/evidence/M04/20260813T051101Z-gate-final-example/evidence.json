@@ -1,0 +1,36 @@
+{
+  "command": [
+    "python",
+    "tools/build_example.py",
+    "--check"
+  ],
+  "completed_at": "2026-08-13T05:11:01Z",
+  "cwd": ".",
+  "duration_ms": 840,
+  "exit_code": 0,
+  "milestone": "M04",
+  "name": "gate-final-example",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T05:11:01Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051101Z-gate-final-example/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 319,
+    "original_bytes": 319,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T051101Z-gate-final-example/stdout.txt",
+    "sha256_captured": "9e3fe9359fe991391fd5dfc68d08a1004415f639c7df9668d354f73c821f4ca5",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 180
+}

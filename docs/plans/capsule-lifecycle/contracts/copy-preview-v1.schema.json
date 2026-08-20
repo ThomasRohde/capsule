@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/copy-preview-v1.schema.json",
+  "title": "Capsule copy preview",
+  "description": "Bounded review-only projection. This document contains no execution authority, path, destination capability, plan or confirmation nonce.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "mode",
+    "availability",
+    "identity",
+    "datasets",
+    "prompts",
+    "blockers",
+    "expected_application_digest",
+    "output",
+    "execution_availability",
+    "execution_blockers",
+    "execution_must_rederive_decisions",
+    "execution_authority_issued"
+  ],
+  "properties": {
+    "profile": { "const": "org.sqlite-capsule.copy-preview/1" },
+    "mode": { "$ref": "#/$defs/mode" },
+    "availability": { "enum": ["ready", "needs-review", "blocked"] },
+    "identity": { "$ref": "#/$defs/identity" },
+    "datasets": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/dataset" }
+    },
+    "prompts": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/prompt" }
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 15,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/blocker" }
+    },
+    "expected_application_digest": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "output": { "$ref": "#/$defs/output" },
+    "execution_availability": {
+      "enum": [
+        "existing-exact-snapshot-executor",
+        "existing-compact-logical-executor",
+        "existing-semantic-executor",
+        "blocked"
+      ]
+    },
+    "execution_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "safe_reason"],
+        "properties": {
+          "code": { "$ref": "#/$defs/blocker" },
+          "safe_reason": { "type": "string", "minLength": 1, "maxLength": 256 }
+        }
+      }
+    },
+    "execution_must_rederive_decisions": { "const": true },
+    "execution_authority_issued": { "const": false }
+  },
+  "$defs": {
+    "mode": {
+      "enum": [
+        "exact-duplicate",
+        "compact-duplicate",
+        "fork-with-data",
+        "create-from-template",
+        "selective-fork"
+      ]
+    },
+    "blocker": {
+      "enum": [
+        "verified-template-required",
+        "reset-semantics-unavailable",
+        "policy-forbids-operation",
+        "dataset-choice-required",
+        "sensitive-confirmation-required",
+        "selective-omission-not-permitted",
+        "required-dataset-omitted",
+        "dependency-not-permitted",
+        "sensitive-copy-confirmation-required",
+        "preview-not-execution-authority",
+        "compact-security-design-unavailable",
+        "fork-executor-unavailable",
+        "selective-executor-unavailable",
+        "cross-dataset-foreign-keys-unverified",
+        "clean-seed-state-unprovable"
+      ]
+    },
+    "identityDisposition": { "enum": ["preserve", "generate-new"] },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capsule_id",
+        "revision_id",
+        "instance_profile",
+        "grants",
+        "change_log",
+        "lineage_operation"
+      ],
+      "properties": {
+        "capsule_id": { "$ref": "#/$defs/identityDisposition" },
+        "revision_id": { "$ref": "#/$defs/identityDisposition" },
+        "instance_profile": {
+          "enum": ["preserve", "explicit-fork-policy", "verified-template-policy"]
+        },
+        "grants": { "enum": ["preserve", "clear"] },
+        "change_log": { "enum": ["preserve", "clear"] },
+        "lineage_operation": {
+          "type": ["string", "null"],
+          "enum": [null, "fork", "created-from-template"]
+        }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "role",
+        "sensitivity",
+        "required",
+        "signed_fork_policy",
+        "action",
+        "row_estimate",
+        "dependencies"
+      ],
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]{0,255}$",
+          "description": "Also limited to 256 UTF-8 bytes by the native profile."
+        },
+        "role": {
+          "enum": ["seed", "user-content", "settings", "history", "derived", "cache"]
+        },
+        "sensitivity": { "enum": ["normal", "sensitive"] },
+        "required": { "type": "boolean" },
+        "signed_fork_policy": { "enum": ["copy", "reset", "omit", "prompt", "forbid"] },
+        "action": {
+          "type": ["string", "null"],
+          "enum": [null, "copy", "reset", "omit", "prompt", "forbid"]
+        },
+        "row_estimate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rows", "exact", "truncated"],
+          "properties": {
+            "rows": { "type": "integer", "minimum": 0, "maximum": 100000 },
+            "exact": { "type": "boolean" },
+            "truncated": { "type": "boolean" }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dataset_id", "reason", "auto_selected"],
+            "properties": {
+              "dataset_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "reason": { "type": "string", "maxLength": 1024 },
+              "auto_selected": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "kind", "unconfirmed_action"],
+      "properties": {
+        "dataset_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "kind": { "enum": ["dataset-choice", "sensitive-confirmation"] },
+        "unconfirmed_action": { "enum": ["copy", "reset", "omit", "prompt", "forbid"] }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_version",
+        "signed_application_profile",
+        "source_is_read_only",
+        "create_new",
+        "overwrite_allowed",
+        "application_digest_must_match_source",
+        "application_digest_from",
+        "publish_only_after_full_verification"
+      ],
+      "properties": {
+        "format_version": { "const": "0.3" },
+        "signed_application_profile": { "const": "org.sqlite-capsule.signed-app/0.3" },
+        "source_is_read_only": { "const": true },
+        "create_new": { "const": true },
+        "overwrite_allowed": { "const": false },
+        "application_digest_must_match_source": { "type": "boolean" },
+        "application_digest_from": { "const": "source" },
+        "publish_only_after_full_verification": { "const": true }
+      }
+    }
+  }
+}

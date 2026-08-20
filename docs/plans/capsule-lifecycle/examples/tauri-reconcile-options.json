@@ -1,0 +1,20 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-options/1",
+  "orientations": [
+    {
+      "orientation_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "source_label": "Branch A",
+      "target_label": "Branch B",
+      "result_label": "New copy of target"
+    },
+    {
+      "orientation_token": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "source_label": "Branch B",
+      "target_label": "Branch A",
+      "result_label": "New copy of target"
+    }
+  ],
+  "disclosed_change_count": 4,
+  "sensitive_change_count": 0,
+  "blockers": []
+}

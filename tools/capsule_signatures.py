@@ -21,6 +21,22 @@ from typing import Any
 
 
 PROFILE = "org.sqlite-capsule.signed-app/0.2"
+PROFILES = {
+    2: (
+        PROFILE,
+        "org.sqlite-capsule",
+        "0.2",
+        "capsule-http/0.2",
+        None,
+    ),
+    3: (
+        "org.sqlite-capsule.signed-app/0.3",
+        "org.sqlite-capsule",
+        "0.3",
+        "capsule-http/0.2",
+        "org.sqlite-capsule.host-profile/0.3",
+    ),
+}
 ALGORITHM = "ed25519"
 MAX_SIGNATURE_ROWS = 1024
 
@@ -58,6 +74,31 @@ def _table_exists(connection: sqlite3.Connection, name: str) -> bool:
         ).fetchone()
         is not None
     )
+
+
+def _signed_profile(connection: sqlite3.Connection) -> str:
+    application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
+    user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    declared = PROFILES.get(user_version)
+    if application_id != 1129337676 or declared is None:
+        raise ValueError("unsupported capsule format identity")
+    profile, format_id, format_version, runtime_protocol, minimum_host_profile = declared
+    columns = "format_id, format_version, runtime_protocol"
+    if minimum_host_profile is not None:
+        columns += ", minimum_host_profile"
+    rows = connection.execute(
+        f"SELECT {columns} FROM capsule_manifest WHERE id = 1"
+    ).fetchall()
+    total = int(connection.execute("SELECT count(*) FROM capsule_manifest").fetchone()[0])
+    if total != 1 or len(rows) != 1:
+        raise ValueError("capsule manifest must contain exactly one id=1 row")
+    row = rows[0]
+    actual = (row["format_id"], row["format_version"], row["runtime_protocol"])
+    if actual != (format_id, format_version, runtime_protocol):
+        raise ValueError("unsupported capsule format tuple")
+    if minimum_host_profile is not None and row["minimum_host_profile"] != minimum_host_profile:
+        raise ValueError("unsupported capsule minimum_host_profile")
+    return profile
 
 
 def _valid_table_shape(
@@ -134,6 +175,11 @@ def signature_inventory(
     extension_valid = False
 
     with closing(_open_immutable(capsule)) as connection:
+        try:
+            expected_profile = _signed_profile(connection)
+        except (sqlite3.DatabaseError, TypeError, ValueError) as exc:
+            expected_profile = None
+            errors.append(str(exc))
         integrity = [str(row[0]) for row in connection.execute("PRAGMA integrity_check")]
         integrity_ok = integrity == ["ok"]
         if not integrity_ok:
@@ -160,11 +206,11 @@ def signature_inventory(
                     row = publisher_rows[0]
                     if (
                         row["id"] != 1
-                        or row["profile"] != PROFILE
+                        or row["profile"] != expected_profile
                         or not isinstance(row["publisher_id"], str)
-                        or not 1 <= len(row["publisher_id"]) <= 512
+                        or not 1 <= len(row["publisher_id"].encode("utf-8")) <= 512
                         or not isinstance(row["publisher_name"], str)
-                        or not 1 <= len(row["publisher_name"]) <= 512
+                        or not 1 <= len(row["publisher_name"].encode("utf-8")) <= 512
                     ):
                         errors.append("capsule_publisher row is malformed")
                     else:

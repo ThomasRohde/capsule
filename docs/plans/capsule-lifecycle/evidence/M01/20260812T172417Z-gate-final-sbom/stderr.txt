@@ -1,0 +1,1 @@
+stale SBOM: C:\Users\thoma\Projects\sqlite-capsule\native\sbom.cdx.json

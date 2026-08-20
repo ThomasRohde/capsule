@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/lifecycle-plan-v1.schema.json",
+  "title": "Capsule lifecycle operation plan",
+  "description": "Canonical, reviewable plan produced before any lifecycle write. A plan pins every input, identifies the create-new output and records policy decisions. The host calculates plan_digest over canonical JSON excluding plan_digest itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "plan_id",
+    "operation",
+    "created_at",
+    "expires_at",
+    "inputs",
+    "output",
+    "decisions",
+    "limits",
+    "expected",
+    "plan_digest"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.lifecycle-plan/1"
+    },
+    "plan_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "operation": {
+      "enum": [
+        "duplicate",
+        "compact-duplicate",
+        "fork",
+        "create-from-template",
+        "selective-fork",
+        "reconcile-to-copy",
+        "application-upgrade"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "Host-issued exact UTC expiry. It is covered by plan_digest and must be later than created_at. Cross-field ordering is enforced by the executor."
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/input"
+      }
+    },
+    "output": {
+      "$ref": "#/$defs/output"
+    },
+    "decisions": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capsule_id",
+        "revision_id",
+        "app_id",
+        "application_digest",
+        "data_schema_id",
+        "data_schema_version"
+      ],
+      "properties": {
+        "capsule_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "revision_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "app_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "application_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "data_schema_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "data_schema_version": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "path_hint",
+        "file_sha256",
+        "snapshot_sha256",
+        "size_bytes",
+        "filesystem_identity",
+        "capsule"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "source",
+            "target",
+            "ancestor",
+            "template",
+            "application-release"
+          ]
+        },
+        "path_hint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "snapshot_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the exact private, standalone SQLite snapshot captured and verified during planning. Execution must reproduce this digest before transformation."
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "filesystem_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "platform",
+            "volume_or_device",
+            "file_id_or_inode",
+            "modified_ns"
+          ],
+          "properties": {
+            "platform": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "volume_or_device": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "file_id_or_inode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "modified_ns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            }
+          }
+        },
+        "capsule": {
+          "$ref": "#/$defs/capsule_identity"
+        }
+      }
+    },
+    "capsule_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_version",
+        "app_id",
+        "app_version",
+        "application_digest",
+        "data_schema_id",
+        "data_schema_version"
+      ],
+      "properties": {
+        "format_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "capsule_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "revision_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "app_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "app_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "application_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "data_schema_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "data_schema_version": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "publisher_key_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "leaf_name",
+        "parent_filesystem_identity",
+        "must_not_exist",
+        "publish_mode"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "leaf_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "x-maxUtf8Bytes": 255,
+          "pattern": "^(?![.]{1,2}$)(?!.*[. ]$)(?!(?i:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:[.]|$))[^\\\\/:*?\"<>|\\u0000-\\u001f]+$",
+          "description": "Portable create-new leaf. Windows device names, control characters, ADS, path separators and trailing dot/space are forbidden."
+        },
+        "parent_filesystem_identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "platform",
+            "volume_or_device",
+            "file_id_or_inode"
+          ],
+          "properties": {
+            "platform": {"type": "string", "minLength": 1, "maxLength": 64},
+            "volume_or_device": {"type": "string", "minLength": 1, "maxLength": 256},
+            "file_id_or_inode": {"type": "string", "minLength": 1, "maxLength": 256}
+          }
+        },
+        "must_not_exist": {
+          "const": true
+        },
+        "publish_mode": {
+          "const": "create-new-no-replace",
+          "description": "Publication must refuse an existing leaf. Platforms without a safe no-replace primitive fail closed; this never permits replace-style rename or copy fallback."
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "subject",
+        "action",
+        "reason"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "dataset",
+            "table",
+            "row",
+            "field",
+            "application",
+            "profile"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "parameters": {
+          "type": "object",
+          "maxProperties": 128,
+          "description": "Operation-profile-specific bounded parameters. Generic callers may not pass arbitrary JSON through this field.",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]{0,127}$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {"type": "null"},
+              {"type": "boolean"},
+              {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807},
+              {"type": "string", "maxLength": 4096}
+            ]
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_input_bytes",
+        "max_output_bytes",
+        "max_rows_inspected",
+        "max_rows_written",
+        "deadline_ms"
+      ],
+      "properties": {
+        "max_input_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "max_rows_inspected": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "max_rows_written": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        }
+      }
+    }
+  }
+}

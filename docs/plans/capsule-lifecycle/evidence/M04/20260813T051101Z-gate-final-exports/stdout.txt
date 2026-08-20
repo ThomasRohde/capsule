@@ -1,0 +1,67 @@
+{
+  "contract": "org.sqlite-capsule.html-export-release/0.2",
+  "created_at": "2026-08-08T12:00:00Z",
+  "files": [
+    {
+      "bytes": 1022936,
+      "capsule_checks": 18,
+      "components": {
+        "database_compressed_bytes": 153703,
+        "database_uncompressed_bytes": 901120,
+        "loader_bytes": 31079,
+        "notices_bytes": 13139,
+        "sqlite_js_bytes": 578559,
+        "sqlite_wasm_bytes": 864752,
+        "worker_bytes": 37435
+      },
+      "database_sha256": "d45eb5157ebe045e7fda20900450318472b5b925d72adeb61d49f5b81b971672",
+      "path": "diagram-studio-view.html",
+      "profile": "view",
+      "revision": 1,
+      "sha256": "00c89887da99879cb990d4ea5207cc4fee94afa2640328fb1caf990e31f00902",
+      "verified": true
+    },
+    {
+      "bytes": 1022964,
+      "capsule_checks": 18,
+      "components": {
+        "database_compressed_bytes": 153703,
+        "database_uncompressed_bytes": 901120,
+        "loader_bytes": 31079,
+        "notices_bytes": 13139,
+        "sqlite_js_bytes": 578559,
+        "sqlite_wasm_bytes": 864752,
+        "worker_bytes": 37435
+      },
+      "database_sha256": "d45eb5157ebe045e7fda20900450318472b5b925d72adeb61d49f5b81b971672",
+      "path": "diagram-studio-interactive.html",
+      "profile": "interactive",
+      "revision": 1,
+      "sha256": "8bc657776795a263799db907b6b3c36c790706ff7a8c50de8a9cd7147d771064",
+      "verified": true
+    },
+    {
+      "bytes": 1022952,
+      "capsule_checks": 18,
+      "components": {
+        "database_compressed_bytes": 153703,
+        "database_uncompressed_bytes": 901120,
+        "loader_bytes": 31079,
+        "notices_bytes": 13139,
+        "sqlite_js_bytes": 578559,
+        "sqlite_wasm_bytes": 864752,
+        "worker_bytes": 37435
+      },
+      "database_sha256": "d45eb5157ebe045e7fda20900450318472b5b925d72adeb61d49f5b81b971672",
+      "path": "diagram-studio-editable.html",
+      "profile": "editable",
+      "revision": 1,
+      "sha256": "7d5ee4b9383af8bb7c2ffee7d85e3ddf40345b2870add81d22c1120e72a1ff11",
+      "verified": true
+    }
+  ],
+  "ok": true,
+  "source": "capsules/diagram-studio.capsule.sqlite",
+  "source_sha256": "d45eb5157ebe045e7fda20900450318472b5b925d72adeb61d49f5b81b971672",
+  "sqlite_wasm_version": "3.53.0-build1"
+}

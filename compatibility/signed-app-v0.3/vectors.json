@@ -1,0 +1,16 @@
+{
+  "profile": "org.sqlite-capsule.signed-app/0.3",
+  "fixtures": [
+    {
+      "name": "format-v0.3",
+      "schema": "format/capsule-v0.3.sql",
+      "data": "compatibility/signed-app-v0.3/fixture-v0.3.sql",
+      "application_digest_sha256": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+      "canonical_stream_bytes": 1077848,
+      "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+      "public_key_hex": "197f6b23e16c8532c6abc838facd5ea789be0c76b2920334039bfa8b3d368d61",
+      "signature_hex": "571963c6314a915bfa9d9b0afd92e9140d2a2220c39cf46e309555f1aad154f93c94ebc29dd7c29129765d058fb19336977b52f4049ca509fdce00546ddae90a",
+      "signed_at": "2026-08-08T12:34:56Z"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "programme_id": "org.sqlite-capsule.lifecycle-program/1",
+  "title": "Capsule lifecycle, comparison and application upgrade",
+  "baseline_expected_commit": "f67da560fb4baaa13144cea220c9329df87ad534",
+  "baseline_observed_at": "2026-08-12",
+  "current_milestone": "M00",
+  "overall_state": "not_started",
+  "rules": {
+    "advance_only_after_acceptance": true,
+    "inputs_are_read_only": true,
+    "outputs_are_create_new": true,
+    "raw_renderer_has_lifecycle_commands": false,
+    "v0_2_signed_capsules_are_never_silently_rewritten": true
+  },
+  "milestones": [
+    {
+      "id": "M00",
+      "slug": "baseline-and-decisions",
+      "title": "Reconcile live repository and freeze architecture",
+      "depends_on": [],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M00-baseline-and-decisions/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M01",
+      "slug": "format-identity-profile-signature",
+      "title": "Format v0.3 identity, profile and signature compartment",
+      "depends_on": [
+        "M00"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M01-format-identity-profile-signature/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M02",
+      "slug": "data-contract-lineage-workspace-core",
+      "title": "Data contract, lineage and workspace service foundation",
+      "depends_on": [
+        "M01"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M02-data-contract-lineage-workspace-core/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M03",
+      "slug": "tauri-overview-cabinet",
+      "title": "Capsule Overview and Cabinet trusted shell UX",
+      "depends_on": [
+        "M02"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M03-tauri-overview-cabinet/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M04",
+      "slug": "copy-fork-template",
+      "title": "Duplicate, compact duplicate, fork and template creation",
+      "depends_on": [
+        "M03"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M04-copy-fork-template/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M05",
+      "slug": "compare-engine-and-ui",
+      "title": "Bounded compare engine and trusted shell comparison",
+      "depends_on": [
+        "M04"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M05-compare-engine-and-ui/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M06",
+      "slug": "reconcile-to-copy",
+      "title": "Apply selected changes to a new target-derived copy",
+      "depends_on": [
+        "M05"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M06-reconcile-to-copy/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M07",
+      "slug": "application-upgrade-same-schema",
+      "title": "Application release upgrade with unchanged data schema",
+      "depends_on": [
+        "M06"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M07-application-upgrade-same-schema/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M08",
+      "slug": "declarative-migration-engine",
+      "title": "Restricted declarative data migrations",
+      "depends_on": [
+        "M07"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M08-declarative-migration-engine/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    },
+    {
+      "id": "M09",
+      "slug": "ecosystem-hardening-release",
+      "title": "Plugin sync, hardening, qualification and release",
+      "depends_on": [
+        "M08"
+      ],
+      "state": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "result_path": "milestones/M09-ecosystem-hardening-release/RESULT.md",
+      "evidence_paths": [],
+      "last_test_summary": null,
+      "handoff": null
+    }
+  ]
+}

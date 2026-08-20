@@ -13,6 +13,7 @@ HOST_PERMISSION = (
     ROOT / "native" / "desktop" / "src-tauri" / "permissions" / "host-first-open.toml"
 )
 NATIVE_SHELL = ROOT / "native" / "desktop" / "src-tauri" / "src" / "lib.rs"
+RECONCILE_FLOW = ROOT / "native" / "desktop" / "src-tauri" / "src" / "reconcile_flow.rs"
 NATIVE_ENTRYPOINT = ROOT / "native" / "desktop" / "src-tauri" / "src" / "main.rs"
 HOST_CAPABILITY = (
     ROOT / "native" / "desktop" / "src-tauri" / "capabilities" / "host-shell.json"
@@ -26,8 +27,11 @@ class HostMarkupParser(HTMLParser):
         self.ids: list[str] = []
         self.references: list[tuple[str, str]] = []
         self.buttons: list[dict[str, str | None]] = []
+        self.headings: list[dict[str, str | int | None]] = []
+        self.page_panels: list[dict[str, str | None]] = []
         self._button_depth = 0
         self._button_text: list[str] = []
+        self._heading_stack: list[dict[str, str | int | None]] = []
 
     def handle_starttag(self, tag: str, attributes: list[tuple[str, str | None]]) -> None:
         values = dict(attributes)
@@ -40,15 +44,31 @@ class HostMarkupParser(HTMLParser):
             self.buttons.append(values)
             self._button_depth += 1
             self._button_text.append("")
+        if re.fullmatch(r"h[1-6]", tag):
+            heading: dict[str, str | int | None] = {
+                "level": int(tag[1]),
+                "id": values.get("id"),
+                "text": "",
+            }
+            self.headings.append(heading)
+            self._heading_stack.append(heading)
+        if tag == "section" and "data-page-panel" in values:
+            self.page_panels.append(values)
 
     def handle_data(self, data: str) -> None:
         if self._button_depth:
             self._button_text[-1] += data
+        if self._heading_stack:
+            heading = self._heading_stack[-1]
+            heading["text"] = f"{heading['text']}{data}"
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "button" and self._button_depth:
             self.buttons[-1]["_text"] = self._button_text.pop().strip()
             self._button_depth -= 1
+        if re.fullmatch(r"h[1-6]", tag) and self._heading_stack:
+            heading = self._heading_stack.pop()
+            heading["text"] = str(heading["text"]).strip()
 
 
 class NativeTrustedUiAccessibilityTests(unittest.TestCase):
@@ -79,15 +99,71 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn('id="update-status" role="status" aria-live="polite"', html)
         self.assertIn("Signing keys are use-once and remain in Rust memory only", html)
         self.assertIn("Sign a verified capsule copy", html)
+        self.assertIn("Apply selected changes to a new copy", html)
+        self.assertIn("Output identity preview", html)
+        self.assertIn("Conflicts and resolutions", html)
+        self.assertIn("Evidence and postconditions", html)
         self.assertIn("Existing files and the source path are never replaced", html)
         self.assertIn("Separate application window · hidden until authorised", html)
         self.assertIn("opens maximized in its own native window", html)
         self.assertNotIn("Native child renderer occupies this fixed region", html)
-        self.assertEqual(html.count('class="nav-item'), 7)
+        self.assertEqual(html.count('class="nav-item'), 9)
+        for page in (
+            "Cabinet",
+            "Overview",
+            "Create copy",
+            "Lineage",
+            "Compare",
+            "Versions",
+            "Security",
+            "Recovery",
+            "Settings",
+        ):
+            self.assertRegex(html, rf'class="nav-item[^\"]*"[^>]*>[\s\S]*?<span>{page}</span>')
+        self.assertIn("No executable assets have been released", html)
+        self.assertIn("Cached identity and trust are not reused", (UI / "app.js").read_text(encoding="utf-8"))
         self.assertIn('id="window-minimize" aria-label="Minimize window"', html)
         self.assertIn('id="window-maximize" aria-label="Maximize window"', html)
         self.assertIn('id="window-close" aria-label="Close window"', html)
         self.assertIn('data-theme-option="system"', html)
+
+    def test_trusted_shell_has_one_semantic_heading_hierarchy(self) -> None:
+        parser = HostMarkupParser()
+        parser.feed((UI / "index.html").read_text(encoding="utf-8"))
+
+        self.assertTrue(parser.headings, "the trusted shell needs a document heading")
+        self.assertEqual(parser.headings[0]["level"], 1)
+        self.assertEqual(parser.headings[0]["id"], "page-title")
+        self.assertEqual(
+            sum(heading["level"] == 1 for heading in parser.headings),
+            1,
+            "the changing page title is the shell's single top-level heading",
+        )
+        self.assertTrue(
+            all(heading["level"] in (1, 2) for heading in parser.headings),
+            "page sections must not skip heading levels",
+        )
+        self.assertTrue(
+            all(str(heading["text"]).strip() for heading in parser.headings),
+            "every heading needs an accessible text label",
+        )
+
+        heading_ids = {
+            str(heading["id"])
+            for heading in parser.headings
+            if heading["id"] is not None
+        }
+        for panel in parser.page_panels:
+            label = panel.get("aria-labelledby")
+            self.assertIsNotNone(
+                label,
+                f"page panel {panel.get('data-page-panel')} needs a heading relationship",
+            )
+            self.assertIn(
+                label,
+                heading_ids,
+                f"page panel {panel.get('data-page-panel')} is not labelled by a heading",
+            )
 
     def test_focus_and_reduced_motion_controls_are_not_colour_only(self) -> None:
         css = (UI / "styles.css").read_text(encoding="utf-8")
@@ -103,9 +179,13 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("--accent: #60cdff", css)
         self.assertIn(':root[data-theme="light"]', css)
         script = (UI / "app.js").read_text(encoding="utf-8")
-        self.assertIn("verdict.focus()", script)
+        self.assertIn(
+            '(report.stage === "recovery-required" ? recoverSelectedButton : verdict).focus()',
+            script,
+        )
         self.assertIn("promptTitle.focus()", script)
-        self.assertIn("openButton.focus()", script)
+        self.assertIn("cabinetOpenButton.focus()", script)
+        self.assertIn("overviewTitle.focus()", script)
         self.assertIn("focusKeyFor(report)", script)
         self.assertIn("report.capsule?.source_sha256", script)
         self.assertIn("trustLabels", script)
@@ -114,6 +194,45 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn('invokeHost("download_host_update",', script)
         self.assertIn('invokeHost("stage_host_update",', script)
         self.assertIn('invokeHost("signing_status")', script)
+        self.assertIn('invokeHost("cabinet_status")', script)
+        self.assertIn('invokeHost("open_recent_capsule"', script)
+        self.assertIn('invokeHost("choose_compare_capsule"', script)
+        self.assertIn('invokeHost("start_compare"', script)
+        self.assertIn('invokeHost(reveal ? "reveal_compare_page" : "get_compare_page"', script)
+        self.assertIn('invokeHost("get_compare_application_detail"', script)
+        self.assertIn("\\u202a-\\u202e\\u2066-\\u2069", script)
+        self.assertIn("compareIsolate", script)
+        self.assertIn("Delta classification withheld by signed policy", script)
+        self.assertIn('invokeHost("close_compare_session"', script)
+        self.assertIn('invokeHost("get_reconcile_options"', script)
+        self.assertIn('invokeHost("start_reconcile_review"', script)
+        self.assertIn('invokeHost("choose_reconcile_destination"', script)
+        self.assertIn('invokeHost("choose_reconcile_ancestor"', script)
+        self.assertIn('invokeHost("prepare_reconcile"', script)
+        self.assertIn('invokeHost("execute_reconcile"', script)
+        self.assertIn('listen("capsule-reconcile-progress-v1"', script)
+        self.assertIn('invokeHost("get_reconcile_operation"', script)
+        self.assertIn('invokeHost("cancel_reconcile_operation"', script)
+        self.assertIn('invokeHost("acknowledge_reconcile_result"', script)
+        self.assertIn("reconcileStatusAfterStart(status.operation_token)", script)
+        self.assertIn("oncePerReconcileOperation(operationToken", script)
+        self.assertIn("reconcileFinalizations.get(operationToken)", script)
+        self.assertIn("terminalEventFinalization", script)
+        self.assertIn("globalThis.setTimeout(() =>", script)
+        self.assertIn("Sensitive values remain unavailable until the explicit reveal", script)
+        self.assertIn('document.createElement("bdi")', script)
+        self.assertIn('invokeHost("choose_copy_destination"', script)
+        self.assertIn('invokeHost("preview_copy_profile"', script)
+        self.assertIn('invokeHost("prepare_copy"', script)
+        self.assertIn('invokeHost("execute_copy"', script)
+        self.assertIn('listen("capsule-copy-progress-v1"', script)
+        self.assertIn('invokeHost("get_copy_operation"', script)
+        self.assertIn('invokeHost("cancel_copy_operation"', script)
+        self.assertIn('invokeHost("acknowledge_copy_result"', script)
+        self.assertIn('invokeHost("open_selected_capsule"', script)
+        self.assertIn('invokeHost("recover_selected_capsule", { selectionId })', script)
+        self.assertIn('invokeHost("first_open_decide", {', script)
+        self.assertIn('currentReport?.selection_id ?? currentReport?.capsule?.overview?.selection_id', script)
         self.assertIn('startSigningPicker("select_signing_key_picker"', script)
         self.assertIn('startSigningPicker("select_signing_source_picker"', script)
         self.assertIn('startSigningPicker("select_signing_output_picker"', script)
@@ -142,6 +261,33 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn('"download_host_update"', permission)
         self.assertIn('"stage_host_update"', permission)
         self.assertIn('"signing_status"', permission)
+        self.assertIn('"cabinet_status"', permission)
+        self.assertIn('"choose_compare_capsule"', permission)
+        self.assertIn('"start_compare"', permission)
+        self.assertIn('"get_compare_page"', permission)
+        self.assertIn('"reveal_compare_page"', permission)
+        self.assertIn('"get_compare_application_detail"', permission)
+        self.assertIn('"close_compare_session"', permission)
+        self.assertIn('"get_reconcile_options"', permission)
+        self.assertIn('"start_reconcile_review"', permission)
+        self.assertIn('"choose_reconcile_destination"', permission)
+        self.assertIn('"choose_reconcile_ancestor"', permission)
+        self.assertIn('"prepare_reconcile"', permission)
+        self.assertIn('"execute_reconcile"', permission)
+        self.assertIn('"get_reconcile_operation"', permission)
+        self.assertIn('"cancel_reconcile_operation"', permission)
+        self.assertIn('"acknowledge_reconcile_result"', permission)
+        self.assertIn('"choose_copy_destination"', permission)
+        self.assertIn('"preview_copy_profile"', permission)
+        self.assertIn('"cancel_copy_destination"', permission)
+        self.assertIn('"prepare_copy"', permission)
+        self.assertIn('"execute_copy"', permission)
+        self.assertIn('"get_copy_operation"', permission)
+        self.assertIn('"cancel_copy_operation"', permission)
+        self.assertIn('"acknowledge_copy_result"', permission)
+        self.assertIn('"open_recent_capsule"', permission)
+        self.assertIn('"open_selected_capsule"', permission)
+        self.assertIn('"recover_selected_capsule"', permission)
         self.assertIn('"select_signing_key_picker"', permission)
         self.assertIn('"prepare_signing"', permission)
         self.assertIn('"execute_signing"', permission)
@@ -161,6 +307,34 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("core:window:allow-toggle-maximize", capability["permissions"])
         self.assertIn("core:window:allow-close", capability["permissions"])
         self.assertIn("core:window:allow-start-dragging", capability["permissions"])
+
+    def test_reconcile_renderer_contract_is_opaque_and_main_only(self) -> None:
+        source = RECONCILE_FLOW.read_text(encoding="utf-8")
+        self.assertIn("pub(crate) struct PrepareReconcileRequest", source)
+        self.assertIn("pub review_token: String", source)
+        self.assertIn("pub destination_token: String", source)
+        self.assertIn("pub selection_tokens: Vec<String>", source)
+        self.assertIn("pub ancestor_token: Option<String>", source)
+        self.assertIn("pub resolution_tokens: Vec<String>", source)
+        self.assertIn("pub(crate) struct ChooseReconcileAncestorRequest", source)
+        self.assertIn("pub conflict_token: String", source)
+        self.assertIn("pub resolution_token: String", source)
+        request_block = source.split("pub(crate) struct PrepareReconcileRequest", 1)[1].split("}", 1)[0]
+        for forbidden in (
+            "PathBuf",
+            "LifecyclePlan",
+            "payload",
+            "digest",
+            "dataset_index",
+            "table_index",
+            "row_value",
+            "sql",
+        ):
+            self.assertNotIn(forbidden, request_block)
+        self.assertIn("HUMAN_REVIEW_LIFETIME: Duration = Duration::from_secs(5 * 60)", source)
+        self.assertIn("EXECUTION_LIFETIME: Duration = Duration::from_secs(30)", source)
+        capability = json.loads(HOST_CAPABILITY.read_text(encoding="utf-8"))
+        self.assertEqual(capability["webviews"], ["main"])
         window = json.loads(TAURI_CONFIG.read_text(encoding="utf-8"))["app"]["windows"][0]
         self.assertGreaterEqual(
             window["height"],
@@ -207,6 +381,14 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertEqual(
             package["scripts"]["test:native:window"],
             "node tests/native/standalone-window.e2e.mjs",
+        )
+        self.assertEqual(
+            package["scripts"]["test:native:reconcile"],
+            "node tests/native/reconcile.e2e.mjs",
+        )
+        self.assertEqual(
+            package["scripts"]["test:native:reconcile-finalization"],
+            "node tests/native/reconcile-finalization.test.mjs",
         )
         for dependency in (
             "@wdio/cli",

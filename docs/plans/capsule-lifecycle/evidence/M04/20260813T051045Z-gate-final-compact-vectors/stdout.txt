@@ -1,0 +1,2 @@
+compact logical-state vector: objects=7 tables=4 rows=5 bytes=2461 sha256=b36508016be9290d3e89321608a195c116b42535ffc16e903b8f004380a58180
+compact logical-state vectors: PASS

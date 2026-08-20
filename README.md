@@ -20,12 +20,15 @@ a compatible fallback host.
 
 ## What is included
 
-- The current v0.2 SQLite format with an embedded `START_HERE` runbook.
+- Versioned v0.2 and v0.3 SQLite format contracts with embedded `START_HERE`
+  runbooks. V0.2 remains the default for the checked-in Diagram Studio example;
+  v0.3 separates signed application releases from mutable capsule instances.
 - A Python standard-library host that binds only to loopback and exposes named,
   parameterised endpoints instead of raw SQL.
-- A Windows native host with an independent Rust verifier, host-owned trust and
-  capability decisions, a separate untrusted application renderer, backup and
-  recovery controls, and offline release-policy verification.
+- A Windows native Capsule Cabinet with an independent Rust verifier, bounded
+  Overview, host-owned trust and capability decisions, a separate untrusted
+  application renderer, backup and recovery controls, and offline release-policy
+  verification.
 - Three self-contained HTML export profiles backed by pinned SQLite WASM:
   `view`, `interactive`, and `editable`.
 - Generic inspect, verify, conformance, permissions, unpack, pack, diff, signing,
@@ -77,14 +80,20 @@ python tools\capsule.py verify .tmp\playground\my-first.sqlitecapsule
 cargo run --manifest-path native\Cargo.toml -p sqlite-capsule-desktop -- .tmp\playground\my-first.sqlitecapsule
 ```
 
-Review the host-owned identity and capabilities before choosing **Allow once**.
+The trusted shell opens on Cabinet/Overview and keeps the raw application
+renderer hidden and locked while it shows separately bounded application,
+signature/publisher, mutable instance, and file state. Review the identity and
+capabilities before choosing **Allow once**. Even a remembered signed-release
+decision now requires the explicit **Open application** action after Overview;
+cached recent-card data is never execution authority.
 The first write creates a verified backup outside the capsule directory.
 Installers are generated build outputs and are not committed. See
 [`native/README.md`](native/README.md) for build, test, and packaging commands.
 To produce a signed application copy whose exact release can receive a durable
 capability decision, configure the protected signing environment and run
 `python tools/sign_release.py`. After choosing **Always for this release** once,
-the unchanged valid signed release opens directly on later launches; see
+the unchanged valid signed release returns to Overview as remembered-ready on
+later launches and needs only the explicit **Open application** action; see
 [Automated release signing](docs/authoring.md#automated-release-signing).
 Build a fast local NSIS setup executable with one repository-owned command:
 
@@ -146,7 +155,15 @@ self-contained `create-capsule` skill from
 standard-library host, format schema, independent conformance spec, browser
 client, pinned SQLite WASM, quality references, and Fluent Capsule Inspector.
 It can be copied away from this repository; the authoring and launch path never
-invokes the Tauri client:
+invokes the Tauri client. The default output remains format v0.2; add
+`--format-version 0.3` to `init` for separate application/instance identity and
+explicit lifecycle dataset contracts:
+
+The Windows native host provides a trusted-shell **Create copy** workflow with
+five explicit profiles: exact duplicate, compact duplicate, fork with data,
+create from an authenticated template, and policy-controlled selective fork.
+All outputs are create-new/no-replace; capsule content and the raw application
+renderer never receive lifecycle paths, plans or publication authority.
 
 From the repository root, register its local Codex marketplace and install the
 plugin once:
@@ -166,6 +183,7 @@ marketplaces are intentionally outside the portable Agent Plugins core.
 
 ```bash
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-v03-app --title "My v0.3 App" --app-id org.example.my-v03-app --format-version 0.3
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host verify my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py conformance my-app.capsule.sqlite

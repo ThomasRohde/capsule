@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/capsule-data-contract-v0.3.schema.json",
+  "title": "SQLite Capsule v0.3 data contract",
+  "description": "Draft signed declaration that classifies application-owned tables for fork, comparison, reconciliation and upgrade. The host must reject undeclared or structurally inconsistent tables rather than infer their lifecycle semantics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "app_id",
+    "data_schema",
+    "datasets"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.data-contract/0.3"
+    },
+    "app_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "data_schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      }
+    },
+    "datasets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/dataset"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]{0,255}$"
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "description",
+        "sensitivity",
+        "required",
+        "fork",
+        "compare",
+        "reconcile",
+        "upgrade",
+        "tables"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "role": {
+          "enum": [
+            "seed",
+            "user-content",
+            "settings",
+            "history",
+            "derived",
+            "cache"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "sensitivity": {
+          "enum": [
+            "normal",
+            "sensitive"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "fork": {
+          "enum": [
+            "copy",
+            "reset",
+            "omit",
+            "prompt",
+            "forbid"
+          ]
+        },
+        "compare": {
+          "enum": [
+            "ignore",
+            "summary",
+            "row",
+            "field"
+          ]
+        },
+        "reconcile": {
+          "enum": [
+            "ignore",
+            "manual",
+            "three-way",
+            "forbid"
+          ]
+        },
+        "upgrade": {
+          "enum": [
+            "copy",
+            "target",
+            "migrate",
+            "rebuild",
+            "omit",
+            "forbid"
+          ]
+        },
+        "depends_on": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "default": []
+        },
+        "tables": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/table"
+          }
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "sequence",
+        "primary_key",
+        "ignored_columns",
+        "immutable_columns"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "primary_key": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "ignored_columns": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "immutable_columns": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "row_limit_hint": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "contains_blobs": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

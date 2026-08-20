@@ -1,0 +1,682 @@
+{
+  "profile": "org.sqlite-capsule.native-reconcile-e2e/1",
+  "evidence": [
+    {
+      "mode": "two-way",
+      "source_sha256": "78d02659fcec4450bf78b8fed6a9b4143820027f2aabe470d8879d5b908680ee",
+      "target_sha256": "70d475cf41504d1509177c6d02721d603b35969e0d1fbec48bb58a98f552e1d9",
+      "ancestor_sha256": null,
+      "manual_selection_count": 1,
+      "output_sha256": "821d184718dd395c60c224ba6ec61cfa4e01698c6758ce4b8f1de2f671b40776",
+      "three_way_screenshot": null,
+      "three_way_scaled_screenshot": null,
+      "scaled_layout": null,
+      "result_screenshot": "ui/two-way-verified-result.png",
+      "accessibility": null,
+      "expected_output_sha256": "3102d6bddd2b51a078f120c202b11083332434b957d0929f8cf4569620aa5998",
+      "expected_comparison": {
+        "profile": "org.sqlite-capsule.compare-report/1",
+        "left": {
+          "file_sha256": "3102d6bddd2b51a078f120c202b11083332434b957d0929f8cf4569620aa5998",
+          "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "revision_id": "cccccccc-cccc-4ccc-9ccc-cccccccccccc",
+          "app_id": "org.sqlite-capsule.vector",
+          "app_version": "3.0.0",
+          "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+          "publisher": {
+            "publisher_id": "org.example.vector",
+            "publisher_name": "Vector Publisher",
+            "signature_count": 1,
+            "signatures": [
+              {
+                "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+                "status": "valid",
+                "signed_at": "2026-08-08T12:34:56Z"
+              }
+            ]
+          },
+          "data_schema_id": "org.sqlite-capsule.vector-data",
+          "data_schema_version": 2
+        },
+        "right": {
+          "file_sha256": "821d184718dd395c60c224ba6ec61cfa4e01698c6758ce4b8f1de2f671b40776",
+          "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "revision_id": "be674da5-72dc-4b05-bfd8-724ca2310564",
+          "app_id": "org.sqlite-capsule.vector",
+          "app_version": "3.0.0",
+          "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+          "publisher": {
+            "publisher_id": "org.example.vector",
+            "publisher_name": "Vector Publisher",
+            "signature_count": 1,
+            "signatures": [
+              {
+                "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+                "status": "valid",
+                "signed_at": "2026-08-08T12:34:56Z"
+              }
+            ]
+          },
+          "data_schema_id": "org.sqlite-capsule.vector-data",
+          "data_schema_version": 2
+        },
+        "compatibility": {
+          "state": "same-release-same-schema",
+          "can_compare_data": true,
+          "can_reconcile": true,
+          "reasons": [
+            "Exact application release and data schema match."
+          ]
+        },
+        "identity": {
+          "state": "different",
+          "left_digest": "dfa1f46daa0ef92f5be95c309f11146e765ce3b1809c770daf13e93bb75407dc",
+          "right_digest": "a46cdf2898ffb180885fcdb5eabd320e5ffed6caf4f9590f05089f8d33c69e5a",
+          "change_count": 1
+        },
+        "lineage": {
+          "state": "different",
+          "left_digest": "8b376154e38b3ae21612ca5d5eb808441f2331f6fce3c759fa6d9a9a329a5403",
+          "right_digest": "b17d2ab3ff118015b8afa9499e85f0c7825f623449b2ee8a0a85b0d87a789adf",
+          "change_count": 1,
+          "direct_relationship": "none",
+          "direct_evidence": [],
+          "common_ancestor_claims": [],
+          "common_ancestor_claims_truncated": false
+        },
+        "application": {
+          "state": "same",
+          "left_digest": "1092026ae9fe4f07821ee33be0794201d14663306f3b33ee591a52cfeecf6fc9",
+          "right_digest": "1092026ae9fe4f07821ee33be0794201d14663306f3b33ee591a52cfeecf6fc9",
+          "change_count": 0
+        },
+        "schema": {
+          "state": "same",
+          "left_digest": "0ddd67e084beb39ea0f206ba31f29d40a0708aff0433f6c80d41c2f4bb13ff40",
+          "right_digest": "0ddd67e084beb39ea0f206ba31f29d40a0708aff0433f6c80d41c2f4bb13ff40",
+          "change_count": 0
+        },
+        "datasets": [
+          {
+            "dataset_id": "content",
+            "policy": "field",
+            "sensitivity": "normal",
+            "state": "same",
+            "left_rows": 1,
+            "right_rows": 1,
+            "counts": {
+              "added": 0,
+              "removed": 0,
+              "changed": 0,
+              "unchanged": 1
+            },
+            "left_digest": "b14336e469535d0728ba7d8c39bb2095c0eea12f7783233e76e4356d5555341c",
+            "right_digest": "b14336e469535d0728ba7d8c39bb2095c0eea12f7783233e76e4356d5555341c",
+            "tables": [
+              {
+                "table": "vector_domain",
+                "primary_key": [
+                  "id"
+                ],
+                "state": "same",
+                "left_rows": 1,
+                "right_rows": 1,
+                "counts": {
+                  "added": 0,
+                  "removed": 0,
+                  "changed": 0,
+                  "unchanged": 1
+                },
+                "left_digest": "4ec4072a7afba529d60c1896939f5490bd66eff245dadab4ddf5553832f691de",
+                "right_digest": "4ec4072a7afba529d60c1896939f5490bd66eff245dadab4ddf5553832f691de",
+                "details_redacted": false,
+                "truncated": false
+              }
+            ],
+            "details_redacted": false,
+            "truncated": false
+          },
+          {
+            "dataset_id": "settings",
+            "policy": "row",
+            "sensitivity": "normal",
+            "state": "same",
+            "left_rows": 2,
+            "right_rows": 2,
+            "counts": {
+              "added": 0,
+              "removed": 0,
+              "changed": 0,
+              "unchanged": 2
+            },
+            "left_digest": "7e0cdffdb2ad147fe780da02353b2bb7ca044cda8b00f0e77e0a301fe0e32f59",
+            "right_digest": "7e0cdffdb2ad147fe780da02353b2bb7ca044cda8b00f0e77e0a301fe0e32f59",
+            "tables": [
+              {
+                "table": "vector_settings",
+                "primary_key": [
+                  "key"
+                ],
+                "state": "same",
+                "left_rows": 2,
+                "right_rows": 2,
+                "counts": {
+                  "added": 0,
+                  "removed": 0,
+                  "changed": 0,
+                  "unchanged": 2
+                },
+                "left_digest": "44e3c1df3257104b5bb82af3444e91290493e70afb5d4a010e499ee0f1af74f3",
+                "right_digest": "44e3c1df3257104b5bb82af3444e91290493e70afb5d4a010e499ee0f1af74f3",
+                "details_redacted": false,
+                "truncated": false
+              }
+            ],
+            "details_redacted": false,
+            "truncated": false
+          }
+        ],
+        "limits": {
+          "max_rows_per_table": 100000,
+          "max_total_rows": 100000,
+          "max_value_bytes": 65536,
+          "max_stream_bytes": 67108864,
+          "deadline_ms": 30000
+        },
+        "truncated": false,
+        "report_digest": "9b46ba2ad18b37e3bc02af07bc297f136a10b63656ba8ce13104ee0e3ed5a2db"
+      },
+      "prepared_digests": {
+        "review_digest": "47d15abdfca447d15bf6dc76804f9f32214b93def99bf9bc8d252c0b5ecab55f",
+        "payload_digest": "ccc99071b546e08374913efa68e51a5e37ce516f85bdbc838c8dac89cc00c736"
+      },
+      "output_state": {
+        "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+        "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "content": {
+          "domain": "target-conflict"
+        },
+        "data_contract": {
+          "rows": {
+            "capsule_dataset": [
+              {
+                "compare_policy": "field",
+                "description": "Mutable vector content.",
+                "fork_policy": "copy",
+                "id": "content",
+                "reconcile_policy": "three-way",
+                "required": 1,
+                "role": "user-content",
+                "sensitivity": "normal",
+                "upgrade_policy": "migrate"
+              },
+              {
+                "compare_policy": "row",
+                "description": "Mutable vector settings.",
+                "fork_policy": "copy",
+                "id": "settings",
+                "reconcile_policy": "manual",
+                "required": 1,
+                "role": "settings",
+                "sensitivity": "normal",
+                "upgrade_policy": "copy"
+              }
+            ],
+            "capsule_dataset_dependency": [
+              {
+                "dataset_id": "content",
+                "depends_on_dataset_id": "settings",
+                "reason": "Content interpretation uses settings."
+              }
+            ],
+            "capsule_dataset_table": [
+              {
+                "dataset_id": "content",
+                "ignored_columns_json": "[]",
+                "immutable_columns_json": "[\"id\"]",
+                "primary_key_json": "[\"id\"]",
+                "sequence": 0,
+                "table_name": "vector_domain"
+              },
+              {
+                "dataset_id": "settings",
+                "ignored_columns_json": "[]",
+                "immutable_columns_json": "[\"key\"]",
+                "primary_key_json": "[\"key\"]",
+                "sequence": 0,
+                "table_name": "vector_settings"
+              }
+            ]
+          },
+          "sha256": "911384b5cd24eefa17bcfd2f53be738726e8ca344d339ef0aa4c936409f704a7"
+        },
+        "lineage": {
+          "details": {
+            "compare_report_digest": "b6dae56aaed068b55134d87af802824a7c57ed4b588877b9a7f28b8ed268f884",
+            "operation_count": 1,
+            "payload_digest": "ccc99071b546e08374913efa68e51a5e37ce516f85bdbc838c8dac89cc00c736",
+            "profile": "org.sqlite-capsule.reconcile-lineage-details/1",
+            "resolved_conflict_count": 0
+          },
+          "operation": "reconcile",
+          "parents": [
+            [
+              "target-derived-from",
+              "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+              "cccccccc-cccc-4ccc-9ccc-cccccccccccc",
+              "70d475cf41504d1509177c6d02721d603b35969e0d1fbec48bb58a98f552e1d9"
+            ],
+            [
+              "changes-applied-from",
+              "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              "bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb",
+              "78d02659fcec4450bf78b8fed6a9b4143820027f2aabe470d8879d5b908680ee"
+            ]
+          ]
+        },
+        "revision_id": "be674da5-72dc-4b05-bfd8-724ca2310564",
+        "settings": {
+          "source-only": "from-source",
+          "theme": "light"
+        },
+        "signature_inventory": [
+          {
+            "algorithm": "ed25519",
+            "application_digest": {
+              "blob_hex": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6"
+            },
+            "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+            "public_key": {
+              "blob_hex": "197f6b23e16c8532c6abc838facd5ea789be0c76b2920334039bfa8b3d368d61"
+            },
+            "signature": {
+              "blob_hex": "571963c6314a915bfa9d9b0afd92e9140d2a2220c39cf46e309555f1aad154f93c94ebc29dd7c29129765d058fb19336977b52f4049ca509fdce00546ddae90a"
+            },
+            "signed_at": "2026-08-08T12:34:56Z"
+          }
+        ],
+        "signed_application": {
+          "rows": {
+            "capsule_application": [
+              {
+                "category": "developer-tool",
+                "description": "Generic v0.3 compatibility fixture.",
+                "icon_asset": "app/icon.png",
+                "id": 1,
+                "name": "Café Vector",
+                "release_notes_doc": "release-notes"
+              }
+            ],
+            "capsule_manifest": [
+              {
+                "app_id": "org.sqlite-capsule.vector",
+                "app_version": "3.0.0",
+                "data_schema_id": "org.sqlite-capsule.vector-data",
+                "data_schema_version": 2,
+                "entry_asset": "app/index.html",
+                "format_id": "org.sqlite-capsule",
+                "format_version": "0.3",
+                "id": 1,
+                "minimum_host_profile": "org.sqlite-capsule.host-profile/0.3",
+                "permissions_json": "{\"z\":0,\"é\":\"café\",\"\":\"bmp\",\"😀\":\"astral\",\"database.read\":{\"required\":true},\"database.write\":{\"required\":true},\"network\":{\"value\":\"none\"}}",
+                "released_at": "2026-08-08T00:00:00Z",
+                "runtime_protocol": "capsule-http/0.2"
+              }
+            ]
+          },
+          "sha256": "c383f28cddd372c7690d15687361d6df8ba6d72675035cee7fe1ea2a71f7d583"
+        }
+      }
+    },
+    {
+      "mode": "three-way",
+      "source_sha256": "8e12b99cf3808337dcccfc50877cfe7496dc6039c4a7fc1d87d15842b84b1ab9",
+      "target_sha256": "70d475cf41504d1509177c6d02721d603b35969e0d1fbec48bb58a98f552e1d9",
+      "ancestor_sha256": "d91ab1532627381803f16601193dd45e3a6d169249bd4ea5b78e23c5ab0ee610",
+      "manual_selection_count": 0,
+      "output_sha256": "481bc22b35ef12b2d2a671457161a67579bf53ce0b9d788ea067586a1e671f3b",
+      "three_way_screenshot": "ui/three-way-conflicts.png",
+      "three_way_scaled_screenshot": "ui/three-way-conflicts-200-percent.png",
+      "scaled_layout": {
+        "visualScale": 2,
+        "documentWidth": 1180,
+        "viewportWidth": 1180,
+        "conflictPanelVisible": true
+      },
+      "result_screenshot": "ui/three-way-verified-result.png",
+      "accessibility": {
+        "title": "Apply selected changes to a new copy",
+        "conflictHeading": "Conflicts and resolutions",
+        "conflictLegends": [
+          "1. content · vector_domain · update update"
+        ],
+        "choiceLabels": [
+          "keep target",
+          "take source"
+        ],
+        "noHorizontalOverflow": true
+      },
+      "expected_output_sha256": "d1a8df1f3678313552bc85239f0abbc248c098e7bbcaf9b0a50d3299e57afab7",
+      "expected_comparison": {
+        "profile": "org.sqlite-capsule.compare-report/1",
+        "left": {
+          "file_sha256": "d1a8df1f3678313552bc85239f0abbc248c098e7bbcaf9b0a50d3299e57afab7",
+          "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "revision_id": "cccccccc-cccc-4ccc-9ccc-cccccccccccc",
+          "app_id": "org.sqlite-capsule.vector",
+          "app_version": "3.0.0",
+          "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+          "publisher": {
+            "publisher_id": "org.example.vector",
+            "publisher_name": "Vector Publisher",
+            "signature_count": 1,
+            "signatures": [
+              {
+                "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+                "status": "valid",
+                "signed_at": "2026-08-08T12:34:56Z"
+              }
+            ]
+          },
+          "data_schema_id": "org.sqlite-capsule.vector-data",
+          "data_schema_version": 2
+        },
+        "right": {
+          "file_sha256": "481bc22b35ef12b2d2a671457161a67579bf53ce0b9d788ea067586a1e671f3b",
+          "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "revision_id": "0658d594-7d25-4abf-bc58-a06fb47543a0",
+          "app_id": "org.sqlite-capsule.vector",
+          "app_version": "3.0.0",
+          "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+          "publisher": {
+            "publisher_id": "org.example.vector",
+            "publisher_name": "Vector Publisher",
+            "signature_count": 1,
+            "signatures": [
+              {
+                "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+                "status": "valid",
+                "signed_at": "2026-08-08T12:34:56Z"
+              }
+            ]
+          },
+          "data_schema_id": "org.sqlite-capsule.vector-data",
+          "data_schema_version": 2
+        },
+        "compatibility": {
+          "state": "same-release-same-schema",
+          "can_compare_data": true,
+          "can_reconcile": true,
+          "reasons": [
+            "Exact application release and data schema match."
+          ]
+        },
+        "identity": {
+          "state": "different",
+          "left_digest": "e6b7d17a60e5d3764bd18d1e71650f760347b62dd8762a51fea5b6f80101a19b",
+          "right_digest": "12265b2196463b5621d45ad4f8880448e36f1945bbdc870e8c1111f58d944ae9",
+          "change_count": 1
+        },
+        "lineage": {
+          "state": "different",
+          "left_digest": "8b376154e38b3ae21612ca5d5eb808441f2331f6fce3c759fa6d9a9a329a5403",
+          "right_digest": "27217693d0c14225965aaaf9fda3062191927d66c337d5554a3f63d383d5507b",
+          "change_count": 1,
+          "direct_relationship": "none",
+          "direct_evidence": [],
+          "common_ancestor_claims": [],
+          "common_ancestor_claims_truncated": false
+        },
+        "application": {
+          "state": "same",
+          "left_digest": "1092026ae9fe4f07821ee33be0794201d14663306f3b33ee591a52cfeecf6fc9",
+          "right_digest": "1092026ae9fe4f07821ee33be0794201d14663306f3b33ee591a52cfeecf6fc9",
+          "change_count": 0
+        },
+        "schema": {
+          "state": "same",
+          "left_digest": "0ddd67e084beb39ea0f206ba31f29d40a0708aff0433f6c80d41c2f4bb13ff40",
+          "right_digest": "0ddd67e084beb39ea0f206ba31f29d40a0708aff0433f6c80d41c2f4bb13ff40",
+          "change_count": 0
+        },
+        "datasets": [
+          {
+            "dataset_id": "content",
+            "policy": "field",
+            "sensitivity": "normal",
+            "state": "same",
+            "left_rows": 2,
+            "right_rows": 2,
+            "counts": {
+              "added": 0,
+              "removed": 0,
+              "changed": 0,
+              "unchanged": 2
+            },
+            "left_digest": "9f1773227ed5ed323c4a67c45b45acab1ceb2e733b99b1ebd6071a511187c93f",
+            "right_digest": "9f1773227ed5ed323c4a67c45b45acab1ceb2e733b99b1ebd6071a511187c93f",
+            "tables": [
+              {
+                "table": "vector_domain",
+                "primary_key": [
+                  "id"
+                ],
+                "state": "same",
+                "left_rows": 2,
+                "right_rows": 2,
+                "counts": {
+                  "added": 0,
+                  "removed": 0,
+                  "changed": 0,
+                  "unchanged": 2
+                },
+                "left_digest": "9223402b196f90edfeaeaa7375806d82c4a8662185b9bf24b1ac7ce5fb4e000d",
+                "right_digest": "9223402b196f90edfeaeaa7375806d82c4a8662185b9bf24b1ac7ce5fb4e000d",
+                "details_redacted": false,
+                "truncated": false
+              }
+            ],
+            "details_redacted": false,
+            "truncated": false
+          },
+          {
+            "dataset_id": "settings",
+            "policy": "row",
+            "sensitivity": "normal",
+            "state": "same",
+            "left_rows": 1,
+            "right_rows": 1,
+            "counts": {
+              "added": 0,
+              "removed": 0,
+              "changed": 0,
+              "unchanged": 1
+            },
+            "left_digest": "31ae075ab32e38793892395aacbb8cf7cbc2bdbbbb5629c6af7038541a7e23df",
+            "right_digest": "31ae075ab32e38793892395aacbb8cf7cbc2bdbbbb5629c6af7038541a7e23df",
+            "tables": [
+              {
+                "table": "vector_settings",
+                "primary_key": [
+                  "key"
+                ],
+                "state": "same",
+                "left_rows": 1,
+                "right_rows": 1,
+                "counts": {
+                  "added": 0,
+                  "removed": 0,
+                  "changed": 0,
+                  "unchanged": 1
+                },
+                "left_digest": "05f8b5d067b134f5cae040b34148e0bdb5e4c0a9c602184ef87766910635faf6",
+                "right_digest": "05f8b5d067b134f5cae040b34148e0bdb5e4c0a9c602184ef87766910635faf6",
+                "details_redacted": false,
+                "truncated": false
+              }
+            ],
+            "details_redacted": false,
+            "truncated": false
+          }
+        ],
+        "limits": {
+          "max_rows_per_table": 100000,
+          "max_total_rows": 100000,
+          "max_value_bytes": 65536,
+          "max_stream_bytes": 67108864,
+          "deadline_ms": 30000
+        },
+        "truncated": false,
+        "report_digest": "56572c9c2ef796b526d08095c55583451ea0fb48e33530feb2400c95bc4f56e4"
+      },
+      "prepared_digests": {
+        "review_digest": "369f7e6aaedc417d97570749a32aaf3abed98e5f25d638d7f00b92d890836c57",
+        "payload_digest": "bfb0a0836db3c7cd756f9ce40d05c9a9653b52a2ca6f4eacd46dc9e6e6f8a2c8"
+      },
+      "output_state": {
+        "application_digest": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6",
+        "capsule_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "content": {
+          "clean-source": "clean-source",
+          "domain": "source-conflict"
+        },
+        "data_contract": {
+          "rows": {
+            "capsule_dataset": [
+              {
+                "compare_policy": "field",
+                "description": "Mutable vector content.",
+                "fork_policy": "copy",
+                "id": "content",
+                "reconcile_policy": "three-way",
+                "required": 1,
+                "role": "user-content",
+                "sensitivity": "normal",
+                "upgrade_policy": "migrate"
+              },
+              {
+                "compare_policy": "row",
+                "description": "Mutable vector settings.",
+                "fork_policy": "copy",
+                "id": "settings",
+                "reconcile_policy": "manual",
+                "required": 1,
+                "role": "settings",
+                "sensitivity": "normal",
+                "upgrade_policy": "copy"
+              }
+            ],
+            "capsule_dataset_dependency": [
+              {
+                "dataset_id": "content",
+                "depends_on_dataset_id": "settings",
+                "reason": "Content interpretation uses settings."
+              }
+            ],
+            "capsule_dataset_table": [
+              {
+                "dataset_id": "content",
+                "ignored_columns_json": "[]",
+                "immutable_columns_json": "[\"id\"]",
+                "primary_key_json": "[\"id\"]",
+                "sequence": 0,
+                "table_name": "vector_domain"
+              },
+              {
+                "dataset_id": "settings",
+                "ignored_columns_json": "[]",
+                "immutable_columns_json": "[\"key\"]",
+                "primary_key_json": "[\"key\"]",
+                "sequence": 0,
+                "table_name": "vector_settings"
+              }
+            ]
+          },
+          "sha256": "911384b5cd24eefa17bcfd2f53be738726e8ca344d339ef0aa4c936409f704a7"
+        },
+        "lineage": {
+          "details": {
+            "ancestor_evidence": {
+              "capsule_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              "evidence_digest": "e10f08a7b589a2afa603f0db6437bdb59ddcb41a7ac73a98b8c629e7ec095d91",
+              "file_sha256": "d91ab1532627381803f16601193dd45e3a6d169249bd4ea5b78e23c5ab0ee610",
+              "profile": "org.sqlite-capsule.reconcile-ancestor-evidence/1",
+              "revision_id": "aaaaaaaa-aaaa-4aaa-9aaa-aaaaaaaaaaaa"
+            },
+            "compare_report_digest": "7f6ec03d4c813f5329d3d2cfc15a22e23a179431e64b1875b6d6c01234256220",
+            "operation_count": 2,
+            "payload_digest": "bfb0a0836db3c7cd756f9ce40d05c9a9653b52a2ca6f4eacd46dc9e6e6f8a2c8",
+            "profile": "org.sqlite-capsule.reconcile-lineage-details/1",
+            "resolved_conflict_count": 1
+          },
+          "operation": "reconcile",
+          "parents": [
+            [
+              "target-derived-from",
+              "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+              "cccccccc-cccc-4ccc-9ccc-cccccccccccc",
+              "70d475cf41504d1509177c6d02721d603b35969e0d1fbec48bb58a98f552e1d9"
+            ],
+            [
+              "changes-applied-from",
+              "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              "bbbbbbbb-bbbb-4bbb-abbb-bbbbbbbbbbbb",
+              "8e12b99cf3808337dcccfc50877cfe7496dc6039c4a7fc1d87d15842b84b1ab9"
+            ]
+          ]
+        },
+        "revision_id": "0658d594-7d25-4abf-bc58-a06fb47543a0",
+        "settings": {
+          "theme": "light"
+        },
+        "signature_inventory": [
+          {
+            "algorithm": "ed25519",
+            "application_digest": {
+              "blob_hex": "fba075f1ced1ab72ca26f5f62ca53c0383bf170990989939576b3bb2446f03c6"
+            },
+            "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+            "public_key": {
+              "blob_hex": "197f6b23e16c8532c6abc838facd5ea789be0c76b2920334039bfa8b3d368d61"
+            },
+            "signature": {
+              "blob_hex": "571963c6314a915bfa9d9b0afd92e9140d2a2220c39cf46e309555f1aad154f93c94ebc29dd7c29129765d058fb19336977b52f4049ca509fdce00546ddae90a"
+            },
+            "signed_at": "2026-08-08T12:34:56Z"
+          }
+        ],
+        "signed_application": {
+          "rows": {
+            "capsule_application": [
+              {
+                "category": "developer-tool",
+                "description": "Generic v0.3 compatibility fixture.",
+                "icon_asset": "app/icon.png",
+                "id": 1,
+                "name": "Café Vector",
+                "release_notes_doc": "release-notes"
+              }
+            ],
+            "capsule_manifest": [
+              {
+                "app_id": "org.sqlite-capsule.vector",
+                "app_version": "3.0.0",
+                "data_schema_id": "org.sqlite-capsule.vector-data",
+                "data_schema_version": 2,
+                "entry_asset": "app/index.html",
+                "format_id": "org.sqlite-capsule",
+                "format_version": "0.3",
+                "id": 1,
+                "minimum_host_profile": "org.sqlite-capsule.host-profile/0.3",
+                "permissions_json": "{\"z\":0,\"é\":\"café\",\"\":\"bmp\",\"😀\":\"astral\",\"database.read\":{\"required\":true},\"database.write\":{\"required\":true},\"network\":{\"value\":\"none\"}}",
+                "released_at": "2026-08-08T00:00:00Z",
+                "runtime_protocol": "capsule-http/0.2"
+              }
+            ]
+          },
+          "sha256": "c383f28cddd372c7690d15687361d6df8ba6d72675035cee7fe1ea2a71f7d583"
+        }
+      }
+    }
+  ]
+}

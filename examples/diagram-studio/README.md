@@ -12,6 +12,12 @@ The example is intentionally separate from the platform design:
   directly testable browser logic without a bundle or runtime dependency.
 - the remaining JSON and Markdown files are records embedded into generic capsule tables.
 
+`source/reconcile-fixtures.json` is review evidence for the native lifecycle
+host rather than embedded application data. It keeps Diagram Studio semantics
+on the example side while exercising the generic two-way action vocabulary,
+all four three-way conflict families, immutable-field resolution, target-derived
+identity and the exact two-parent lineage expectation.
+
 Build and validate from the repository root:
 
 ```bash

@@ -1,0 +1,39 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "sqlite-capsule-desktop",
+    "compare",
+    "--lib"
+  ],
+  "completed_at": "2026-08-13T07:18:52Z",
+  "cwd": "native",
+  "duration_ms": 658,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-absolute-deadline-desktop-compare",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:18:51Z",
+  "stderr": {
+    "captured_bytes": 175,
+    "original_bytes": 175,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T071851Z-gate-final-absolute-deadline-desktop-compare/stderr.txt",
+    "sha256_captured": "e8abf26db4029dc633df83f5a06c5e671f394e5d10ba41f018591c45dbed21fa",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 547,
+    "original_bytes": 547,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T071851Z-gate-final-absolute-deadline-desktop-compare/stdout.txt",
+    "sha256_captured": "a7b36b5c5a546a07fc34ff3cd8733b0a19a5be40bdb76f9f09283e1bfa7a2f8c",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

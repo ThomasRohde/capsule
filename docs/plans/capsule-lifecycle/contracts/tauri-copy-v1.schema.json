@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/tauri-copy-v1.schema.json",
+  "title": "Trusted-shell copy projections",
+  "description": "Closed root profiles for review-only choice data, prepared one-use review, operation status and main-window progress. No path, serialized plan, reservation or SQL is permitted.",
+  "oneOf": [
+    { "$ref": "#/$defs/profilePreview" },
+    { "$ref": "#/$defs/preparedReview" },
+    { "$ref": "#/$defs/status" },
+    { "$ref": "#/$defs/progress" }
+  ],
+  "$defs": {
+    "token": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "mode": { "enum": ["exact-duplicate", "compact-duplicate", "fork-with-data", "create-from-template", "selective-fork"] },
+    "phase": { "enum": ["queued", "reverify", "stage", "copy-or-compact", "validate", "publish", "postpublish", "succeeded", "failed", "cancelled"] },
+    "profilePreview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "mode", "source_format_version", "source_sha256", "datasets", "blockers", "expires_at"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.tauri-copy-profile-preview/1" },
+        "mode": { "$ref": "#/$defs/mode" },
+        "source_format_version": { "enum": ["0.2", "0.3"] },
+        "source_sha256": { "$ref": "#/$defs/sha256" },
+        "datasets": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/choice" } },
+        "blockers": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 64 } },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "choice": {
+      "type": "object", "additionalProperties": false,
+      "required": ["choice_id", "dataset_id", "sensitivity", "signed_fork_policy", "fixed_action", "default_disposition", "allow_include", "allow_omit", "sensitive_confirmation_required", "dependencies", "auto_selected_by_dependency"],
+      "properties": {
+        "choice_id": { "oneOf": [{ "$ref": "#/$defs/token" }, { "type": "null" }] },
+        "dataset_id": { "type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256 },
+        "sensitivity": { "enum": ["normal", "sensitive"] },
+        "signed_fork_policy": { "enum": ["copy", "reset", "omit", "prompt", "forbid"] },
+        "fixed_action": { "enum": ["copy", "reset", "omit", "forbid", null] },
+        "default_disposition": { "enum": ["include", "omit", null] },
+        "allow_include": { "type": "boolean" }, "allow_omit": { "type": "boolean" },
+        "sensitive_confirmation_required": { "type": "boolean" },
+        "dependencies": { "type": "array", "maxItems": 64, "items": { "type": "string", "minLength": 1, "maxLength": 256 } },
+        "auto_selected_by_dependency": { "type": "boolean" }
+      }
+    },
+    "preparedReview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "plan_id", "plan_digest", "mode", "output", "preview", "checks", "expires_at", "confirmation_nonce"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.tauri-copy-review/1" },
+        "plan_id": { "type": "string", "format": "uuid" }, "plan_digest": { "$ref": "#/$defs/sha256" },
+        "mode": { "$ref": "#/$defs/mode" },
+        "output": { "$ref": "#/$defs/destination" },
+        "preview": { "oneOf": [{ "$ref": "#/$defs/exactPreview" }, { "$ref": "#/$defs/compactPreview" }, { "$ref": "#/$defs/semanticPreview" }] },
+        "checks": { "type": "array", "minItems": 7, "maxItems": 7, "items": { "type": "string", "minLength": 1, "maxLength": 64 } },
+        "expires_at": { "type": "string", "format": "date-time" }, "confirmation_nonce": { "$ref": "#/$defs/token" }
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "operation_id", "mode", "phase", "cancellable", "output_leaf"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.tauri-copy-status/1" }, "operation_id": { "$ref": "#/$defs/token" },
+        "mode": { "$ref": "#/$defs/mode" }, "phase": { "$ref": "#/$defs/phase" }, "cancellable": { "type": "boolean" },
+        "output_leaf": { "type": "string", "minLength": 1, "maxLength": 255 }, "output_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+        "error": { "$ref": "#/$defs/error" }
+      }
+    },
+    "progress": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "operation_id", "sequence", "mode", "phase", "cancellable"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.copy-progress/1" }, "operation_id": { "$ref": "#/$defs/token" },
+        "sequence": { "type": "integer", "minimum": 0, "maximum": 1000 }, "mode": { "$ref": "#/$defs/mode" },
+        "phase": { "$ref": "#/$defs/phase" }, "cancellable": { "type": "boolean" }
+      }
+    },
+    "destination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["destination_id", "mode", "parent_display", "leaf_display", "expires_at"],
+      "properties": {
+        "destination_id": { "$ref": "#/$defs/token" }, "mode": { "$ref": "#/$defs/mode" },
+        "parent_display": { "const": "Selected local folder", "description": "Host-owned non-path label; the parent filesystem path remains in Rust." },
+        "leaf_display": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "exactPreview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "format_version", "signature_state", "signature_count", "source_size_bytes", "source_sha256", "capsule_identity", "revision_identity", "logical_state", "destination", "overwrite_allowed", "expected_output_sha256"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.exact-copy-preview/1" }, "format_version": { "enum": ["0.2", "0.3"] },
+        "signature_state": { "enum": ["unsigned", "signed-valid"] }, "signature_count": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "source_size_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 }, "source_sha256": { "$ref": "#/$defs/sha256" },
+        "capsule_identity": { "const": "preserved" }, "revision_identity": { "const": "preserved" }, "logical_state": { "const": "preserved-exactly" },
+        "destination": { "const": "create-new-no-replace" }, "overwrite_allowed": { "const": false }, "expected_output_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "compactPreview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "format_version", "signature_state", "signature_count", "source_size_bytes", "source_sha256", "logical_state_profile", "logical_state_sha256", "page_size", "capsule_identity", "revision_identity", "physical_bytes", "destination", "overwrite_allowed"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.compact-copy-preview/1" }, "format_version": { "enum": ["0.2", "0.3"] },
+        "signature_state": { "enum": ["unsigned", "signed-valid"] }, "signature_count": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "source_size_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 }, "source_sha256": { "$ref": "#/$defs/sha256" },
+        "logical_state_profile": { "const": "org.sqlite-capsule.compact-logical-state/1" }, "logical_state_sha256": { "$ref": "#/$defs/sha256" },
+        "page_size": { "type": "integer", "minimum": 512, "maximum": 65536 }, "capsule_identity": { "const": "preserved" },
+        "revision_identity": { "const": "preserved" }, "physical_bytes": { "const": "repacked-not-byte-exact" },
+        "destination": { "const": "create-new-no-replace" }, "overwrite_allowed": { "const": false }
+      }
+    },
+    "semanticPreview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "mode", "source_format_version", "signature_count", "publisher_trust", "output_capsule_id", "output_revision_id", "capsule_identity", "revision_identity", "application_identity", "application_digest", "datasets", "grants", "change_log", "prior_lineage", "lineage_events", "instance_text", "instance_assets", "destination", "overwrite_allowed"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.semantic-copy-preview/1" }, "mode": { "enum": ["fork", "create-from-template", "selective-fork"] },
+        "source_format_version": { "const": "0.3" }, "signature_count": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "publisher_trust": { "const": "separate-host-policy" }, "output_capsule_id": { "type": "string", "format": "uuid" },
+        "output_revision_id": { "type": "string", "format": "uuid" }, "capsule_identity": { "const": "new-uuid-v4" },
+        "revision_identity": { "const": "new-uuid-v4" }, "application_identity": { "const": "preserved" }, "application_digest": { "$ref": "#/$defs/sha256" },
+        "datasets": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/semanticDataset" } },
+        "grants": { "const": "cleared" }, "change_log": { "const": "cleared" }, "prior_lineage": { "const": "cleared" }, "lineage_events": { "const": 1 },
+        "instance_text": { "enum": ["preserved-nonauthoritative", "signed-app-defaults"] }, "instance_assets": { "const": "cleared" },
+        "destination": { "const": "create-new-no-replace" }, "overwrite_allowed": { "const": false }
+      }
+    },
+    "semanticDataset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dataset_id", "action", "sensitivity", "sensitive_confirmed", "source_row_count", "source_state_profile", "source_state_sha256"],
+      "properties": {
+        "dataset_id": { "type": "string", "minLength": 1, "maxLength": 256 }, "action": { "enum": ["copy", "omit", "reset"] },
+        "sensitivity": { "enum": ["normal", "sensitive"] }, "sensitive_confirmed": { "type": "boolean" },
+        "source_row_count": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "source_state_profile": { "const": "org.sqlite-capsule.dataset-state/1" }, "source_state_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile", "code", "category", "retryable", "safe_detail"],
+      "properties": {
+        "profile": { "const": "org.sqlite-capsule.lifecycle-errors/1" }, "code": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 64 }, "retryable": { "type": "boolean" },
+        "safe_detail": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    }
+  }
+}

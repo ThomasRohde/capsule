@@ -1,0 +1,183 @@
+{
+  "profile": "org.sqlite-capsule.migration-ops/1",
+  "migration_id": "diagram-data-1-to-2",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+  "from_version": 1,
+  "to_version": 2,
+  "description": "Populate the new node style identifier from the legacy node kind while retaining stable node IDs.",
+  "reversible": false,
+  "limits": {
+    "max_rows_read": 2000000,
+    "max_rows_written": 2000000,
+    "max_output_bytes": 1073741824,
+    "deadline_ms": 120000
+  },
+  "preconditions": [
+    {
+      "kind": "schema_version_equals",
+      "severity": "error",
+      "description": "The source must use Diagram Studio data schema version 1.",
+      "version": 1
+    },
+    {
+      "kind": "column_exists",
+      "severity": "error",
+      "description": "Legacy nodes must expose kind.",
+      "table": "diagram_node",
+      "column": "kind"
+    },
+    {
+      "kind": "column_absent",
+      "severity": "error",
+      "description": "The source must not already contain style_id.",
+      "table": "diagram_node",
+      "column": "style_id"
+    },
+    {
+      "kind": "foreign_keys_clean",
+      "severity": "error",
+      "description": "The source capsule must have no foreign-key violations."
+    }
+  ],
+  "steps": [
+    {
+      "operation": "copy_rows",
+      "source_table": "diagram",
+      "target_table": "diagram",
+      "columns": [
+        {
+          "target_column": "id",
+          "value": {
+            "source_column": "id"
+          }
+        },
+        {
+          "target_column": "title",
+          "value": {
+            "source_column": "title"
+          }
+        },
+        {
+          "target_column": "created_at",
+          "value": {
+            "source_column": "created_at"
+          }
+        },
+        {
+          "target_column": "updated_at",
+          "value": {
+            "source_column": "updated_at"
+          }
+        }
+      ],
+      "conflict_policy": "error",
+      "batch_size": 1000
+    },
+    {
+      "operation": "copy_rows",
+      "source_table": "diagram_node",
+      "target_table": "diagram_node",
+      "columns": [
+        {
+          "target_column": "id",
+          "value": {
+            "source_column": "id"
+          }
+        },
+        {
+          "target_column": "diagram_id",
+          "value": {
+            "source_column": "diagram_id"
+          }
+        },
+        {
+          "target_column": "label",
+          "value": {
+            "source_column": "label"
+          }
+        },
+        {
+          "target_column": "x",
+          "value": {
+            "source_column": "x"
+          }
+        },
+        {
+          "target_column": "y",
+          "value": {
+            "source_column": "y"
+          }
+        },
+        {
+          "target_column": "style_id",
+          "value": {
+            "source_column": "kind",
+            "value_map": {
+              "box": "shape.rectangle.standard",
+              "decision": "shape.diamond.standard",
+              "note": "shape.note.standard"
+            },
+            "unmapped": "error"
+          }
+        },
+        {
+          "target_column": "created_at",
+          "value": {
+            "source_column": "created_at"
+          }
+        },
+        {
+          "target_column": "updated_at",
+          "value": {
+            "source_column": "updated_at"
+          }
+        }
+      ],
+      "conflict_policy": "error",
+      "batch_size": 1000
+    },
+    {
+      "operation": "copy_dataset",
+      "dataset_id": "application-presets",
+      "mode": "replace-empty-target"
+    },
+    {
+      "operation": "rebuild_dataset",
+      "dataset_id": "layout-cache",
+      "rebuild_endpoint": "rebuild_layout_cache"
+    }
+  ],
+  "postconditions": [
+    {
+      "kind": "schema_version_equals",
+      "severity": "error",
+      "description": "The output must use Diagram Studio data schema version 2.",
+      "version": 2
+    },
+    {
+      "kind": "column_exists",
+      "severity": "error",
+      "description": "Migrated nodes must expose style_id.",
+      "table": "diagram_node",
+      "column": "style_id"
+    },
+    {
+      "kind": "column_values_in",
+      "severity": "error",
+      "description": "All style identifiers must be recognised.",
+      "table": "diagram_node",
+      "column": "style_id",
+      "values": [
+        "shape.rectangle.standard",
+        "shape.diamond.standard",
+        "shape.note.standard"
+      ]
+    },
+    {
+      "kind": "foreign_keys_clean",
+      "severity": "error",
+      "description": "The migrated output must have no foreign-key violations."
+    }
+  ]
+}

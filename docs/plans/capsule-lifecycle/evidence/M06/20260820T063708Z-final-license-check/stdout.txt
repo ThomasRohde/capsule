@@ -1,0 +1,4 @@
+{
+  "ok": true,
+  "output": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\native\\THIRD_PARTY_LICENSES.md"
+}

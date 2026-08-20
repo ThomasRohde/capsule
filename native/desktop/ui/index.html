@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
-    <title>SQLite Capsule Host — trust review</title>
+    <title>SQLite Capsule Cabinet</title>
     <link rel="stylesheet" href="styles.css">
     <script src="app.js" defer></script>
   </head>
@@ -19,7 +19,7 @@
             <circle cx="164" cy="40" r="28" fill="#EF9F27"/>
             <path d="M153 40l8 8 15-17" fill="none" stroke="#412402" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span data-tauri-drag-region>SQLite Capsule Host — trust review</span>
+          <span data-tauri-drag-region>SQLite Capsule Cabinet</span>
         </div>
         <div class="caption-controls" aria-label="Window controls">
           <button type="button" class="caption-button" id="window-minimize" aria-label="Minimize window">
@@ -35,7 +35,7 @@
       </header>
 
       <div class="host-layout">
-        <aside class="navigation-rail" aria-label="Host settings">
+        <aside class="navigation-rail" aria-label="Capsule Cabinet and host settings">
           <label class="nav-search">
             <span class="search-icon" aria-hidden="true"></span>
             <span class="sr-only">Find a host setting</span>
@@ -43,43 +43,57 @@
           </label>
 
           <nav class="page-navigation" aria-label="Host pages">
-            <button type="button" class="nav-item is-selected" data-page="trust" aria-current="page">
+            <button type="button" class="nav-item is-selected" data-page="cabinet" aria-current="page">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z"></path><path d="M5 6.5h6M5 9.5h4"></path></svg>
+              <span>Cabinet</span>
+            </button>
+            <button type="button" class="nav-item" data-page="overview">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M5.4 8.2l1.8 1.8 3.4-3.8"></path></svg>
-              <span>Trust review</span>
-              <span class="nav-tag" id="trust-nav-tag">Review</span>
+              <span>Overview</span>
+              <span class="nav-tag" id="overview-nav-tag">No file</span>
             </button>
-            <button type="button" class="nav-item" data-page="capabilities">
+            <button type="button" class="nav-item" data-page="copy">
               <span class="selection-pill" aria-hidden="true"></span>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h7"></path></svg>
-              <span>Capabilities</span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7v3H3zM6 6.5h7v7H6z"></path><path d="M3 5.5v5h2"></path></svg>
+              <span>Create copy</span>
+              <span class="nav-tag">M04</span>
+            </button>
+            <button type="button" class="nav-item" data-page="lineage">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h5M8 4l2 4M10 8l3 4M3 12h10"></path><circle cx="3" cy="4" r="1"></circle><circle cx="10" cy="8" r="1"></circle><circle cx="13" cy="12" r="1"></circle></svg>
+              <span>Lineage</span>
+              <span class="nav-tag">M04</span>
+            </button>
+            <button type="button" class="nav-item" data-page="compare">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h4v7h-4zM9.5 4.5h4v7h-4zM6.5 8h3"></path></svg>
+              <span>Compare</span>
+              <span class="nav-tag">M05</span>
+            </button>
+            <button type="button" class="nav-item" data-page="versions">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5h10v3H3zM3 9.5h10v3H3z"></path><path d="M5 6.5v3M11 6.5v3"></path></svg>
+              <span>Versions</span>
+              <span class="nav-tag">M07</span>
+            </button>
+            <span class="nav-group-label">Host</span>
+            <button type="button" class="nav-item" data-page="security">
+              <span class="selection-pill" aria-hidden="true"></span>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5l5 2v3.6c0 2.7-2 4.8-5 5.7-3-.9-5-3-5-5.7V4.5z"></path><path d="M5.8 8l1.4 1.4 3-3"></path></svg>
+              <span>Security</span>
             </button>
             <button type="button" class="nav-item" data-page="protection">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"></rect><rect x="5.5" y="5.5" width="5" height="5" rx="0.8"></rect></svg>
-              <span>Data protection</span>
-            </button>
-            <button type="button" class="nav-item" data-page="signing">
-              <span class="selection-pill" aria-hidden="true"></span>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12.5h10M4.5 10.5l6.8-6.8 1 1-6.8 6.8h-1z"></path><path d="M9.8 5.2l1 1"></path></svg>
-              <span>Publisher signing</span>
-              <span class="nav-tag" id="signing-nav-tag">Use once</span>
+              <span>Recovery</span>
             </button>
             <button type="button" class="nav-item" data-page="updates">
               <span class="selection-pill" aria-hidden="true"></span>
               <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M5.4 8.6L8 6l2.6 2.6"></path></svg>
-              <span>Host updates</span>
+              <span>Settings</span>
               <span class="nav-tag" id="update-nav-tag" hidden>1</span>
-            </button>
-            <button type="button" class="nav-item" data-page="admin">
-              <span class="selection-pill" aria-hidden="true"></span>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.6" y="3.6" width="8.8" height="8.8" rx="1" transform="rotate(45 8 8)"></rect></svg>
-              <span>Local trust controls</span>
-            </button>
-            <button type="button" class="nav-item" data-page="boundary">
-              <span class="selection-pill" aria-hidden="true"></span>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="1.5"></rect><path d="M2.5 6h11"></path></svg>
-              <span>Application window</span>
             </button>
           </nav>
 
@@ -109,17 +123,60 @@
 
         <main id="page-content" class="content-surface" tabindex="-1">
           <header class="page-heading">
-            <h1 id="page-title">Trust review</h1>
-            <p id="page-subtitle">Host-owned identity for the file that is asking to run. Nothing executes until you decide.</p>
+            <h1 id="page-title">Cabinet</h1>
+            <p id="page-subtitle">Choose a capsule to inspect. Recent metadata is a convenience only and never execution authority.</p>
           </header>
 
-          <section class="page-panel is-active" data-page-panel="trust" id="trust-review" aria-labelledby="page-title">
+          <section class="page-panel is-active" data-page-panel="cabinet" id="cabinet" aria-labelledby="page-title">
+            <div class="cabinet-hero">
+              <div class="cabinet-mark" aria-hidden="true">SC</div>
+              <div>
+                <span class="boundary-kicker">Trusted host shell</span>
+                <h2>Open a Capsule safely</h2>
+                <p>The Cabinet inspects bounded metadata before any application asset, bridge, or database write can be released.</p>
+              </div>
+            </div>
+            <div class="cabinet-actions">
+              <button type="button" class="primary" id="cabinet-open-button">Open capsule…</button>
+              <button type="button" id="create-template-button" data-route="copy">Create a copy…</button>
+            </div>
+            <p class="action-status" id="cabinet-open-status" role="status" aria-live="polite"></p>
+            <section class="section-card recent-card" aria-labelledby="recent-title">
+              <div class="card-heading">
+                <div><h2 id="recent-title">Recent capsules</h2><p>Host-local display cache. Every open is inspected again from the source file.</p></div>
+                <span class="badge">Non-authoritative</span>
+              </div>
+              <ul id="recent-capsules" class="recent-list"><li>No recent capsules yet.</li></ul>
+            </section>
+          </section>
+
+          <section class="page-panel" data-page-panel="overview" id="capsule-overview" aria-labelledby="page-title" hidden>
+            <div class="overview-hero">
+              <div class="overview-icon" id="overview-icon" aria-hidden="true"><img id="overview-icon-image" alt="" hidden><span id="overview-icon-fallback">SC</span></div>
+              <div class="overview-heading-copy">
+                <div class="overview-badges"><span class="badge" id="format-badge">Inspecting</span><span class="badge" id="profile-badge">Profile</span></div>
+                <h2 id="overview-title" tabindex="-1">Capsule overview</h2>
+                <p id="overview-description">Bounded application and capsule metadata appears here before execution.</p>
+              </div>
+            </div>
+
+            <div class="overview-columns">
+              <section class="section-card" aria-labelledby="application-identity-title">
+                <div class="card-heading"><div><h2 id="application-identity-title">Application release</h2><p>Application-profile metadata. Cryptographic and host-local trust are shown separately.</p></div><span class="badge" id="application-state-badge">Inspecting</span></div>
+                <dl id="application-identity" class="setting-list"></dl>
+              </section>
+              <section class="section-card" aria-labelledby="instance-identity-title">
+                <div class="card-heading"><div><h2 id="instance-identity-title">Capsule profile</h2><p>Mutable, self-described identity. It is not publisher authentication.</p></div><span class="badge warn">Mutable</span></div>
+                <dl id="instance-identity" class="setting-list"></dl>
+              </section>
+            </div>
+
             <div class="verdict" id="verdict" aria-live="polite" tabindex="-1">
               <span class="verdict-mark" aria-hidden="true">?</span>
               <div><strong>Verification in progress</strong><p>No executable assets have been released.</p></div>
             </div>
 
-            <h2 id="identity-title" class="section-title">File and publisher</h2>
+            <h2 id="identity-title" class="section-title">File, verification and publisher</h2>
             <dl id="identity-details" class="setting-list">
               <div><dt>Status</dt><dd>Waiting for the trusted host…</dd></div>
             </dl>
@@ -132,9 +189,237 @@
               <dl id="crypto-details" class="technical-list"></dl>
             </details>
 
+            <section class="section-card lifecycle-preview" aria-labelledby="lifecycle-preview-title">
+              <div class="card-heading"><div><h2 id="lifecycle-preview-title">Lifecycle actions</h2><p>Review and execute create-new copies inside the trusted host.</p></div><span class="badge">Create new</span></div>
+              <div class="lifecycle-card-grid">
+                <button type="button" data-route="copy"><strong>Create copy</strong><span>Exact, compact, fork, template, and selective profiles are reviewed separately.</span></button>
+                <button type="button" data-route="copy"><strong>Fork</strong><span>Signed data-contract policy controls every dataset and new lineage output.</span></button>
+                <button type="button" data-route="compare"><strong>Compare</strong><span>Inspect identity, application, schema, and policy-controlled data without executing either Capsule.</span></button>
+                <button type="button" disabled><strong>Upgrade</strong><span>Requires same-publisher release and migration policy in M07–M08.</span></button>
+              </div>
+            </section>
+
             <div class="page-actions page-actions-end">
               <p class="action-status" id="open-status" role="status" aria-live="polite"></p>
-              <button type="button" id="open-button">Open capsule…</button>
+              <button type="button" class="primary" id="review-capabilities-button" disabled>Review capabilities</button>
+              <button type="button" id="open-button">Open another capsule…</button>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="copy" aria-labelledby="copy-page-title" hidden>
+            <div class="status-card copy-status-card">
+              <span class="status-icon" aria-hidden="true">＋</span>
+              <div>
+                <h2 id="copy-page-title">Create a verified Capsule copy</h2>
+                <p id="copy-status" role="status" aria-live="polite">Choose a copy profile. The selected source remains pinned read-only and the destination must not exist.</p>
+              </div>
+              <span class="badge" id="copy-badge">No review</span>
+            </div>
+
+            <fieldset class="copy-mode-grid" id="copy-mode-grid">
+              <legend>Copy profile</legend>
+              <label><input type="radio" name="copy-mode" value="exact-duplicate" checked><span><strong>Exact duplicate</strong><small>Byte-for-byte snapshot; identity and signature state are preserved.</small></span></label>
+              <label><input type="radio" name="copy-mode" value="compact-duplicate"><span><strong>Compact duplicate</strong><small>Logical state is preserved while deleted/free pages are removed.</small></span></label>
+              <label><input type="radio" name="copy-mode" value="fork-with-data"><span><strong>Fork with data</strong><small>New capsule and revision IDs; signed dataset policies apply.</small></span></label>
+              <label><input type="radio" name="copy-mode" value="create-from-template"><span><strong>Create from template</strong><small>Requires an authenticated clean template-state proof.</small></span></label>
+              <label><input type="radio" name="copy-mode" value="selective-fork"><span><strong>Selective fork</strong><small>Sensitive datasets default off and dependencies stay closed.</small></span></label>
+            </fieldset>
+
+            <section class="section-card copy-profile-review" id="copy-profile-review" hidden aria-labelledby="copy-profile-review-title">
+              <div class="card-heading"><div><h2 id="copy-profile-review-title">Signed dataset choices</h2><p>Choice tokens are opaque and bound to this selection. Dataset names are display-only.</p></div><span class="badge">Review only</span></div>
+              <div id="copy-profile-datasets" class="copy-dataset-review"></div>
+            </section>
+
+            <div class="action-list copy-selections">
+              <div class="action-row"><div><strong>Create-new destination</strong><p id="copy-destination-status">No filesystem path is sent to this page. The host retains an opaque destination capability.</p></div><button type="button" id="copy-destination-button">Choose…</button></div>
+            </div>
+
+            <div class="actions copy-prepare-actions">
+              <button type="button" class="quiet" id="copy-clear-button">Clear review</button>
+              <button type="button" class="primary" id="copy-prepare-button" disabled>Prepare bound review</button>
+            </div>
+
+            <section class="section-card copy-review" id="copy-review" hidden aria-labelledby="copy-review-title">
+              <div class="card-heading"><div><h2 id="copy-review-title">Create-new review</h2><p>Bound source, identity effects, storage promises, and post-publication checks.</p></div><span class="badge">One use</span></div>
+              <dl id="copy-review-details" class="technical-list"></dl>
+              <div id="copy-dataset-review" class="copy-dataset-review"></div>
+            </section>
+
+            <div class="signing-consent" id="copy-consent" hidden>
+              <label><input type="checkbox" id="copy-confirmation"><span>I reviewed the exact source digest, identity effects, dataset actions, destination display, checks, and expiry above.</span></label>
+              <button type="button" class="primary" id="copy-execute-button" disabled>Create verified copy</button>
+            </div>
+            <p id="copy-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+
+            <div class="admin-output-wrap" id="copy-result-wrap" hidden>
+              <div><strong>Copy result</strong><span>Create-new output · source unchanged</span></div>
+              <pre id="copy-result" tabindex="0" aria-live="polite" aria-label="Verified copy result"></pre>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="lineage" aria-labelledby="lineage-preview-page-title" hidden>
+            <div class="section-card milestone-empty-state">
+              <span class="boundary-kicker">Read-only preview</span>
+              <h2 id="lineage-preview-page-title">Lineage</h2>
+              <p>Verified lineage browsing is delivered with create-new copy and fork outputs in M04. No mutable lineage claim is used as publisher authority.</p>
+              <button type="button" disabled title="Lineage browsing is delivered in M04.">Open lineage</button>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="compare" aria-labelledby="compare-page-title" hidden>
+            <div class="status-card compare-status-card">
+              <span class="status-icon" aria-hidden="true">⇄</span>
+              <div>
+                <h2 id="compare-page-title" tabindex="-1">Compare verified Capsules</h2>
+                <p id="compare-status" role="status" aria-live="polite">Select a Capsule in the Cabinet, then choose a second local Capsule. Both remain pinned read-only and no application code runs.</p>
+              </div>
+              <span id="compare-badge" class="badge">No session</span>
+            </div>
+
+            <section class="section-card" aria-labelledby="compare-pair-title">
+              <div class="card-heading">
+                <div><h2 id="compare-pair-title">Comparison pair</h2><p>Paths, SQLite identifiers, source handles, and cursors remain inside Rust.</p></div>
+                <span class="boundary-kicker">Read only</span>
+              </div>
+              <div class="page-actions">
+                <button type="button" class="primary" id="compare-choose-button">Choose second Capsule…</button>
+                <button type="button" id="compare-close-button" disabled>Close comparison</button>
+              </div>
+              <p id="compare-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+            </section>
+
+            <div id="compare-report" hidden>
+              <section class="section-card compare-compatibility" aria-labelledby="compare-compatibility-title">
+                <div class="card-heading">
+                  <div><h2 id="compare-compatibility-title" tabindex="-1">Compatibility</h2><p id="compare-compatibility-reason"></p></div>
+                  <span id="compare-compatibility-badge" class="badge"></span>
+                </div>
+                <dl id="compare-pair-details" class="technical-list compare-pair-details"></dl>
+                <p class="boundary-note">A valid application signature is cryptographic evidence, not a host-local publisher trust decision. Review trust separately under Security.</p>
+              </section>
+
+              <section class="compare-section-grid" aria-label="Four comparison layers">
+                <article class="section-card compare-layer"><h2>Identity</h2><p data-compare-layer="identity"></p></article>
+                <article class="section-card compare-layer"><h2>Lineage</h2><p data-compare-layer="lineage"></p></article>
+                <article class="section-card compare-layer">
+                  <h2>Application</h2>
+                  <p data-compare-layer="application"></p>
+                  <button type="button" id="compare-application-button">Inspect bounded application families</button>
+                  <div id="compare-application-detail" class="compare-application-detail" hidden></div>
+                </article>
+                <article class="section-card compare-layer"><h2>Schema</h2><p data-compare-layer="schema"></p></article>
+              </section>
+
+              <section class="section-card" aria-labelledby="compare-datasets-title">
+                <div class="card-heading"><div><h2 id="compare-datasets-title">Dataset summaries</h2><p>Disclosure follows each signed compare policy. Sensitive datasets remain counts-only until an explicit reveal.</p></div><span id="compare-limit-badge" class="badge"></span></div>
+                <div id="compare-datasets" class="compare-datasets"></div>
+              </section>
+
+              <section id="compare-detail" class="section-card" aria-labelledby="compare-detail-title" hidden>
+                <div class="card-heading"><div><h2 id="compare-detail-title" tabindex="-1">Bounded detail page</h2><p id="compare-detail-description"></p></div><span id="compare-detail-badge" class="badge"></span></div>
+                <div id="compare-sensitive-consent" class="sensitive-consent" hidden>
+                  <p>This dataset is marked sensitive. Reveal returns one bounded page to this trusted shell only; values are not cached or logged.</p>
+                  <button type="button" class="danger" id="compare-reveal-button">Reveal one sensitive page</button>
+                </div>
+                <div id="compare-detail-table-wrap" class="compare-detail-table-wrap" hidden>
+                  <table class="compare-detail-table">
+                    <thead><tr><th scope="col">Change</th><th scope="col">Row evidence</th><th scope="col">Field changes</th></tr></thead>
+                    <tbody id="compare-detail-rows"></tbody>
+                  </table>
+                  <div class="page-actions page-actions-end"><button type="button" id="compare-next-button" disabled>Next page</button></div>
+                </div>
+              </section>
+
+              <section id="reconcile-panel" class="section-card reconcile-panel" aria-labelledby="reconcile-title">
+                <div class="card-heading">
+                  <div>
+                    <h2 id="reconcile-title" tabindex="-1">Apply selected changes to a new copy</h2>
+                    <p>Create a new copy of the chosen target. Neither compared Capsule is modified.</p>
+                  </div>
+                  <span id="reconcile-badge" class="badge">No authority</span>
+                </div>
+                <button type="button" class="primary" id="reconcile-open-button">Apply selected changes to a new copy</button>
+                <p id="reconcile-status" class="lifecycle-action-status" role="status" aria-live="polite">Open bounded row detail before applying changes. Only rows disclosed in this comparison can be selected.</p>
+
+                <div id="reconcile-options" hidden>
+                  <fieldset id="reconcile-orientations" class="reconcile-orientations">
+                    <legend>Choose source and target</legend>
+                  </fieldset>
+                  <p class="boundary-note">Source supplies reviewed changes. Target supplies the Capsule identity, signed application, signature inventory, ignored data and immutable values preserved in the new copy.</p>
+                  <button type="button" id="reconcile-start-button" disabled>Review this direction</button>
+                </div>
+
+                <div id="reconcile-session" hidden>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-identity-title">
+                    <h2 id="reconcile-identity-title">Output identity preview</h2>
+                    <dl id="reconcile-identity" class="technical-list"></dl>
+                  </section>
+                  <fieldset id="reconcile-selections" class="reconcile-selections">
+                    <legend>Select disclosed changes</legend>
+                  </fieldset>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-conflicts-title">
+                    <h2 id="reconcile-conflicts-title">Conflicts and resolutions</h2>
+                    <p id="reconcile-conflicts">Two-way review has no ancestor-derived conflict resolution. Each selected row is bound to its exact source and target precondition.</p>
+                    <button type="button" id="reconcile-ancestor-button" disabled>Choose verified ancestor…</button>
+                    <div id="reconcile-three-way" class="reconcile-conflict-list" hidden></div>
+                  </section>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-validation-title">
+                    <h2 id="reconcile-validation-title">Validation</h2>
+                    <ul id="reconcile-session-checks" class="check-list"></ul>
+                  </section>
+                  <div class="page-actions">
+                    <button type="button" id="reconcile-destination-button">Choose new-copy destination…</button>
+                    <button type="button" class="primary" id="reconcile-prepare-button" disabled>Prepare exact review</button>
+                  </div>
+                  <p id="reconcile-destination-status" class="boundary-note">No destination selected. The destination must not exist.</p>
+                </div>
+
+                <div id="reconcile-review" hidden>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-review-title">
+                    <h2 id="reconcile-review-title" tabindex="-1">Exact value-free review</h2>
+                    <dl id="reconcile-review-identity" class="technical-list"></dl>
+                  </section>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-operations-title">
+                    <h2 id="reconcile-operations-title">Selected operations</h2>
+                    <div id="reconcile-operation-list" class="reconcile-operation-list"></div>
+                  </section>
+                  <section class="reconcile-subsection" aria-labelledby="reconcile-evidence-title">
+                    <h2 id="reconcile-evidence-title">Evidence and postconditions</h2>
+                    <ul id="reconcile-review-checks" class="check-list"></ul>
+                  </section>
+                  <label class="reconcile-confirmation"><input type="checkbox" id="reconcile-confirmation"><span>I reviewed the source, target, new output identity, selected operations, sensitive disclosures, lineage, checks and expiry.</span></label>
+                  <div class="page-actions">
+                    <button type="button" class="primary" id="reconcile-execute-button" disabled>Create and verify new copy</button>
+                    <button type="button" id="reconcile-cancel-button" disabled>Cancel operation</button>
+                  </div>
+                </div>
+
+                <div id="reconcile-result" class="admin-output-wrap" hidden>
+                  <div><strong>Reconciliation result</strong><span>New copy · both inputs unchanged</span></div>
+                  <pre id="reconcile-result-output" tabindex="0" aria-live="polite" aria-label="Verified reconciliation result"></pre>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="versions" aria-labelledby="versions-preview-page-title" hidden>
+            <div class="section-card milestone-empty-state">
+              <span class="boundary-kicker">Create-new upgrades only</span>
+              <h2 id="versions-preview-page-title">Application versions</h2>
+              <p>Signed application release upgrades arrive in M07 and declarative data migration in M08. This milestone never rewrites the selected Capsule.</p>
+              <button type="button" disabled title="Application upgrade is delivered in M07–M08.">Upgrade application…</button>
+            </div>
+          </section>
+
+          <section class="page-panel" data-page-panel="security" aria-labelledby="security-page-title" hidden>
+            <div class="section-card">
+              <div class="card-heading"><div><h2 id="security-page-title">Security</h2><p>Host-owned trust, capability, publisher and renderer-boundary controls.</p></div><span class="badge">Trusted shell</span></div>
+              <div class="action-list">
+                <div class="action-row"><div><strong>Trust and capabilities</strong><p>Review the exact verified release and its requested authority.</p></div><button type="button" data-route="capabilities">Review</button></div>
+                <div class="action-row"><div><strong>Publisher tools</strong><p>Sign a verified create-new Capsule copy with a use-once key.</p></div><button type="button" data-route="signing">Open</button></div>
+                <div class="action-row"><div><strong>Local trust</strong><p>Audit, forget, revoke or reset protected host-local decisions.</p></div><button type="button" data-route="admin">Open</button></div>
+                <div class="action-row"><div><strong>Application boundary</strong><p>Inspect the separately sandboxed raw Wry window and named bridge.</p></div><button type="button" data-route="boundary">Inspect</button></div>
+              </div>
             </div>
           </section>
 
@@ -170,6 +455,10 @@
               </div>
             </div>
             <div class="action-list">
+              <div class="action-row">
+                <div><strong>Recover rollback journal and re-inspect</strong><p>Runs only after this explicit action. SQLite performs recovery, then the Cabinet re-inspects with application assets still locked.</p></div>
+                <button type="button" id="recover-selected-button" disabled>Recover and inspect</button>
+              </div>
               <div class="action-row">
                 <div><strong>Reopen and re-verify</strong><p>Re-inspects the current path. Application code remains locked.</p></div>
                 <button type="button" id="reopen-button" disabled>Reopen</button>

@@ -1,0 +1,37 @@
+{
+  "command": [
+    "python",
+    "native\\tools\\build_installers.py",
+    "--bundles",
+    "nsis"
+  ],
+  "completed_at": "2026-08-12T17:27:18Z",
+  "cwd": ".",
+  "duration_ms": 66654,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-nsis-installer-rerun",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:26:11Z",
+  "stderr": {
+    "captured_bytes": 1778,
+    "original_bytes": 1778,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172611Z-gate-nsis-installer-rerun/stderr.txt",
+    "sha256_captured": "374e66e4bcc20f8b5f4f75de23d98987e73b3139df699ba88998fee2d07dd9d7",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 597,
+    "original_bytes": 597,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172611Z-gate-nsis-installer-rerun/stdout.txt",
+    "sha256_captured": "71837f200fe23b434c054c763ae0ae36aacbcba34274f6791db5ca48ec6afe30",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 1800
+}

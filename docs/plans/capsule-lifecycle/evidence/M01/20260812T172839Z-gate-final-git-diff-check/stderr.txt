@@ -1,0 +1,1 @@
+warning: in the working copy of 'plugins/capsule-creator/.codex-plugin/plugin.json', CRLF will be replaced by LF the next time Git touches it

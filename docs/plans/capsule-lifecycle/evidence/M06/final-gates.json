@@ -1,0 +1,141 @@
+{
+  "profile": "org.sqlite-capsule.milestone-gate-summary/1",
+  "milestone": "M06",
+  "completed_at": "2026-08-20T06:42:00Z",
+  "repository": {
+    "branch": "main",
+    "base_commit": "e73cf948fba233ef84d4680930b61549012020a7",
+    "source_dirty_during_qualification": true
+  },
+  "environment": {
+    "os": "Windows",
+    "target": "x86_64-pc-windows-msvc",
+    "installer_profile": "debug",
+    "installer_signing": "development-unsigned"
+  },
+  "gates": [
+    {
+      "command": "python -m unittest discover -s tests -v",
+      "result": "pass",
+      "summary": "202 passed; 1 optional Python jsonschema test skipped",
+      "compensating_evidence": "Draft 2020-12 PowerShell Test-Json validation passed for the frozen reconcile lifecycle, payload, CLI and Tauri examples"
+    },
+    {
+      "command": "cargo test --offline --workspace --all-targets -- --test-threads=1",
+      "cwd": "native",
+      "result": "pass",
+      "summary": "373 passed; 0 failed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "cargo check --offline --workspace --all-targets",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "cargo clippy --offline --workspace --all-targets -- -D warnings",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:browser",
+      "result": "pass",
+      "summary": "4 passed"
+    },
+    {
+      "command": "npm run test:browser:html",
+      "result": "pass",
+      "summary": "59 passed; 13 project/platform-conditional skips"
+    },
+    {
+      "command": "node tests/native/reconcile-finalization.test.mjs",
+      "result": "pass",
+      "evidence": "20260820T063711Z-final-js-terminal-race/evidence.json"
+    },
+    {
+      "command": "node tests/native/reconcile.e2e.mjs",
+      "result": "pass",
+      "summary": "trusted two-way and pure-three-way flows; exact lineage, signatures, application/data contracts, independent expected-output comparison and 200% layout",
+      "evidence": "ui/native-m06-reconcile-evidence.json"
+    },
+    {
+      "command": "node tests/native/raw-child.e2e.mjs (boundary-only)",
+      "result": "pass",
+      "summary": "all ten reconcile commands denied in locked and authorized raw Wry states; Tauri globals absent"
+    },
+    {
+      "command": "python -m unittest tests.test_capsule_creator_plugin -v",
+      "result": "pass",
+      "summary": "19 passed; standalone plugin copy verified"
+    },
+    {
+      "command": "python docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py",
+      "result": "pass",
+      "summary": "224 records/checks after milestone completion",
+      "evidence": "20260820T064808Z-final-completed-lifecycle-specs/evidence.json"
+    },
+    {
+      "command": "python -m unittest tests.test_cli_reconcile_contract tests.test_tauri_reconcile_contract tests.test_reconcile_plan_vectors tests.test_diagram_studio_data_contract -v",
+      "result": "pass",
+      "summary": "25 passed; 1 optional Python jsonschema test skipped; semantic schemas independently validated with PowerShell Draft 2020-12",
+      "evidence": "20260820T063633Z-final-reconcile-contracts/evidence.json"
+    },
+    {
+      "command": "python tools/build_example.py --check",
+      "result": "pass",
+      "evidence": "20260820T063652Z-final-example-check/evidence.json"
+    },
+    {
+      "command": "python tools/build_exports.py --check",
+      "result": "pass",
+      "evidence": "20260820T063655Z-final-exports-check/evidence.json"
+    },
+    {
+      "command": "python tools/capsule.py verify capsules/diagram-studio.capsule.sqlite",
+      "result": "pass",
+      "summary": "18 checks",
+      "evidence": "20260820T063659Z-final-capsule-verify/evidence.json"
+    },
+    {
+      "command": "python native/tools/generate_sbom.py --check",
+      "result": "pass",
+      "evidence": "20260820T063700Z-final-sbom-check/evidence.json"
+    },
+    {
+      "command": "python native/tools/generate_license_report.py --check",
+      "result": "pass",
+      "evidence": "20260820T063708Z-final-license-check/evidence.json"
+    },
+    {
+      "command": "python native/tools/check_rustsec.py --advisory-db .tmp/rustsec-advisory-db-m06",
+      "result": "pass",
+      "summary": "no vulnerabilities; 17 exact reviewed warning exceptions",
+      "evidence": "20260820T063907Z-final-rustsec/evidence.json"
+    },
+    {
+      "command": "python native/tools/build_installers.py --bundles nsis",
+      "result": "pass",
+      "summary": "NSIS only; exported stable installer matches the generated bundle byte-for-byte",
+      "evidence": "20260820T063754Z-final-nsis-installer/release-evidence.json"
+    }
+  ],
+  "artifacts": {
+    "capsule": {
+      "path": "capsules/diagram-studio.capsule.sqlite",
+      "bytes": 913408,
+      "sha256": "76c883e39d6d9617919fe0f3c1f1974e63b97c9377fb39d4cb3e1f6031890e2e"
+    },
+    "installer": {
+      "path": "capsules/sqlite-capsule-host-setup.exe",
+      "kind": "windows-nsis",
+      "bytes": 7780957,
+      "sha256": "2fb2bda1dd3329228e02fe00ed43dad44ce6df13ed93752abd4d210774af8db8",
+      "development_unsigned": true
+    }
+  },
+  "result": "pass"
+}

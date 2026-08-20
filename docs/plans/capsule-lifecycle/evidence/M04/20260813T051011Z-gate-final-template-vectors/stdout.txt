@@ -1,0 +1,6 @@
+template-state vector content: rows=1 bytes=306 sha256=da520fd9258e7885a3575b02793d5324a54f89243cfa2b7493d7b12d2823d0ae
+template-state vector empty-state: rows=0 bytes=229 sha256=e5ae322fde5bf4cec6b4762404bd9279ca602d68f5d478de1a3359687a50987c
+template-state vector ordering: rows=4 bytes=598 sha256=fe0df8b89dc6a219981480037769b670e8d3dbc42dda4c2f8ad6d845af8f76db
+template-state vector settings: rows=1 bytes=254 sha256=5f6021d0a0862a2c9ed7822968fcdcd57b31151662d12520ed23cbdcd90b78ac
+template-state vector type-spectrum: rows=2 bytes=398 sha256=926a6344985a4e576723d0af20a57b59660c82dc893241890324d56f1903040d
+template-state vectors: PASS

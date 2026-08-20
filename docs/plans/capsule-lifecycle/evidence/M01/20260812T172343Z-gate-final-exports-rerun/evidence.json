@@ -1,0 +1,36 @@
+{
+  "command": [
+    "python",
+    "tools\\build_exports.py",
+    "--check"
+  ],
+  "completed_at": "2026-08-12T17:23:44Z",
+  "cwd": ".",
+  "duration_ms": 1583,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-exports-rerun",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:23:43Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172343Z-gate-final-exports-rerun/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 2329,
+    "original_bytes": 2329,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172343Z-gate-final-exports-rerun/stdout.txt",
+    "sha256_captured": "1f18036bb9154c6d90f73cd47f56abfac07f21ab30bb39f2c743e67cef527977",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

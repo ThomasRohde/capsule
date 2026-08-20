@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/exact-copy-preview-v1.schema.json",
+  "title": "Capsule exact-copy preview",
+  "description": "Path-free review projection for a byte-exact create-new duplicate. It carries no destination capability or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "format_version", "signature_state", "signature_count", "source_size_bytes", "source_sha256", "capsule_identity", "revision_identity", "logical_state", "destination", "overwrite_allowed", "expected_output_sha256"],
+  "properties": {
+    "profile": { "const": "org.sqlite-capsule.exact-copy-preview/1" },
+    "format_version": { "enum": ["0.2", "0.3"] },
+    "signature_state": { "enum": ["unsigned", "signed-valid"] },
+    "signature_count": { "type": "integer", "minimum": 0, "maximum": 32 },
+    "source_size_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "capsule_identity": { "const": "preserved" },
+    "revision_identity": { "const": "preserved" },
+    "logical_state": { "const": "preserved-exactly" },
+    "destination": { "const": "create-new-no-replace" },
+    "overwrite_allowed": { "const": false },
+    "expected_output_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

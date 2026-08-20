@@ -1,0 +1,24 @@
+{
+  "profile": "org.sqlite-capsule.reconcile-cli-three-way-candidates/1",
+  "compare_report_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "clean_change_count": 1,
+  "conflicts": [
+    {
+      "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "dataset_id": "content",
+      "table": "diagram_node",
+      "key_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "kind": "update-update",
+      "deleted_side": null,
+      "source_row_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "target_row_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "ancestor_row_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "allowed_choices": [
+        "keep-target",
+        "take-source"
+      ]
+    }
+  ],
+  "executable_authority": false,
+  "note": "Conflict and row digests are review data only. Resolution requires the retained in-process authority."
+}

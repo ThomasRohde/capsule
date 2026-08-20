@@ -12,8 +12,11 @@
     "test:native:prepare": "python native/tools/prepare_native_e2e.py",
     "test:native:prepare:check": "python native/tools/prepare_native_e2e.py --check",
     "test:native": "wdio run tests/native/wdio.conf.mjs",
+    "test:native:overview": "node tests/native/cabinet-overview.e2e.mjs",
     "test:native:window": "node tests/native/standalone-window.e2e.mjs",
-    "test:native:raw": "node tests/native/raw-child.e2e.mjs"
+    "test:native:raw": "node tests/native/raw-child.e2e.mjs",
+    "test:native:reconcile": "node tests/native/reconcile.e2e.mjs",
+    "test:native:reconcile-finalization": "node tests/native/reconcile-finalization.test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

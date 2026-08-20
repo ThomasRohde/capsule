@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/compare-report-v1.schema.json",
+  "title": "Bounded Capsule comparison summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile", "left", "right", "compatibility", "identity", "lineage",
+    "application", "schema", "datasets", "limits", "truncated", "report_digest"
+  ],
+  "properties": {
+    "profile": {"const": "org.sqlite-capsule.compare-report/1"},
+    "left": {"$ref": "#/$defs/input_ref"},
+    "right": {"$ref": "#/$defs/input_ref"},
+    "compatibility": {"$ref": "#/$defs/compatibility"},
+    "identity": {"$ref": "#/$defs/section"},
+    "lineage": {"$ref": "#/$defs/lineage_section"},
+    "application": {"$ref": "#/$defs/section"},
+    "schema": {"$ref": "#/$defs/section"},
+    "datasets": {
+      "type": "array", "maxItems": 256,
+      "items": {"$ref": "#/$defs/dataset_summary"}
+    },
+    "limits": {"$ref": "#/$defs/limits"},
+    "truncated": {"type": "boolean"},
+    "report_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullable_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "nullable_count": {"type": ["integer", "null"], "minimum": 0, "maximum": 9223372036854775807},
+    "bounded_text": {"type": "string", "maxLength": 2048, "x-maxUtf8Bytes": 2048},
+    "input_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "file_sha256", "capsule_id", "revision_id", "app_id", "app_version",
+        "application_digest", "publisher", "data_schema_id", "data_schema_version"
+      ],
+      "properties": {
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "capsule_id": {"type": "string", "minLength": 1, "maxLength": 128, "x-maxUtf8Bytes": 128},
+        "revision_id": {"type": "string", "minLength": 1, "maxLength": 128, "x-maxUtf8Bytes": 128},
+        "app_id": {"type": "string", "minLength": 1, "maxLength": 512, "x-maxUtf8Bytes": 512},
+        "app_version": {"type": "string", "minLength": 1, "maxLength": 128, "x-maxUtf8Bytes": 128},
+        "application_digest": {"$ref": "#/$defs/sha256"},
+        "publisher": {"$ref": "#/$defs/publisher"},
+        "data_schema_id": {"type": "string", "minLength": 1, "maxLength": 512, "x-maxUtf8Bytes": 512},
+        "data_schema_version": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+      }
+    },
+    "publisher": {
+      "type": "object", "additionalProperties": false,
+      "required": ["publisher_id", "publisher_name", "signature_count", "signatures"],
+      "properties": {
+        "publisher_id": {"type": "string", "minLength": 1, "maxLength": 512, "x-maxUtf8Bytes": 512},
+        "publisher_name": {"type": "string", "minLength": 1, "maxLength": 512, "x-maxUtf8Bytes": 512},
+        "signature_count": {"type": "integer", "minimum": 1, "maximum": 32},
+        "signatures": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/signature"}}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "status", "signed_at"],
+      "properties": {
+        "key_id": {"type": "string", "pattern": "^ed25519:sha256:[0-9a-f]{64}$"},
+        "status": {"const": "valid"},
+        "signed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "compatibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "can_compare_data", "can_reconcile", "reasons"],
+      "properties": {
+        "state": {"enum": [
+          "same-release-same-schema", "same-app-same-schema",
+          "same-app-migration-available", "same-app-incompatible-schema",
+          "different-application"
+        ]},
+        "can_compare_data": {"type": "boolean"},
+        "can_reconcile": {"type": "boolean"},
+        "reasons": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/bounded_text"}}
+      }
+    },
+    "section": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "left_digest", "right_digest", "change_count"],
+      "properties": {
+        "state": {"enum": ["same", "different", "unavailable", "invalid"]},
+        "left_digest": {"$ref": "#/$defs/sha256"},
+        "right_digest": {"$ref": "#/$defs/sha256"},
+        "change_count": {"type": "integer", "minimum": 0, "maximum": 100000}
+      }
+    },
+    "lineage_section": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "state", "left_digest", "right_digest", "change_count",
+        "direct_relationship", "direct_evidence", "common_ancestor_claims",
+        "common_ancestor_claims_truncated"
+      ],
+      "properties": {
+        "state": {"enum": ["same", "different", "unavailable", "invalid"]},
+        "left_digest": {"$ref": "#/$defs/sha256"},
+        "right_digest": {"$ref": "#/$defs/sha256"},
+        "change_count": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "direct_relationship": {"enum": ["none", "left-is-parent-of-right", "right-is-parent-of-left", "mutual-parent-claims"]},
+        "direct_evidence": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/direct_lineage_evidence"}},
+        "common_ancestor_claims": {"type": "array", "maxItems": 32, "items": {"$ref": "#/$defs/common_ancestor_claim"}},
+        "common_ancestor_claims_truncated": {"type": "boolean"}
+      }
+    },
+    "direct_lineage_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["child_side", "relation", "parent_file_sha256", "verification"],
+      "properties": {
+        "child_side": {"enum": ["left", "right"]},
+        "relation": {"enum": ["created-from", "forked-from", "target-derived-from", "changes-applied-from", "upgraded-from", "application-release"]},
+        "parent_file_sha256": {"$ref": "#/$defs/sha256"},
+        "verification": {"const": "claimed-parent-file-digest-matches-other-retained-source-bytes"}
+      }
+    },
+    "common_ancestor_claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file_sha256", "claimed_by", "verification"],
+      "properties": {
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "claimed_by": {"enum": ["left", "right", "both"]},
+        "verification": {"const": "mutable-untrusted-claim-only"}
+      }
+    },
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["added", "removed", "changed", "unchanged"],
+      "properties": {
+        "added": {"$ref": "#/$defs/nullable_count"},
+        "removed": {"$ref": "#/$defs/nullable_count"},
+        "changed": {"$ref": "#/$defs/nullable_count"},
+        "unchanged": {"$ref": "#/$defs/nullable_count"}
+      }
+    },
+    "table_summary": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "table", "primary_key", "state", "left_rows", "right_rows", "counts",
+        "left_digest", "right_digest", "details_redacted", "truncated"
+      ],
+      "properties": {
+        "table": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+        "primary_key": {
+          "type": "array", "minItems": 1, "maxItems": 16,
+          "items": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256}
+        },
+        "state": {"enum": ["same", "different", "ignored", "unavailable", "truncated"]},
+        "left_rows": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "right_rows": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "counts": {"$ref": "#/$defs/counts"},
+        "left_digest": {"$ref": "#/$defs/nullable_sha256"},
+        "right_digest": {"$ref": "#/$defs/nullable_sha256"},
+        "details_redacted": {"type": "boolean"},
+        "truncated": {"type": "boolean"}
+      }
+    },
+    "dataset_summary": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "dataset_id", "policy", "sensitivity", "state", "left_rows", "right_rows",
+        "counts", "left_digest", "right_digest", "tables", "details_redacted", "truncated"
+      ],
+      "properties": {
+        "dataset_id": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+        "policy": {"enum": ["ignore", "summary", "row", "field"]},
+        "sensitivity": {"enum": ["normal", "sensitive"]},
+        "state": {"enum": ["same", "different", "ignored", "unavailable", "truncated"]},
+        "left_rows": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "right_rows": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+        "counts": {"$ref": "#/$defs/counts"},
+        "left_digest": {"$ref": "#/$defs/nullable_sha256"},
+        "right_digest": {"$ref": "#/$defs/nullable_sha256"},
+        "tables": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/table_summary"}},
+        "details_redacted": {"type": "boolean"},
+        "truncated": {"type": "boolean"}
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_rows_per_table", "max_total_rows", "max_value_bytes", "max_stream_bytes", "deadline_ms"],
+      "properties": {
+        "max_rows_per_table": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "max_total_rows": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "max_value_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "max_stream_bytes": {"type": "integer", "minimum": 1, "maximum": 268435456},
+        "deadline_ms": {"type": "integer", "minimum": 1, "maximum": 30000}
+      }
+    }
+  }
+}

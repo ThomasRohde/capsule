@@ -1,0 +1,59 @@
+{
+  "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+  "provenance_status": "mutable-untrusted",
+  "events": [
+    {
+      "application_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "event_id": "b12bf828-6c72-490e-b1b3-d23cf1d863cb",
+      "occurred_at": "2026-08-12T02:30:00Z",
+      "operation": "created-from-template",
+      "result_capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+      "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+      "data_schema_version": 1,
+      "details_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "details_property_count": 1,
+      "details_redacted": true,
+      "parents": [
+        {
+          "capsule_id": null,
+          "file_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "relation": "application-release",
+          "revision_id": null
+        }
+      ],
+      "plan_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_revision_id": "80b1d11e-76fe-45be-a941-a448614d1a59",
+      "sequence": 1
+    },
+    {
+      "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "event_id": "409f3ef6-7119-40ae-aa97-16ed069cb727",
+      "occurred_at": "2026-09-01T08:15:00Z",
+      "operation": "application-upgrade",
+      "result_capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+      "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+      "data_schema_version": 2,
+      "details_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "details_property_count": 1,
+      "details_redacted": true,
+      "parents": [
+        {
+          "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+          "file_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "relation": "upgraded-from",
+          "revision_id": "80b1d11e-76fe-45be-a941-a448614d1a59"
+        },
+        {
+          "capsule_id": null,
+          "file_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "relation": "application-release",
+          "revision_id": null
+        }
+      ],
+      "plan_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "result_revision_id": "a742f286-1c77-4f92-a14d-25a49585ab1d",
+      "sequence": 2
+    }
+  ],
+  "profile": "org.sqlite-capsule.lineage/0.3"
+}

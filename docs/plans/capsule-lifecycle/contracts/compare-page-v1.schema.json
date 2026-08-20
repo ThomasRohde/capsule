@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/compare-page-v1.schema.json",
+  "title": "Bounded Capsule comparison detail page",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile", "session_id", "report_digest", "dataset_label", "table_label",
+    "sensitivity", "revealed", "rows", "next_page_token", "expires_at"
+  ],
+  "properties": {
+    "profile": {"const": "org.sqlite-capsule.compare-page/1"},
+    "session_id": {"$ref": "#/$defs/token"},
+    "report_digest": {"$ref": "#/$defs/sha256"},
+    "dataset_label": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+    "table_label": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+    "sensitivity": {"enum": ["normal", "sensitive"]},
+    "revealed": {"type": "boolean"},
+    "rows": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/row"}},
+    "next_page_token": {"anyOf": [{"$ref": "#/$defs/token"}, {"type": "null"}]},
+    "expires_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "token": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"},
+    "row": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "key_digest", "left_digest", "right_digest", "fields"],
+      "properties": {
+        "kind": {"enum": ["added", "removed", "changed", "unchanged"]},
+        "key_digest": {"$ref": "#/$defs/sha256"},
+        "left_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "right_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "fields": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/field"}}
+      }
+    },
+    "field": {
+      "type": "object", "additionalProperties": false,
+      "required": ["column", "kind", "left", "right"],
+      "properties": {
+        "column": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+        "kind": {"enum": ["same", "added", "removed", "changed", "redacted", "truncated"]},
+        "left": {"anyOf": [{"$ref": "#/$defs/value"}, {"type": "null"}]},
+        "right": {"anyOf": [{"$ref": "#/$defs/value"}, {"type": "null"}]}
+      }
+    },
+    "value": {
+      "type": "object", "additionalProperties": false,
+      "required": ["storage_class", "display", "byte_count", "sha256", "truncated", "redacted"],
+      "properties": {
+        "storage_class": {"enum": ["null", "integer", "real", "text", "blob"]},
+        "display": {"type": ["string", "null"], "maxLength": 4096, "x-maxUtf8Bytes": 4096},
+        "byte_count": {"type": "integer", "minimum": 0, "maximum": 1048576},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "truncated": {"type": "boolean"},
+        "redacted": {"type": "boolean"}
+      }
+    }
+  }
+}

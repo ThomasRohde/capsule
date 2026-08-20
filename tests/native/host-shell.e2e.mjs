@@ -1,6 +1,11 @@
 describe("SQLite Capsule trusted native first-open shell (raw renderer intentionally absent)", () => {
   let startupFocusId = "";
 
+  async function openSecurityRoute(route) {
+    await $("button[data-page='security']").click();
+    await $(`button[data-route='${route}']`).click();
+  }
+
   beforeAll(async () => {
     const state = await $("#host-state");
     await state.waitUntil(
@@ -16,7 +21,7 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("keeps executable assets locked while showing verified identity", async () => {
-    await $("button[data-page='trust']").click();
+    await $("button[data-page='overview']").click();
     await expect($("#verdict strong")).toHaveText("Your decision is required");
     await expect($("#host-state")).toHaveText("Trust decision required · code locked");
     expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
@@ -26,7 +31,7 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("renders the host-owned capability decision without creating authority", async () => {
-    await $("button[data-page='capabilities']").click();
+    await openSecurityRoute("capabilities");
     const capabilities = await $$("#capability-list input[type='checkbox']");
     expect(capabilities.length).toBe(7);
     await expect($("button[data-action='allow_once']")).toBeEnabled();
@@ -36,13 +41,16 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
     await expect($("#action-status")).toHaveText("");
   });
 
-  it("places real WebView2 keyboard focus on the first-open heading", async () => {
-    expect(startupFocusId).toBe("prompt-title");
-    await expect($("#prompt-title")).toHaveText("Choose what this release may do");
+  it("places real WebView2 keyboard focus on Overview before capability review", async () => {
+    expect(startupFocusId).toBe("overview-title");
+    expect(await browser.execute(() => document.querySelector("#overview-title")?.textContent)).toBe("Diagram Studio — SQLite Capsule");
+    const report = await browser.execute(() => window.__TAURI__.core.invoke("startup_report"));
+    expect(report.capsule.assets_released).toBe(false);
+    expect(report.capsule.overview.profile).toBe("org.sqlite-capsule.tauri-overview/1");
   });
 
   it("traverses every enabled prompt control in DOM order without a keyboard trap", async () => {
-    await $("button[data-page='capabilities']").click();
+    await openSecurityRoute("capabilities");
     const focusable = await browser.execute(() => [
       ...document.querySelectorAll("#capability-list input:not(:disabled)"),
       ...document.querySelectorAll("#actions button:not(:disabled)"),
@@ -77,7 +85,7 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("exposes the host-owned use-once publisher-signing surface", async () => {
-    await $("button[data-page='signing']").click();
+    await openSecurityRoute("signing");
     await expect($("#page-title")).toHaveText("Publisher signing");
     await expect($("#signing-status")).toHaveText(expect.stringContaining("Rust memory only"));
     await expect($("#signing-key-button")).toBeEnabled();
@@ -100,16 +108,18 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
   });
 
   it("denies and forgets only the isolated exact-file decision without granting authority", async () => {
-    await $("button[data-page='capabilities']").click();
+    await openSecurityRoute("capabilities");
     await $("button[data-action='deny']").click();
     await browser.waitUntil(
       async () => browser.execute(() => document.querySelector("#verdict strong")?.textContent === "Execution is blocked"),
       { timeout: 20_000, timeoutMsg: "the host did not apply the exact-file denial" },
     );
     expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
-    await expect($("#action-status")).toHaveText("Decision applied. The effective policy is shown above.");
+    expect(await browser.execute(() => document.querySelector("#action-status")?.textContent)).toBe(
+      "Decision applied. The effective policy is shown above.",
+    );
 
-    await $("button[data-page='admin']").click();
+    await openSecurityRoute("admin");
     await expect($("#forget-decision-button")).toBeEnabled();
     await $("#forget-decision-button").scrollIntoView();
     await $("#forget-decision-button").click();
@@ -129,11 +139,11 @@ describe("SQLite Capsule trusted native first-open shell (raw renderer intention
       async () => browser.execute(() => document.querySelector("#verdict strong")?.textContent === "Your decision is required"),
       { timeout: 20_000, timeoutMsg: "forgetting the decision did not restore first-open policy" },
     );
-    await $("button[data-page='admin']").click();
+    await openSecurityRoute("admin");
     expect(await browser.execute(() => document.querySelector("#boundary-title")?.textContent)).toBe("Application window · executable assets locked");
     await expect($("#forget-decision-button")).toBeDisabled();
     await expect($("#admin-output")).toHaveText(expect.stringContaining('"authority_granted": false'));
-    await $("button[data-page='capabilities']").click();
+    await openSecurityRoute("capabilities");
     await expect($("button[data-action='allow_once']")).toBeEnabled();
   });
 });

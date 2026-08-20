@@ -233,7 +233,8 @@ try {
   await parentPage.locator("#host-state").waitFor({ state: "visible" });
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent !== "Verifying before open");
   assert.equal(await parentPage.locator("#host-state").textContent(), "Trust decision required · code locked");
-  await parentPage.locator("button[data-page='boundary']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='boundary']").click();
   await parentPage.getByText("Separate application window · hidden until authorised").waitFor();
   assert.equal(await rawPage.title(), "Raw child renderer probe");
 
@@ -248,7 +249,8 @@ try {
     () => true,
   );
 
-  await parentPage.locator("button[data-page='capabilities']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='capabilities']").click();
   const capabilityViewport = await parentPage.locator(".content-surface").evaluate((surface) => ({
     clientHeight: surface.clientHeight,
     scrollHeight: surface.scrollHeight,
@@ -257,7 +259,8 @@ try {
     capabilityViewport.scrollHeight <= capabilityViewport.clientHeight + 1,
     `capabilities page unexpectedly requires vertical scrolling: ${JSON.stringify(capabilityViewport)}`,
   );
-  await parentPage.locator("button[data-page='signing']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='signing']").click();
   assert.equal(await parentPage.locator("#page-title").textContent(), "Publisher signing");
   assert.match(await parentPage.locator("#signing-status").textContent(), /Rust memory only/);
   assert.equal(await parentPage.locator("#signing-key-button").isEnabled(), true);
@@ -276,12 +279,22 @@ try {
   assert.equal(JSON.stringify(signingStatus).includes("private"), false);
   assert.equal(JSON.stringify(signingStatus).includes("keyPath"), false);
   await parentPage.screenshot({ path: hostSigningScreenshotPath, animations: "disabled" });
-  await parentPage.locator("button[data-page='capabilities']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='capabilities']").click();
   await parentPage.locator("button[data-action='allow_once']").click();
   await parentPage.waitForFunction(() => document.querySelector("#host-state")?.textContent?.includes("application running"));
-  await rawPage.waitForFunction(() => document.title === "Diagram Studio — SQLite Capsule");
+  await rawPage.waitForFunction(
+    () => document.title === "Design and present architecture diagrams — SQLite Capsule",
+    null,
+    { timeout: 30_000 },
+  ).catch(async (error) => {
+    throw new Error(
+      `${error.message}; raw=${JSON.stringify({ title: await rawPage.title(), url: rawPage.url() })}; host=${JSON.stringify({ state: await parentPage.locator("#host-state").textContent(), action: await parentPage.locator("#action-status").textContent() })}`,
+    );
+  });
 
-  await parentPage.locator("button[data-page='boundary']").click();
+  await parentPage.locator("button[data-page='security']").click();
+  await parentPage.locator("button[data-route='boundary']").click();
   const originalTheme = await parentPage.locator("[data-theme-option][aria-pressed='true']").getAttribute("data-theme-option");
   await parentPage.locator("button[data-theme-option='light']").click();
   await parentPage.waitForFunction(() => document.documentElement.dataset.theme === "light");

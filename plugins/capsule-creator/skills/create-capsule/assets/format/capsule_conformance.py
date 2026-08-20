@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent SQLite Capsule v0.2 platform conformance checker.
+"""Independent, version-dispatched SQLite Capsule platform conformance checker.
 
 This module deliberately uses only sqlite3 and the JSON conformance document. It
 does not import the runtime verifier, so it provides an independent signal when
@@ -18,6 +18,10 @@ from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SPEC = ROOT / "format" / "capsule-v0.2.conformance.json"
+VERSIONED_SPECS = {
+    2: DEFAULT_SPEC,
+    3: ROOT / "format" / "capsule-v0.3.conformance.json",
+}
 
 
 class ConformanceError(Exception):
@@ -55,7 +59,10 @@ def _load_spec(path: Path) -> Mapping[str, Any]:
         raise ConformanceError(f"Could not load conformance document {path}: {exc}") from exc
     if not isinstance(document, dict):
         raise ConformanceError("Conformance document must be a JSON object")
-    if document.get("description_format") != "org.sqlite-capsule.conformance/0.2":
+    if document.get("description_format") not in {
+        "org.sqlite-capsule.conformance/0.2",
+        "org.sqlite-capsule.conformance/0.3",
+    }:
         raise ConformanceError("Unsupported conformance document format")
     return document
 
@@ -82,6 +89,7 @@ def _check_columns(
     table: str,
     expected: Mapping[str, Mapping[str, Any]],
     expected_primary_key: list[str],
+    exact_columns: bool,
     errors: list[str],
 ) -> None:
     try:
@@ -90,6 +98,10 @@ def _check_columns(
         errors.append(f"{table}: unable to inspect columns: {exc}")
         return
     actual = {row["name"]: row for row in rows}
+    if exact_columns and list(actual) != list(expected):
+        errors.append(
+            f"{table}: expected exact columns {list(expected)}, got {list(actual)}"
+        )
     for column, rules in expected.items():
         row = actual.get(column)
         if row is None:
@@ -128,20 +140,6 @@ def _check_foreign_keys(
 
 def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str, Any]:
     capsule = capsule.expanduser().resolve()
-    if spec_path is None:
-        spec_path = DEFAULT_SPEC
-    spec_path = spec_path.expanduser().resolve()
-    spec = _load_spec(spec_path)
-    errors: list[str] = []
-    identity = spec.get("identity", {})
-    required = spec.get("required_objects", {})
-    optional = spec.get("optional_objects", {})
-    tables = required.get("tables", {})
-    views = required.get("views", {})
-    optional_tables = optional.get("tables", {}) if isinstance(optional, dict) else {}
-    if not isinstance(tables, dict) or not isinstance(views, dict) or not isinstance(optional_tables, dict):
-        raise ConformanceError("Conformance document has invalid required_objects")
-
     try:
         connection = _readonly_connection(capsule)
     except (OSError, sqlite3.DatabaseError) as exc:
@@ -149,12 +147,40 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
     try:
         application_id = connection.execute("PRAGMA application_id").fetchone()[0]
         user_version = connection.execute("PRAGMA user_version").fetchone()[0]
+        if spec_path is None:
+            # Preserve the v0.2 diagnostic path for malformed/unknown legacy files;
+            # only the explicit v0.3 tuple selects the new contract.
+            spec_path = VERSIONED_SPECS[3] if user_version == 3 else DEFAULT_SPEC
+        spec_path = spec_path.expanduser().resolve()
+        spec = _load_spec(spec_path)
+        errors: list[str] = []
+        identity = spec.get("identity", {})
+        required = spec.get("required_objects", {})
+        optional = spec.get("optional_objects", {})
+        tables = required.get("tables", {})
+        views = required.get("views", {})
+        optional_tables = optional.get("tables", {}) if isinstance(optional, dict) else {}
+        if not isinstance(tables, dict) or not isinstance(views, dict) or not isinstance(optional_tables, dict):
+            raise ConformanceError("Conformance document has invalid required_objects")
+
+        max_bytes = int(spec.get("limits", {}).get("max_capsule_bytes", 0) or 0)
+        if max_bytes and capsule.stat().st_size > max_bytes:
+            errors.append(f"capsule exceeds maximum size of {max_bytes} bytes")
         if application_id != identity.get("application_id"):
             errors.append(f"application_id: expected {identity.get('application_id')}, got {application_id}")
         if user_version != identity.get("user_version"):
             errors.append(f"user_version: expected {identity.get('user_version')}, got {user_version}")
 
         names = _object_names(connection)
+        if spec.get("reject_unknown_platform_objects"):
+            allowed_platform_names = set(tables) | set(optional_tables)
+            unexpected_platform_names = sorted(
+                name for name in names if name.startswith("capsule_") and name not in allowed_platform_names
+            )
+            if unexpected_platform_names:
+                errors.append(
+                    "unexpected platform objects: " + ", ".join(unexpected_platform_names)
+                )
         forbidden = set(spec.get("forbidden_schema_objects", []))
         if "trigger" in forbidden:
             triggers = sorted(name for name, kind in names.items() if kind == "trigger")
@@ -173,7 +199,14 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
                 errors.append(f"missing required table {table!r}")
                 continue
             columns = dict(declaration.get("columns", {}))
-            _check_columns(connection, table, columns, list(declaration.get("primary_key", [])), errors)
+            _check_columns(
+                connection,
+                table,
+                columns,
+                list(declaration.get("primary_key", [])),
+                bool(declaration.get("exact_columns", False)),
+                errors,
+            )
             _check_foreign_keys(connection, table, declaration.get("foreign_keys", []), errors)
             if table in set(spec.get("minimum_nonempty_tables", [])):
                 count = connection.execute(f"SELECT COUNT(*) FROM {_identifier(table)}").fetchone()[0]
@@ -188,6 +221,7 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
                 table,
                 declaration.get("columns", {}),
                 list(declaration.get("primary_key", [])),
+                bool(declaration.get("exact_columns", False)),
                 errors,
             )
             _check_foreign_keys(connection, table, declaration.get("foreign_keys", []), errors)
@@ -205,13 +239,16 @@ def check_conformance(capsule: Path, spec_path: Path | None = None) -> dict[str,
             if columns != list(declaration.get("columns", [])):
                 errors.append(f"{view}: expected columns {declaration.get('columns', [])}, got {columns}")
 
+        manifest_columns = ["format_id", "format_version", "runtime_protocol"]
+        if "minimum_host_profile" in identity:
+            manifest_columns.append("minimum_host_profile")
         manifest = connection.execute(
-            "SELECT format_id, format_version, runtime_protocol FROM capsule_manifest WHERE id = 1"
+            f"SELECT {', '.join(manifest_columns)} FROM capsule_manifest WHERE id = 1"
         ).fetchone()
         if manifest is None:
             errors.append("capsule_manifest: required id=1 row is missing")
         else:
-            for column in ("format_id", "format_version", "runtime_protocol"):
+            for column in manifest_columns:
                 expected = identity.get(column)
                 if manifest[column] != expected:
                     errors.append(f"capsule_manifest.{column}: expected {expected!r}, got {manifest[column]!r}")

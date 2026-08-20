@@ -17,10 +17,12 @@ tauri-build.workspace = true
 [dependencies]
 base64.workspace = true
 getrandom.workspace = true
+image.workspace = true
 minisign-verify.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 sqlite-capsule-core = { path = "../../crates/capsule-core" }
 sqlite-capsule-distribution = { path = "../../crates/capsule-distribution" }
 sqlite-capsule-installer = { path = "../../crates/capsule-installer" }
@@ -32,6 +34,7 @@ sqlite-capsule-runtime = { path = "../../crates/capsule-runtime", features = ["d
 sqlite-capsule-sigstore = { path = "../../crates/capsule-sigstore" }
 sqlite-capsule-signing = { path = "../../crates/capsule-signing" }
 sqlite-capsule-update = { path = "../../crates/capsule-update" }
+sqlite-capsule-workspace = { path = "../../crates/capsule-workspace" }
 tauri.workspace = true
 tauri-plugin-dialog.workspace = true
 tauri-plugin-single-instance.workspace = true
@@ -46,5 +49,4 @@ custom-protocol = ["tauri/custom-protocol"]
 ed25519-dalek.workspace = true
 rusqlite.workspace = true
 serde_json_canonicalizer.workspace = true
-sha2.workspace = true
 sqlite-capsule-crypto = { path = "../../crates/capsule-crypto" }

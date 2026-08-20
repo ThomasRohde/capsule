@@ -1,0 +1,36 @@
+{
+  "command": [
+    "python",
+    "tools\\generate_sbom.py",
+    "--check"
+  ],
+  "completed_at": "2026-08-12T17:24:21Z",
+  "cwd": "native",
+  "duration_ms": 3870,
+  "exit_code": 1,
+  "milestone": "M01",
+  "name": "gate-final-sbom",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "fail",
+  "started_at": "2026-08-12T17:24:17Z",
+  "stderr": {
+    "captured_bytes": 73,
+    "original_bytes": 73,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172417Z-gate-final-sbom/stderr.txt",
+    "sha256_captured": "532f1170264f598d380717c41b8f54503eb36ac91157bcadb7091ea869f408b8",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172417Z-gate-final-sbom/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

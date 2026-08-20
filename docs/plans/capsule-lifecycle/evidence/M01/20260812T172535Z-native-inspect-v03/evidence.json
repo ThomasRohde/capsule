@@ -1,0 +1,36 @@
+{
+  "command": [
+    "native\\target\\debug\\capsule-native.exe",
+    "inspect",
+    "docs\\plans\\capsule-lifecycle\\evidence\\M01\\v03-cli-fixture.sqlite"
+  ],
+  "completed_at": "2026-08-12T17:25:36Z",
+  "cwd": ".",
+  "duration_ms": 652,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "native-inspect-v03",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:25:35Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172535Z-native-inspect-v03/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 2280,
+    "original_bytes": 2280,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172535Z-native-inspect-v03/stdout.txt",
+    "sha256_captured": "d0c1ae70d45a93af2c4abbabd96966d7901bd7d0671ec2775a398a2914f03286",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

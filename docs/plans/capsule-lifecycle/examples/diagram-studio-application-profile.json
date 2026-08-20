@@ -1,0 +1,15 @@
+{
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "app_version": "0.4.0",
+  "category": "visual-tools",
+  "data_schema": {
+    "id": "org.sqlite-capsule.diagram-studio-data",
+    "version": 1
+  },
+  "description": "Create, edit and present interactive diagrams stored inside a SQLite Capsule.",
+  "icon_asset": "meta/diagram-studio-icon.png",
+  "minimum_host_profile": "org.sqlite-capsule.host-profile/0.3",
+  "name": "Diagram Studio",
+  "profile": "org.sqlite-capsule.application-profile/0.3",
+  "release_notes_doc": "release-notes/0.4.0"
+}

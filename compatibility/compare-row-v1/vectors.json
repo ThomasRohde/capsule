@@ -1,0 +1,170 @@
+{
+  "profile": "org.sqlite-capsule.compare-row-vectors/1",
+  "key_profile": "org.sqlite-capsule.compare-key/1",
+  "row_profile": "org.sqlite-capsule.compare-row/1",
+  "cases": [
+    {
+      "id": "all-storage-classes-and-composite-key",
+      "table": "items",
+      "key": [
+        {
+          "column": "tenant",
+          "value": {
+            "type": "text",
+            "utf8_hex": "65cc81"
+          }
+        },
+        {
+          "column": "ordinal",
+          "value": {
+            "type": "integer",
+            "decimal": "-9223372036854775808"
+          }
+        }
+      ],
+      "compared": [
+        {
+          "column": "missing",
+          "value": {
+            "type": "null"
+          }
+        },
+        {
+          "column": "count",
+          "value": {
+            "type": "integer",
+            "decimal": "9223372036854775807"
+          }
+        },
+        {
+          "column": "negative_zero",
+          "value": {
+            "type": "real-bits",
+            "hex": "8000000000000000"
+          }
+        },
+        {
+          "column": "composed",
+          "value": {
+            "type": "text",
+            "utf8_hex": "c3a9"
+          }
+        },
+        {
+          "column": "payload",
+          "value": {
+            "type": "blob",
+            "hex": "0001feff"
+          }
+        }
+      ],
+      "key_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d6b65792f3100000000000000056974656d7300000002000000000000000674656e616e7403000000000000000365cc8100000000000000076f7264696e616c018000000000000000",
+      "key_sha256": "d4fb97cb7a1eb22b7778ed59d0c28c87256ad97d8a254154b93eab5fc676448b",
+      "row_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d726f772f3100000000000000056974656d7300000002000000000000000674656e616e7403000000000000000365cc8100000000000000076f7264696e616c0180000000000000000000000500000000000000076d697373696e67000000000000000005636f756e74017fffffffffffffff000000000000000d6e656761746976655f7a65726f0280000000000000000000000000000008636f6d706f736564030000000000000002c3a900000000000000077061796c6f61640400000000000000040001feff",
+      "row_sha256": "1d97efc28c2b0bfec403fa5d207e03970bf8a162695cb186703b645572921766"
+    },
+    {
+      "id": "mixed-key-storage-and-positive-zero",
+      "table": "mixed_π",
+      "key": [
+        {
+          "column": "kind",
+          "value": {
+            "type": "blob",
+            "hex": "31"
+          }
+        },
+        {
+          "column": "id",
+          "value": {
+            "type": "real-bits",
+            "hex": "0000000000000000"
+          }
+        }
+      ],
+      "compared": [
+        {
+          "column": "text-one",
+          "value": {
+            "type": "text",
+            "utf8_hex": "31"
+          }
+        },
+        {
+          "column": "integer-one",
+          "value": {
+            "type": "integer",
+            "decimal": "1"
+          }
+        }
+      ],
+      "key_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d6b65792f3100000000000000086d697865645fcf800000000200000000000000046b696e640400000000000000013100000000000000026964020000000000000000",
+      "key_sha256": "83f941e84c388f4035f0b0c7eccebd4757baf1335660f5b01b29c13cbeb42c0e",
+      "row_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d726f772f3100000000000000086d697865645fcf800000000200000000000000046b696e640400000000000000013100000000000000026964020000000000000000000000020000000000000008746578742d6f6e6503000000000000000131000000000000000b696e74656765722d6f6e65010000000000000001",
+      "row_sha256": "22428e363252bd9bca1e0ff434828c5989f3eee5f137756428feb18cf9736f04"
+    },
+    {
+      "id": "empty-blob-and-decomposed-unicode-remain-distinct",
+      "table": "unicode",
+      "key": [
+        {
+          "column": "id",
+          "value": {
+            "type": "text",
+            "utf8_hex": "c3a9"
+          }
+        }
+      ],
+      "compared": [
+        {
+          "column": "decomposed",
+          "value": {
+            "type": "text",
+            "utf8_hex": "65cc81"
+          }
+        },
+        {
+          "column": "empty",
+          "value": {
+            "type": "blob",
+            "hex": ""
+          }
+        }
+      ],
+      "key_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d6b65792f310000000000000007756e69636f64650000000100000000000000026964030000000000000002c3a9",
+      "key_sha256": "0e7d516779a0d65362f236981618d8bf8b97c522a702be7232f999202a2e4263",
+      "row_bytes_hex": "00000000000000206f72672e73716c6974652d63617073756c652e636f6d706172652d726f772f310000000000000007756e69636f64650000000100000000000000026964030000000000000002c3a900000002000000000000000a6465636f6d706f73656403000000000000000365cc810000000000000005656d707479040000000000000000",
+      "row_sha256": "f8467f9a7534eed827e22f76d559b7fe8adf041762ee4c916ec70dd8522f51e8"
+    }
+  ],
+  "invalid": [
+    {
+      "id": "positive-infinity",
+      "value": {
+        "type": "real-bits",
+        "hex": "7ff0000000000000"
+      }
+    },
+    {
+      "id": "negative-infinity",
+      "value": {
+        "type": "real-bits",
+        "hex": "fff0000000000000"
+      }
+    },
+    {
+      "id": "quiet-nan",
+      "value": {
+        "type": "real-bits",
+        "hex": "7ff8000000000000"
+      }
+    },
+    {
+      "id": "invalid-utf8",
+      "value": {
+        "type": "text",
+        "utf8_hex": "80"
+      }
+    }
+  ]
+}

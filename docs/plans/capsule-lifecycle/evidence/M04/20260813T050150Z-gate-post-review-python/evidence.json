@@ -1,0 +1,40 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "completed_at": "2026-08-13T05:04:52Z",
+  "cwd": ".",
+  "duration_ms": 182284,
+  "exit_code": 1,
+  "milestone": "M04",
+  "name": "gate-post-review-python",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "fail",
+  "started_at": "2026-08-13T05:01:50Z",
+  "stderr": {
+    "captured_bytes": 29323,
+    "original_bytes": 29323,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050150Z-gate-post-review-python/stderr.txt",
+    "sha256_captured": "b9fb57f2cd3cd7740fcb4a26286cceae5abebe081b018eb4bb049a3389e7a05e",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050150Z-gate-post-review-python/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

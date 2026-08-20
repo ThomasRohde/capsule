@@ -1,0 +1,36 @@
+{
+  "command": [
+    "python",
+    "native/tools/generate_license_report.py",
+    "--check"
+  ],
+  "completed_at": "2026-08-12T20:02:56Z",
+  "cwd": ".",
+  "duration_ms": 546,
+  "exit_code": 0,
+  "milestone": "M02",
+  "name": "gate-final-license",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T20:02:56Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200256Z-gate-final-license/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 112,
+    "original_bytes": 112,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200256Z-gate-final-license/stdout.txt",
+    "sha256_captured": "534c22cf135f72bf4f1aa8a59be1b3190ebc978c35e43f1cb1b2967ad812ead3",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

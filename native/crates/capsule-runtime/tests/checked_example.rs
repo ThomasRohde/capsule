@@ -663,8 +663,8 @@ fn an_external_sqlite_commit_stops_the_session_before_another_host_write() {
         .expect("external commit");
     drop(external);
 
-    assert!(matches!(
-        runtime.write_endpoint(
+    let error = runtime
+        .write_endpoint(
             "diagram.rename",
             &arguments(json!({
                 "operation_id": "operation-after-conflict",
@@ -672,10 +672,10 @@ fn an_external_sqlite_commit_stops_the_session_before_another_host_write() {
                 "diagram_id": "diagram-main",
                 "from_title": "Design and present architecture diagrams",
                 "to_title": "Must not commit"
-            }))
-        ),
-        Err(RuntimeError::SourceConflict)
-    ));
+            })),
+        )
+        .expect_err("external commit must close the session");
+    assert!(error.session_must_close(), "unexpected error: {error}");
     drop(runtime);
 
     let connection = Connection::open(&capsule).expect("direct evidence");

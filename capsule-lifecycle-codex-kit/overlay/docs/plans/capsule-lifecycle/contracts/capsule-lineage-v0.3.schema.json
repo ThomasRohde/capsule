@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/capsule-lineage-v0.3.schema.json",
+  "title": "SQLite Capsule mutable lineage projection",
+  "description": "A serialisable projection of lineage rows. Lineage records provenance claims and exact file digests but does not authenticate publishers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "capsule_id",
+    "events"
+  ],
+  "properties": {
+    "profile": {
+      "const": "org.sqlite-capsule.lineage/0.3"
+    },
+    "capsule_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "sequence",
+        "operation",
+        "result_revision_id",
+        "occurred_at",
+        "application_digest",
+        "plan_digest",
+        "parents"
+      ],
+      "properties": {
+        "event_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "operation": {
+          "enum": [
+            "created",
+            "created-from-template",
+            "fork",
+            "reconcile",
+            "application-upgrade",
+            "import"
+          ]
+        },
+        "result_revision_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "application_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "plan_digest": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parents": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "relation",
+              "capsule_id",
+              "revision_id",
+              "file_sha256"
+            ],
+            "properties": {
+              "relation": {
+                "enum": [
+                  "created-from",
+                  "forked-from",
+                  "target-derived-from",
+                  "changes-applied-from",
+                  "upgraded-from",
+                  "application-release"
+                ]
+              },
+              "capsule_id": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "revision_id": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "file_sha256": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

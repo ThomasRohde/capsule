@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/compact-copy-preview-v1.schema.json",
+  "title": "Capsule compact-copy preview",
+  "description": "Bounded path-free review projection. It contains no destination capability, serialized lifecycle plan, confirmation nonce or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "format_version",
+    "signature_state",
+    "signature_count",
+    "source_size_bytes",
+    "source_sha256",
+    "logical_state_profile",
+    "logical_state_sha256",
+    "page_size",
+    "capsule_identity",
+    "revision_identity",
+    "physical_bytes",
+    "destination",
+    "overwrite_allowed"
+  ],
+  "properties": {
+    "profile": { "const": "org.sqlite-capsule.compact-copy-preview/1" },
+    "format_version": { "enum": ["0.2", "0.3"] },
+    "signature_state": { "enum": ["unsigned", "signed-valid"] },
+    "signature_count": { "type": "integer", "minimum": 0, "maximum": 32 },
+    "source_size_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "logical_state_profile": { "const": "org.sqlite-capsule.compact-logical-state/1" },
+    "logical_state_sha256": { "$ref": "#/$defs/sha256" },
+    "page_size": { "type": "integer", "minimum": 512, "maximum": 65536 },
+    "capsule_identity": { "const": "preserved" },
+    "revision_identity": { "const": "preserved" },
+    "physical_bytes": { "const": "repacked-not-byte-exact" },
+    "destination": { "const": "create-new-no-replace" },
+    "overwrite_allowed": { "const": false }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "profile": "org.sqlite-capsule.test-evidence/1",
+  "milestone": "MNN",
+  "repository": {
+    "commit": "<40-hex-sha>",
+    "dirty": false,
+    "platform": "<platform>",
+    "environment": {}
+  },
+  "started_at": "<RFC3339>",
+  "completed_at": "<RFC3339>",
+  "commands": [
+    {
+      "command": "<exact command>",
+      "cwd": "<relative path>",
+      "exit_code": 0,
+      "duration_ms": 0,
+      "stdout_path": "<path>",
+      "stderr_path": "<path>",
+      "summary": "<pass/fail counts and relevant result>"
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "<path>",
+      "role": "input",
+      "sha256_before": "<64 hex>",
+      "sha256_after": "<64 hex>",
+      "unchanged": true
+    }
+  ],
+  "review": {
+    "reviewer": "<agent/person>",
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "report_path": "<path>"
+  },
+  "gaps": [],
+  "result": "pass"
+}

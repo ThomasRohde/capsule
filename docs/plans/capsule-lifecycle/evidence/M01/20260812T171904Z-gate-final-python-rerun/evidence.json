@@ -1,0 +1,40 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-v"
+  ],
+  "completed_at": "2026-08-12T17:20:32Z",
+  "cwd": ".",
+  "duration_ms": 88326,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-python-rerun",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:19:04Z",
+  "stderr": {
+    "captured_bytes": 25983,
+    "original_bytes": 25983,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T171904Z-gate-final-python-rerun/stderr.txt",
+    "sha256_captured": "789ec1c83679ab203d31ab6d4754bf10d9bad286631a310b72534b7e0481d03c",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T171904Z-gate-final-python-rerun/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 1200
+}

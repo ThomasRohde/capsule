@@ -1,0 +1,38 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-13T05:09:13Z",
+  "cwd": "native",
+  "duration_ms": 117500,
+  "exit_code": 0,
+  "milestone": "M04",
+  "name": "gate-final-rust-settled",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T05:07:16Z",
+  "stderr": {
+    "captured_bytes": 2351,
+    "original_bytes": 2351,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050716Z-gate-final-rust-settled/stderr.txt",
+    "sha256_captured": "492c3140dd600c7c50a1d261328036e06ee963d5a785aa4647ad45b5d119aec7",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 25662,
+    "original_bytes": 25662,
+    "path": "docs/plans/capsule-lifecycle/evidence/M04/20260813T050716Z-gate-final-rust-settled/stdout.txt",
+    "sha256_captured": "fbcc3fd79a11ab55006c3d787f4c9bb280775a00cabd1630a22c4564b88fab1c",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 900
+}

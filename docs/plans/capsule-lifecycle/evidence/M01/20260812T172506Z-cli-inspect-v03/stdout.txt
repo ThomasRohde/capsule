@@ -1,0 +1,125 @@
+{
+  "assets": [
+    {
+      "bytes": 68,
+      "cache_policy": "no-store",
+      "description": "Signed application icon",
+      "executable": 0,
+      "media_type": "image/png",
+      "path": "app/icon.png",
+      "sha256": "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460"
+    },
+    {
+      "bytes": 13,
+      "cache_policy": "no-store",
+      "description": "Minimal vector entry point",
+      "executable": 1,
+      "media_type": "text/html",
+      "path": "app/index.html",
+      "sha256": "b633a587c652d02386c4f16f8c6f6aab7352d97f16367c3c40576214372dd628"
+    },
+    {
+      "bytes": 1048576,
+      "cache_policy": "no-store",
+      "description": "Large but bounded signed asset",
+      "executable": 0,
+      "media_type": "application/octet-stream",
+      "path": "app/large.bin",
+      "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+    }
+  ],
+  "commands": [
+    {
+      "argv_json": [
+        "vector",
+        "å"
+      ],
+      "command_template": "vector",
+      "cwd": "{repo}",
+      "id": "vector.command",
+      "platform": "any",
+      "purpose": "Empty and Unicode argv",
+      "risk_class": "read-only",
+      "success_condition": "done"
+    }
+  ],
+  "documents": [
+    {
+      "media_type": "text/markdown",
+      "sequence": 0,
+      "slug": "release-notes",
+      "title": "Release notes"
+    }
+  ],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.vector",
+    "app_version": "3.0.0",
+    "data_schema_id": "org.sqlite-capsule.vector-data",
+    "data_schema_version": 2,
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.3",
+    "id": 1,
+    "minimum_host_profile": "org.sqlite-capsule.host-profile/0.3",
+    "permissions_json": {
+      "database.read": {
+        "required": true
+      },
+      "database.write": {
+        "required": true
+      },
+      "network": {
+        "value": "none"
+      },
+      "z": 0,
+      "é": "café",
+      "": "bmp",
+      "😀": "astral"
+    },
+    "released_at": "2026-08-08T00:00:00Z",
+    "runtime_protocol": "capsule-http/0.2"
+  },
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.vector",
+      "app_version": "3.0.0",
+      "category": "developer-tool",
+      "description": "Generic v0.3 compatibility fixture.",
+      "icon_asset": "app/icon.png",
+      "legacy_fallback": false,
+      "name": "Café Vector",
+      "release_notes_doc": "release-notes"
+    },
+    "data_schema": {
+      "id": "org.sqlite-capsule.vector-data",
+      "version": 2
+    },
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.3"
+    },
+    "instance": {
+      "capsule_id": "11111111-1111-4111-8111-111111111111",
+      "content_updated_at": "2026-08-08T00:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "description": "Mutable instance profile.",
+      "document_kind": "test-document",
+      "icon_asset_id": "instance-icon",
+      "revision_id": "22222222-2222-4222-8222-222222222222",
+      "tags_json": [
+        "vector",
+        "café"
+      ],
+      "title": "Vector document"
+    }
+  },
+  "prompts": [
+    {
+      "id": "vector.prompt",
+      "prompt_text": "Return “yes”.",
+      "sequence": 0,
+      "title": "Question?"
+    }
+  ]
+}

@@ -383,6 +383,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
+name = "byteorder-lite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
+
+[[package]]
 name = "bytes"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2014,6 +2020,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "image"
+version = "0.25.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd6f44aed642f18953a158afeb30206f4d50da59fbc66ecb53c66488de73563b"
+dependencies = [
+ "bytemuck",
+ "byteorder-lite",
+ "image-webp",
+ "num-traits",
+ "png 0.17.16",
+]
+
+[[package]]
+name = "image-webp"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e031e8e3d94711a9ccb5d6ea357439ef3dcbed361798bd4071dc4d9793fbe22f"
+dependencies = [
+ "byteorder-lite",
+ "quick-error",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3089,6 +3118,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-error"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+
+[[package]]
 name = "quick-xml"
 version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4110,6 +4145,7 @@ dependencies = [
  "sqlite-capsule-launch",
  "sqlite-capsule-policy",
  "sqlite-capsule-signing",
+ "sqlite-capsule-workspace",
 ]
 
 [[package]]
@@ -4143,6 +4179,7 @@ dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
  "getrandom 0.4.3",
+ "image",
  "minisign-verify",
  "reqwest",
  "rusqlite",
@@ -4162,6 +4199,7 @@ dependencies = [
  "sqlite-capsule-signing",
  "sqlite-capsule-sigstore",
  "sqlite-capsule-update",
+ "sqlite-capsule-workspace",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
@@ -4204,11 +4242,13 @@ name = "sqlite-capsule-launch"
 version = "0.3.0"
 dependencies = [
  "rusqlite",
+ "serde",
  "serde_json",
  "sha2 0.11.0",
  "sqlite-capsule-core",
  "sqlite-capsule-crypto",
  "sqlite-capsule-policy",
+ "tempfile",
  "thiserror 2.0.20",
 ]
 
@@ -4216,6 +4256,7 @@ dependencies = [
 name = "sqlite-capsule-lifecycle"
 version = "0.3.0"
 dependencies = [
+ "getrandom 0.4.3",
  "libc",
  "serde",
  "sha2 0.11.0",
@@ -4252,6 +4293,7 @@ dependencies = [
 name = "sqlite-capsule-runtime"
 version = "0.3.0"
 dependencies = [
+ "getrandom 0.4.3",
  "rusqlite",
  "serde",
  "serde_json",
@@ -4301,6 +4343,23 @@ dependencies = [
  "sqlite-capsule-lifecycle",
  "sqlite-capsule-platform",
  "thiserror 2.0.20",
+]
+
+[[package]]
+name = "sqlite-capsule-workspace"
+version = "0.3.0"
+dependencies = [
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "sqlite-capsule-core",
+ "sqlite-capsule-crypto",
+ "sqlite-capsule-launch",
+ "sqlite-capsule-lifecycle",
+ "tempfile",
 ]
 
 [[package]]

@@ -8,6 +8,7 @@ members = [
   "crates/capsule-lifecycle",
   "crates/capsule-policy",
   "crates/capsule-runtime",
+  "crates/capsule-workspace",
   "crates/capsule-distribution",
   "crates/capsule-platform",
   "crates/capsule-sigstore",
@@ -27,6 +28,7 @@ rust-version = "1.97"
 base64 = "=0.22.1"
 ed25519-dalek = { version = "=3.0.0", features = ["signature", "pkcs8", "pem"] }
 getrandom = "=0.4.3"
+image = { version = "=0.25.5", default-features = false, features = ["png", "webp"] }
 libc = "=0.2.189"
 minisign-verify = "=0.2.5"
 pkcs8 = { version = "=0.11.0", features = ["pem"] }

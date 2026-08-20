@@ -1,0 +1,3786 @@
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\capsules\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-state\\restored\\restored.sqlitecapsule",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "parentPort": 60974,
+  "rawPort": 60975,
+  "rawUrl": "http://capsule.app/__host/locked",
+  "nodes": 12,
+  "scenes": 5,
+  "trustTransitions": [
+    "deny",
+    "forget-exact-decision",
+    "allow-once"
+  ],
+  "sourceWritePerformed": false,
+  "sourceSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+  "disposableWritePerformed": true,
+  "disposableSha256": "c37e21df364fd7fe1a949dcbc7ec51697562751baadf582737c047ce61823245",
+  "verifiedBackup": {
+    "id": "01786574317106286000-32596-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6"
+  },
+  "supportExport": {
+    "format": "org.sqlite-capsule.support-bundle/0.2",
+    "sha256": "c18c89fab35fcbc471b702464fb687fb50db7fdd344baf2a95714505e09fce0f",
+    "bytes": 22004,
+    "contentPolicy": {
+      "capsule_controlled_text": "untrusted-data-only",
+      "capsule_database_bytes_included": false,
+      "embedded_instructions_executed": false,
+      "host_severity_source": "host-owned-structured-fields-only",
+      "private_keys_included": false,
+      "selected_file_contents_included": false,
+      "shutdown_tokens_included": false,
+      "trust_store_bytes_included": false
+    },
+    "selectedPathRedacted": true,
+    "capsuleBytesIncluded": false,
+    "trustStoreBytesIncluded": false,
+    "existingFileReplaced": false,
+    "output": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-state\\support\\sqlite-capsule-support.json"
+  },
+  "crashRecovery": {
+    "attempted": true,
+    "hotJournalCandidate": true,
+    "journalSha256": "8e7a1087c50750a0e12e51271458f65376cc69305f3570c7b737d6a2d0656c2d",
+    "journalClearedBySQLite": true,
+    "fullyReverifiedBeforeAssetRelease": true
+  },
+  "persistedNode": {
+    "id": "node-agent-prompt",
+    "label": "One-sentence agent prompt · native raw E2E"
+  },
+  "externalReplacement": {
+    "attempted": true,
+    "deniedByWindows": true,
+    "errorCode": "EPERM",
+    "candidateSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "activeSha256": "5d6cfad66eba51622b002b59062eb855cc16dc2b9a541c97a2f78e5ec8f20b9f",
+    "sourceBytesChanged": false,
+    "writableSessionContinued": true
+  },
+  "externalConflict": {
+    "detected": true,
+    "externalLabel": "One-sentence agent prompt · external conflict E2E",
+    "sessionClosed": true,
+    "rendererLocked": true,
+    "recoveryPointRetained": true,
+    "readOnlyContinuationRequiresReauthorization": true,
+    "unsignedApplicationRemainedLocked": true
+  },
+  "verifiedRestore": {
+    "createdAtNewPath": true,
+    "existingFileReplaced": false,
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "bytes": 888832,
+    "restoredPrewriteLabel": "One-sentence agent prompt",
+    "applicationRemainedLocked": true,
+    "output": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-state\\restored\\restored.sqlitecapsule"
+  },
+  "disposableCapsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-open-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "open.verified",
+  "hostExitCode": 98,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-open-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "sha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "changed": false,
+    "historyCursor": 0,
+    "journalRetained": false
+  },
+  "restart": {
+    "stage": "first-open",
+    "persistedAuthority": false,
+    "assetsReleasedBeforeNewDecision": false,
+    "rawRendererLockedBeforeNewDecision": true,
+    "backupArtifacts": 0,
+    "writerLeaseReacquiredAfterNewDecision": true
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-open-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-fault-e2e-state\\restored\\interrupted.sqlitecapsule",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "restore.database-copied",
+  "hostExitCode": 98,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "beforeSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "afterSha256": "cc91c7a3e8d27cd74a987ea863b877c7b71e81d1d88a69d50e165f8b27456203",
+    "committedLabel": "One-sentence agent prompt · restore crash E2E"
+  },
+  "recoveryPoint": {
+    "id": "01786574326992653300-39876-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6"
+  },
+  "interruptedRestore": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-fault-e2e-state\\restored\\interrupted.sqlitecapsule",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "markerRetained": true,
+    "originalLabel": "One-sentence agent prompt"
+  },
+  "restart": {
+    "stage": "rejected",
+    "rejectedBeforeExecution": true,
+    "assetsReleased": false,
+    "rawRendererLocked": true,
+    "backupStillVerified": true
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-prewrite-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-prewrite-fault-e2e-state\\capsule-backups\\01786574332164100900-26992-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "prewrite.database-copied",
+  "hostExitCode": 98,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-prewrite-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "beforeSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "afterSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "attemptedLabel": "One-sentence agent prompt · prewrite crash E2E",
+    "persistedLabel": "One-sentence agent prompt",
+    "writeCommitted": false,
+    "journalRetained": false
+  },
+  "interruptedBackup": {
+    "id": "01786574332164100900-26992-addd01712879db46.capsule-backup.sqlite",
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-prewrite-fault-e2e-state\\capsule-backups\\01786574332164100900-26992-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "databaseCopied": true,
+    "markerRetained": true,
+    "manifestPresent": false,
+    "treatedAsRecoverable": false
+  },
+  "restart": {
+    "stage": "first-open",
+    "assetsReleased": false,
+    "rawRendererLocked": true,
+    "lifecycleAttention": true,
+    "incompleteArtifacts": 1,
+    "invalidArtifacts": 0
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-prewrite-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-state\\capsule-backups\\01786574337112540900-41544-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-state\\capsule-backups\\01786574336301943500-41544-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "checkpoint.manifest-synced",
+  "hostExitCode": 98,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "beforeSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "afterSha256": "aa9eca46ae55f6a67e6e09b41c34d509e8ceca4b1bae1ceac7104628e6fa9afc",
+    "committedLabel": "One-sentence agent prompt · checkpoint 10",
+    "committedWrites": 10,
+    "attemptedEleventhWriteCommitted": false,
+    "journalRetained": false
+  },
+  "verifiedPrewriteBackup": {
+    "id": "01786574336301943500-41544-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "historyCursor": 0
+  },
+  "interruptedBoundedCheckpoint": {
+    "id": "01786574337112540900-41544-addd01712879db46.capsule-backup.sqlite",
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-state\\capsule-backups\\01786574337112540900-41544-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "90ab50b4ec8340e8a3790787dc48fbc99679128a11054fdcfafe1b774e928300",
+    "historyCursor": 10,
+    "markerRetained": true,
+    "manifestPresent": true,
+    "treatedAsRecoverable": false
+  },
+  "restart": {
+    "stage": "first-open",
+    "assetsReleased": false,
+    "rawRendererLocked": true,
+    "verifiedArtifacts": 1,
+    "incompleteArtifacts": 1,
+    "invalidArtifacts": 0
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-checkpoint-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-state\\capsule-backups\\01786574343172499000-20200-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-state\\capsule-backups\\01786574342752179300-20200-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "update.manifest-synced",
+  "hostExitCode": 98,
+  "trustedCommand": "stage_host_update",
+  "signedUpdateAcceptanceClaimed": false,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "beforeSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "afterSha256": "d0cb6287d9bb35fe8c3ccc50128de4359596c586d0ab3e0bd09c4b270672e999",
+    "committedLabel": "One-sentence agent prompt · update preflight crash E2E",
+    "historyCursor": 1,
+    "journalRetained": false
+  },
+  "verifiedPrewriteBackup": {
+    "id": "01786574342752179300-20200-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "historyCursor": 0
+  },
+  "interruptedUpdatePreflight": {
+    "id": "01786574343172499000-20200-addd01712879db46.capsule-backup.sqlite",
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-state\\capsule-backups\\01786574343172499000-20200-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "cf057c41fa0351f56af99fccc8d0d98bdd750393e28eae61c2b7067cafbef715",
+    "historyCursor": 1,
+    "markerRetained": true,
+    "manifestPresent": true,
+    "treatedAsRecoverable": false
+  },
+  "restart": {
+    "stage": "first-open",
+    "assetsReleased": false,
+    "rawRendererLocked": true,
+    "verifiedArtifacts": 1,
+    "incompleteArtifacts": 1,
+    "invalidArtifacts": 0
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-update-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-state\\capsule-backups\\01786574349560864300-40276-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-state\\capsule-backups\\01786574348765752700-40276-addd01712879db46.capsule-backup.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "durableFault": "close.manifest-synced",
+  "hostExitCode": 98,
+  "closeRequestedThroughNativeWindow": true,
+  "source": {
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-capsule\\diagram-studio.capsule.sqlite",
+    "beforeSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+    "afterSha256": "11af773f4a79e0992c1d300c5ac70c113cfdfb0b234cb56aa54bf74660479d2d",
+    "committedLabel": "One-sentence agent prompt · close crash E2E",
+    "writeCommitted": true,
+    "journalRetained": false
+  },
+  "verifiedPrewriteBackup": {
+    "id": "01786574348765752700-40276-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "originalLabel": "One-sentence agent prompt"
+  },
+  "interruptedCloseCheckpoint": {
+    "id": "01786574349560864300-40276-addd01712879db46.capsule-backup.sqlite",
+    "path": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-state\\capsule-backups\\01786574349560864300-40276-addd01712879db46.capsule-backup.sqlite",
+    "sha256": "a249489dca0222b7317962e5b914bfd405fe0ffbcb5ec86d59b984185f602007",
+    "committedLabel": "One-sentence agent prompt · close crash E2E",
+    "databaseCopied": true,
+    "markerRetained": true,
+    "manifestPresent": true,
+    "treatedAsRecoverable": false
+  },
+  "restart": {
+    "stage": "first-open",
+    "assetsReleased": false,
+    "rawRendererLocked": true,
+    "verifiedArtifacts": 1,
+    "incompleteArtifacts": 1,
+    "invalidArtifacts": 0
+  },
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-close-fault-e2e-state"
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-picker-e2e-state\\restored\\restored.sqlitecapsule",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-picker-e2e-capsule\\diagram-studio.capsule.sqlite",
+  "checks": [
+    {
+      "detail": "ok",
+      "id": "agent-boot-path-complete",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "connector-routing-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-has-scenes",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "diagram-main-exists",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "embedded-host-present",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "group-membership-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-cursor-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-endpoints-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-payloads-bounded",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-sequence-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "history-state-matches-cursor",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "layer-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "no-orphan-edges",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "node-dimensions-valid",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "presentation-order-contiguous",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-focus-resolves",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "scene-overrides-resolve",
+      "passed": true
+    },
+    {
+      "detail": "ok",
+      "id": "semantic-layer-ownership-valid",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "manifest": {
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.3.0",
+    "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+    "created_at": "2026-08-07T19:00:00Z",
+    "entry_asset": "app/index.html",
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "id": 1,
+    "permissions_json": {
+      "clipboard.read": {
+        "reason": "Paste a user-initiated bounded Diagram Studio interchange document.",
+        "required": false
+      },
+      "clipboard.write": {
+        "reason": "Copy selected semantic objects as bounded Diagram Studio JSON.",
+        "required": false
+      },
+      "database.read": {
+        "reason": "Render diagram objects and presentation scenes.",
+        "required": true
+      },
+      "database.write": {
+        "reason": "Persist user edits into this capsule file.",
+        "required": true
+      },
+      "download": {
+        "reason": "Export deterministic JSON, SVG, and PNG artefacts through browser downloads.",
+        "required": false
+      },
+      "file.read.user-selected": {
+        "reason": "Import only a JSON file explicitly chosen by the user.",
+        "required": false
+      },
+      "fullscreen": {
+        "reason": "Optional presentation mode.",
+        "required": false
+      },
+      "network": {
+        "reason": "The application is fully offline.",
+        "required": false,
+        "value": "none"
+      }
+    },
+    "runtime_protocol": "capsule-http/0.2",
+    "summary": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+    "title": "Diagram Studio — SQLite Capsule",
+    "updated_at": "2026-08-08T12:00:00Z"
+  },
+  "ok": true,
+  "overview": {
+    "application": {
+      "app_id": "org.sqlite-capsule.diagram-studio",
+      "app_version": "0.3.0",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "icon_asset": null,
+      "legacy_fallback": true,
+      "name": "Diagram Studio — SQLite Capsule"
+    },
+    "data_schema": null,
+    "format": {
+      "id": "org.sqlite-capsule",
+      "version": "0.2"
+    },
+    "instance": {
+      "capsule_id": "urn:uuid:4f5e31aa-19ce-4b49-bd5e-256d611201f4",
+      "content_updated_at": "2026-08-08T12:00:00Z",
+      "cover_asset_id": null,
+      "created_at": "2026-08-07T19:00:00Z",
+      "description": "A self-describing visual diagram application whose UI, data, APIs, scenes, checks, documentation, and runbook live in one SQLite database.",
+      "document_kind": "legacy-v0.2",
+      "icon_asset_id": null,
+      "revision_id": null,
+      "tags": [],
+      "title": "Diagram Studio — SQLite Capsule"
+    }
+  },
+  "warnings": []
+}
+{
+  "ok": true,
+  "productionRestorePicker": {
+    "debugDestinationOverridePresent": false,
+    "dialogClass": "#32770",
+    "dialogName": "Save As",
+    "fileNameHostAutomationId": "1001",
+    "fileNameInputAutomationId": "1001",
+    "fileNameInputControlType": "ControlType.Pane",
+    "fileNameInputClass": "Edit",
+    "fileNameInputPattern": "HostSuggestedName",
+    "saveButtonAutomationId": "1",
+    "saveCommitMethod": "NativeDialogButton",
+    "hostProcessOwned": true,
+    "createdAtNewPath": true,
+    "existingFileReplaced": false
+  },
+  "verifiedRestore": {
+    "sha256": "5c944f6dd79db3f5d7d3770d9bb855013f588ade1187b4768b9fa048cede2cc6",
+    "bytes": 888832,
+    "restoredPrewriteLabel": "One-sentence agent prompt",
+    "applicationRemainedLocked": true
+  },
+  "conflictSource": {
+    "sha256": "35330e5336f428a8a1113e3ab1c1a6871ab1a60ff177e40f24359598c40acd43",
+    "externalLabel": "One-sentence agent prompt · native save picker conflict"
+  },
+  "checkedSourceSha256": "addd01712879db46af594f5936043700ad938b0b9a4a26fc0dd2014c730a3be8",
+  "isolatedStateRoot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-raw-picker-e2e-state"
+}

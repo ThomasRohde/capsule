@@ -1,0 +1,23 @@
+{
+  "profile": "org.sqlite-capsule.template-state/1",
+  "app_id": "org.sqlite-capsule.vector",
+  "app_version": "3.0.0",
+  "data_schema_id": "org.sqlite-capsule.vector-data",
+  "data_schema_version": 2,
+  "dataset_state_profile": "org.sqlite-capsule.dataset-state/1",
+  "mutable_platform_state_profile": "org.sqlite-capsule.template-platform-reset/1",
+  "datasets": [
+    {
+      "dataset_id": "content",
+      "disposition": "seed",
+      "stored_row_count": 1,
+      "state_sha256": "da520fd9258e7885a3575b02793d5324a54f89243cfa2b7493d7b12d2823d0ae"
+    },
+    {
+      "dataset_id": "settings",
+      "disposition": "seed",
+      "stored_row_count": 1,
+      "state_sha256": "5f6021d0a0862a2c9ed7822968fcdcd57b31151662d12520ed23cbdcd90b78ac"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+[package]
+name = "sqlite-capsule-workspace"
+version = "0.3.0"
+description = "Verified, product-independent lifecycle workspace services for SQLite Capsules"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "capsule-workspace"
+path = "src/bin/capsule-workspace.rs"
+
+[dependencies]
+getrandom.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlite-capsule-core = { path = "../capsule-core" }
+sqlite-capsule-crypto = { path = "../capsule-crypto" }
+sqlite-capsule-launch = { path = "../capsule-launch" }
+sqlite-capsule-lifecycle = { path = "../capsule-lifecycle" }
+tempfile.workspace = true
+
+[dev-dependencies]
+ed25519-dalek.workspace = true
+rusqlite.workspace = true
+serde_json.workspace = true

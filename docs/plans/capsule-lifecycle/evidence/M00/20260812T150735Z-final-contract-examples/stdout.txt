@@ -1,0 +1,7 @@
+schema: diagram-studio-application-profile.json -> capsule-application-profile-v0.3.schema.json: pass
+schema: diagram-studio-instance-profile.json -> capsule-instance-profile-v0.3.schema.json: pass
+schema: diagram-studio-data-contract.json -> capsule-data-contract-v0.3.schema.json: pass
+schema: diagram-studio-lineage-example.json -> capsule-lineage-v0.3.schema.json: pass
+schema: diagram-studio-migration-v1-to-v2.json -> capsule-migration-v0.3.schema.json: pass
+schema: diagram-studio-upgrade-plan-same-schema.json -> upgrade-plan-v1.schema.json: pass
+coverage: 10 domain tables classified exactly once: pass

@@ -24,6 +24,38 @@ references, format assets, and runtime assets are relative to it.
 The normative machine resources are under `assets/`; do not substitute guessed
 schemas or download a runtime.
 
+The no-flag authoring path remains Capsule format v0.2 for compatibility. Choose
+v0.3 explicitly only when the capsule needs separate application/instance
+identity and lifecycle dataset contracts:
+
+```text
+python <skill>/scripts/capsule_project.py init <project> --title "<title>" --app-id <reverse-domain-id> --format-version 0.3
+```
+
+Add `--template` only for an intentionally clean v0.3 seed project. The
+builder derives its template-state document from the actual seed database; it
+never trusts handwritten row counts or hashes. That proof becomes authoritative
+only after the resulting application compartment is signed.
+
+When choosing v0.3 dataset policies, review the native lifecycle truth table in
+`references/authoring-contract.md`: `copy` cannot be downgraded, sensitive
+`prompt` inclusion needs explicit confirmation, `forbid` blocks every semantic
+mode, and fork/selective `reset` is deliberately unavailable without a separate
+clean source. The standalone plugin authors and verifies these declarations but
+does not execute lifecycle copies or require the Tauri host.
+Treat `compare_policy` as a signed disclosure ceiling too: prefer `summary` or
+`row` unless bounded field values are genuinely required, and remember that
+sensitive values still need an explicit trusted-shell reveal.
+The separate Application expansion is value-free and fixed by the trusted
+host; author metadata cannot select application tables or expose their values.
+Treat `reconcile_policy` as signed transformation authority: `ignore` excludes,
+`forbid` blocks, `manual` allows explicit two-way choices, and `three-way`
+allows automatic clean-change classification only with a separately verified
+exact ancestor. Three-way requires row/field comparison. Keep timestamps and
+non-semantic noise ignored, and mark identity/ownership columns immutable;
+immutable conflicts can only keep the target. The plugin never applies a
+reconciliation or accepts lineage as ancestor proof.
+
 ## Workflow
 
 1. Turn the request into a compact product/source plan: user job, domain model,
@@ -40,7 +72,9 @@ schemas or download a runtime.
    inspect `assets/examples/capsule-inspector/`; copy patterns, not its domain.
    Give every table an explicit primary key, do not use triggers or virtual
    tables, and list suffix-classified pure-content files in
-   `capsule-project.json` under `non_executable_assets`.
+   `capsule-project.json` under `non_executable_assets`. For v0.3, also keep
+   `source/data-contract.json` exhaustive: classify every ordinary domain table
+   in exactly one dataset and declare its real ordered primary key.
 4. Build to a resolved output. Use `--replace` only when intentionally
    regenerating that exact file:
 
@@ -90,8 +124,14 @@ schemas or download a runtime.
   unspecified targets.
 - Keep schema portable: explicit table primary keys only, with no triggers or
   virtual tables.
+- Do not add lifecycle migration endpoints. V0.3 migrations are signed,
+  host-interpreted `copy_rows`, `copy_dataset`, or `discard_dataset`
+  declarations; the application endpoint engine is outside that boundary.
 - Treat internal hashes as integrity evidence, never publisher authentication.
 - Render database/untrusted text with safe DOM text APIs.
+- For v0.3 application or instance artwork, use only hash-valid static PNG/WebP
+  within the 512 KiB, 1024-by-1024, and 4 MiB decoded host ceilings; never use
+  SVG, remote/data URLs, animation, or Cabinet state as authority.
 - Do not hand-edit generated capsules for durable changes.
 
 ## Existing capsules

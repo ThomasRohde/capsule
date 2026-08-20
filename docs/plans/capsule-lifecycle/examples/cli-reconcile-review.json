@@ -1,0 +1,205 @@
+{
+  "profile": "org.sqlite-capsule.reconcile-cli-review/1",
+  "compare_report_digest": "1010101010101010101010101010101010101010101010101010101010101010",
+  "review_digest": "9999999999999999999999999999999999999999999999999999999999999999",
+  "operation_count": 1,
+  "plan": {
+    "profile": "org.sqlite-capsule.lifecycle-plan/1",
+    "plan_id": "91967b4a-8cc0-4f0a-a9a4-78bc53b46490",
+    "operation": "reconcile-to-copy",
+    "created_at": "2026-08-13T08:00:00Z",
+    "expires_at": "2026-08-13T08:05:00Z",
+    "inputs": [
+      {
+        "role": "source",
+        "path_hint": "Source.capsule.sqlite",
+        "file_sha256": "5151515151515151515151515151515151515151515151515151515151515151",
+        "snapshot_sha256": "5252525252525252525252525252525252525252525252525252525252525252",
+        "size_bytes": 8192,
+        "filesystem_identity": {
+          "platform": "windows",
+          "volume_or_device": "volume:1",
+          "file_id_or_inode": "file:source",
+          "modified_ns": 1000
+        },
+        "capsule": {
+          "format_version": "0.3",
+          "capsule_id": "8a89b412-32ec-49ec-9e61-bce3538fa8d2",
+          "revision_id": "39dd777e-f135-4ab0-8924-4c04570dde65",
+          "app_id": "org.example.notes",
+          "app_version": "1.0.0",
+          "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+          "data_schema_id": "org.example.notes-data",
+          "data_schema_version": 1,
+          "publisher_key_id": "ed25519:sha256:source"
+        }
+      },
+      {
+        "role": "target",
+        "path_hint": "Target.capsule.sqlite",
+        "file_sha256": "5454545454545454545454545454545454545454545454545454545454545454",
+        "snapshot_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "size_bytes": 8192,
+        "filesystem_identity": {
+          "platform": "windows",
+          "volume_or_device": "volume:1",
+          "file_id_or_inode": "file:target",
+          "modified_ns": 2000
+        },
+        "capsule": {
+          "format_version": "0.3",
+          "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+          "revision_id": "b117c3ad-4205-43a9-b0d0-9d4f8dfa5734",
+          "app_id": "org.example.notes",
+          "app_version": "1.0.0",
+          "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+          "data_schema_id": "org.example.notes-data",
+          "data_schema_version": 1,
+          "publisher_key_id": "ed25519:sha256:target"
+        }
+      }
+    ],
+    "output": {
+      "path": "Reconciled.capsule.sqlite",
+      "leaf_name": "Reconciled.capsule.sqlite",
+      "parent_filesystem_identity": {
+        "platform": "windows",
+        "volume_or_device": "volume:1",
+        "file_id_or_inode": "directory:output"
+      },
+      "must_not_exist": true,
+      "publish_mode": "create-new-no-replace"
+    },
+    "decisions": [
+      {
+        "scope": "application",
+        "subject": "org.example.notes",
+        "action": "bind-reconcile-payload",
+        "reason": "Apply only the exact reviewed value-free reconciliation payload to a new target-derived copy.",
+        "parameters": {
+          "reconcile_payload_digest": "2828282828282828282828282828282828282828282828282828282828282828"
+        }
+      }
+    ],
+    "limits": {
+      "max_input_bytes": 67108864,
+      "max_output_bytes": 67108864,
+      "max_rows_inspected": 100000,
+      "max_rows_written": 100000,
+      "deadline_ms": 30000
+    },
+    "expected": {
+      "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+      "revision_id": "b5eff64a-7244-46f1-b5d6-34735579eef6",
+      "app_id": "org.example.notes",
+      "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+      "data_schema_id": "org.example.notes-data",
+      "data_schema_version": 1
+    },
+    "plan_digest": "2929292929292929292929292929292929292929292929292929292929292929"
+  },
+  "payload": {
+    "profile": "org.sqlite-capsule.reconcile-payload/1",
+    "compare_report_digest": "1010101010101010101010101010101010101010101010101010101010101010",
+    "source_side": "source",
+    "target_side": "target",
+    "mode": "two-way-explicit",
+    "signature_inventories": {
+      "source": {
+        "count": 1,
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "target": {
+        "count": 1,
+        "sha256": "1212121212121212121212121212121212121212121212121212121212121212"
+      }
+    },
+    "lineage": {
+      "event_id": "31fe41d2-35de-4ece-9200-c80061582c42",
+      "occurred_at": "2026-08-13T08:00:00Z",
+      "operation": "reconcile-to-copy",
+      "result": {
+        "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+        "revision_id": "b5eff64a-7244-46f1-b5d6-34735579eef6"
+      },
+      "parents": [
+        {
+          "ordinal": 1,
+          "relation": "target-derived-from",
+          "file_sha256": "5454545454545454545454545454545454545454545454545454545454545454",
+          "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+          "revision_id": "b117c3ad-4205-43a9-b0d0-9d4f8dfa5734"
+        },
+        {
+          "ordinal": 2,
+          "relation": "changes-applied-from",
+          "file_sha256": "5151515151515151515151515151515151515151515151515151515151515151",
+          "capsule_id": "8a89b412-32ec-49ec-9e61-bce3538fa8d2",
+          "revision_id": "39dd777e-f135-4ab0-8924-4c04570dde65"
+        }
+      ],
+      "details": {
+        "profile": "org.sqlite-capsule.reconcile-lineage-details/1",
+        "compare_report_digest": "1010101010101010101010101010101010101010101010101010101010101010",
+        "payload_digest": "2828282828282828282828282828282828282828282828282828282828282828",
+        "operation_count": 1,
+        "resolved_conflict_count": 0
+      }
+    },
+    "operations": [
+      {
+        "sequence": 1,
+        "dataset_id": "content",
+        "table": "items",
+        "key_digest": "2020202020202020202020202020202020202020202020202020202020202020",
+        "basis": "user-selected",
+        "source_state": {
+          "state": "present",
+          "row_digest": "2121212121212121212121212121212121212121212121212121212121212121"
+        },
+        "target_state": {
+          "state": "present",
+          "row_digest": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "action": {
+          "kind": "set-target-fields-from-source",
+          "fields": [
+            {
+              "column": "title",
+              "source_value_digest": "2323232323232323232323232323232323232323232323232323232323232323",
+              "target_value_digest": "2424242424242424242424242424242424242424242424242424242424242424"
+            }
+          ]
+        }
+      }
+    ],
+    "resolved_conflicts": [],
+    "expected_dataset_states": [
+      {
+        "dataset_id": "content",
+        "source": {
+          "profile": "org.sqlite-capsule.dataset-state/1",
+          "row_count": 1,
+          "sha256": "2525252525252525252525252525252525252525252525252525252525252525"
+        },
+        "target": {
+          "profile": "org.sqlite-capsule.dataset-state/1",
+          "row_count": 1,
+          "sha256": "2626262626262626262626262626262626262626262626262626262626262626"
+        },
+        "output": {
+          "profile": "org.sqlite-capsule.dataset-state/1",
+          "row_count": 1,
+          "sha256": "2727272727272727272727272727272727272727272727272727272727272727"
+        }
+      }
+    ],
+    "sensitive_confirmation": {
+      "required_dataset_ids": [],
+      "confirmed_dataset_ids": []
+    },
+    "payload_digest": "2828282828282828282828282828282828282828282828282828282828282828"
+  },
+  "executable_authority": false,
+  "note": "This canonical plan and payload are review data only. The retained in-process capability is required for execution."
+}

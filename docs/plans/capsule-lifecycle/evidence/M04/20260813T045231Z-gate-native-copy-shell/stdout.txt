@@ -1,0 +1,75 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "empty",
+      "stage": "no-capsule",
+      "scaling": {
+        "visualScale": 2,
+        "visualViewport": {
+          "left": 288,
+          "top": 48,
+          "width": 590,
+          "height": 450
+        },
+        "viewportWidth": 1180,
+        "documentWidth": 1180,
+        "titleVisible": true,
+        "titleInsideVisualViewport": true,
+        "openButtonVisible": true,
+        "openButtonInsideVisualViewport": true,
+        "openButtonRight": 455.48960876464844
+      },
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\cabinet-empty.png"
+    },
+    {
+      "name": "legacy-v02",
+      "stage": "first-open",
+      "signature": "Unsigned",
+      "profile": "Legacy v0.2",
+      "sourceSha256": "473f879791ead1a9f7f32bd9b13664c10ae996b2aabac2cff39422f42ff6b828",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-legacy-v02.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null
+    },
+    {
+      "name": "signed-v03",
+      "stage": "first-open",
+      "signature": "Signature valid",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "70ec3b439ae9e4769c6007a9f7742aa6996b5fbea6aa942210084b439d30362d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-signed-v03.png",
+      "copyScreenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\copy-selective-v03.png",
+      "exactCopySha256": "70ec3b439ae9e4769c6007a9f7742aa6996b5fbea6aa942210084b439d30362d"
+    },
+    {
+      "name": "unsigned-v03",
+      "stage": "first-open",
+      "signature": "Unsigned",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "3ce3fa2689e2539ed6fad1c7ccb3b75e0df66de298baa56feca2da63ab6ad3ee",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-unsigned-v03.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null
+    },
+    {
+      "name": "invalid-v03",
+      "stage": "first-open",
+      "signature": "Invalid signature",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "01dcbddafd959eaefea7a91e081083cc72c5c4f0f7054e1bfd9a8b003754d10d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-invalid-v03.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null
+    },
+    {
+      "name": "remembered-ready",
+      "stage": "remembered-ready",
+      "assetsBeforeExplicitOpen": false,
+      "rawLockedBeforeExplicitOpen": true,
+      "assetsAfterExplicitOpen": true,
+      "sourceSha256": "70ec3b439ae9e4769c6007a9f7742aa6996b5fbea6aa942210084b439d30362d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-remembered-ready.png"
+    }
+  ]
+}

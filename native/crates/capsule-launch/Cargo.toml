@@ -9,9 +9,11 @@ rust-version.workspace = true
 
 [dependencies]
 rusqlite.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 sqlite-capsule-core = { path = "../capsule-core" }
 sqlite-capsule-crypto = { path = "../capsule-crypto" }
 sqlite-capsule-policy = { path = "../capsule-policy" }
 thiserror.workspace = true
+tempfile.workspace = true

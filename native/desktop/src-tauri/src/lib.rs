@@ -1,3 +1,34 @@
+mod cabinet;
+mod compare_flow;
+mod copy_flow;
+pub mod overview;
+mod reconcile_flow;
+mod safe_image;
+
+use cabinet::{CabinetObservation, CabinetRecentCache, CabinetRecentSnapshot, LastObservedBadge};
+use compare_flow::{
+    ActiveCompareRequest, CANDIDATE_LIFETIME, COMPARE_OPERATION_LIFETIME,
+    ChooseCompareCandidateRequest, CloseCompareSessionRequest, CompareApplicationRequest,
+    CompareCandidateView, ComparePageRequest, ComparePageView, CompareSessionView, CompareState,
+    StartCompareRequest, remaining_compare_lifetime,
+};
+use copy_flow::{
+    COPY_PROGRESS_EVENT, CancelCopyDestinationRequest, ChooseCopyDestinationRequest,
+    CopyDestinationView, CopyOperationPhase, CopyOperationStatus, CopyProfilePreviewView,
+    CopyProgressEvent, CopyState, ExecuteCopyRequest, OperationRequest, PrepareCopyRequest,
+    PreparedCopyView, PreviewCopyProfileRequest, ShellChoiceDisposition, ShellDatasetChoiceView,
+};
+use overview::CapsuleOverviewViewModel;
+use reconcile_flow::{
+    ChooseReconcileAncestorRequest, EXECUTION_LIFETIME, ExecuteReconcileRequest,
+    HUMAN_REVIEW_LIFETIME, PrepareReconcileRequest, PreparedReconcileView,
+    RECONCILE_PROGRESS_EVENT, ReconcileDestinationView, ReconcileOperationPhase,
+    ReconcileOperationRequest, ReconcileOperationStatus, ReconcileOptionsRequest,
+    ReconcileOptionsView, ReconcileProgressEvent, ReconcileSessionRequest, ReconcileSessionView,
+    ReconcileState, ReconcileThreeWayView, StartReconcileRequest, orient_handoff,
+};
+use safe_image::{SafeImageDerivative, SafeImageSelection, project_safe_image};
+
 use std::{
     borrow::Cow,
     cell::RefCell,
@@ -10,7 +41,7 @@ use std::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 #[cfg(debug_assertions)]
@@ -20,10 +51,7 @@ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 use minisign_verify::{PublicKey as MinisignPublicKey, Signature as MinisignSignature};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use sqlite_capsule_core::{
-    CapsuleIdentity,
-    protocol::{ProtocolParams, ProtocolSession},
-};
+use sqlite_capsule_core::protocol::{ProtocolParams, ProtocolSession};
 use sqlite_capsule_distribution::{
     InstalledReleaseContext, ReleaseCandidateContext, SignedReleaseManifest, UpdateAuthorization,
     VerifiedDownloadedUpdate, VerifiedReleaseCandidate, accept_downloaded_update,
@@ -34,7 +62,7 @@ use sqlite_capsule_installer::{
     discover_bootstrap_installer, launch_prepared, launch_rollback, lock_installer_source,
 };
 use sqlite_capsule_launch::LaunchInspection;
-use sqlite_capsule_lifecycle::{prepare_private_directory, protect_private_file};
+use sqlite_capsule_lifecycle::{SourceIdentity, prepare_private_directory, protect_private_file};
 use sqlite_capsule_platform::{PlatformVerificationReport, verify_platform_artifact};
 use sqlite_capsule_policy::{
     CapabilityDecision, EvaluationContext, LaunchDecision, LaunchEvidence, SUPPORTED_CAPABILITIES,
@@ -53,6 +81,12 @@ use sqlite_capsule_sigstore::verify_sigstore_bundle;
 use sqlite_capsule_update::{
     PreparedInstallation, PreviousInstaller, StageRequest, StagedUpdate, UpdateInventoryReport,
     UpdateStageState, UpdateStager,
+};
+use sqlite_capsule_workspace::{
+    CancellationToken, CompareApplicationDetail, CompareLimits, ForkPolicy, Sensitivity,
+    TemplateStateLimits, VerifiedCopySource, VerifiedWorkspaceSource, WorkspaceError,
+    WorkspaceErrorCode, WorkspaceLimits, compare_sources, open_semantic_copy_source,
+    verify_template_state,
 };
 use tauri::{AppHandle, DragDropEvent, Emitter, Manager, State, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
@@ -507,6 +541,33 @@ fn generate_session_token() -> Result<String, String> {
     Ok(output)
 }
 
+fn generate_uuid_v4() -> Result<String, WorkspaceError> {
+    let mut bytes = [0_u8; 16];
+    getrandom::fill(&mut bytes)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Ok(format!(
+        "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        bytes[0],
+        bytes[1],
+        bytes[2],
+        bytes[3],
+        bytes[4],
+        bytes[5],
+        bytes[6],
+        bytes[7],
+        bytes[8],
+        bytes[9],
+        bytes[10],
+        bytes[11],
+        bytes[12],
+        bytes[13],
+        bytes[14],
+        bytes[15]
+    ))
+}
+
 fn asset_response(asset: sqlite_capsule_runtime::RuntimeAsset) -> Response<Cow<'static, [u8]>> {
     response_builder(StatusCode::OK)
         .header(header::CONTENT_TYPE, asset.media_type)
@@ -619,18 +680,45 @@ const RAW_SANDBOX_PROBE_JS: &str = r##"
     try { await fetch(url, { cache: "no-store" }); return false; }
     catch { return true; }
   };
+  const unavailable = async url => {
+    try { return !(await fetch(url, { cache: "no-store" })).ok; }
+    catch { return true; }
+  };
+  const ipcAttempt = await (async () => {
+    if (typeof globalThis.ipc?.postMessage !== "function") return ["Absent", true];
+    let responseObserved = false;
+    const observe = () => { responseObserved = true; };
+    globalThis.addEventListener("message", observe);
+    try {
+      globalThis.ipc.postMessage(JSON.stringify({
+        cmd: "cabinet_status",
+        callback: 1,
+        error: 2,
+        payload: { recentId: "0".repeat(32) },
+      }));
+      await new Promise(resolve => setTimeout(resolve, 50));
+      return [responseObserved ? "Response observed" : "Sent · no response", !responseObserved];
+    } catch {
+      return ["Rejected", true];
+    } finally {
+      globalThis.removeEventListener("message", observe);
+    }
+  })();
   const checks = [
     ["Tauri global", globalThis.__TAURI__ ? "Exposed" : "Absent", !globalThis.__TAURI__],
     ["Tauri internals", globalThis.__TAURI_INTERNALS__ ? "Exposed" : "Absent", !globalThis.__TAURI_INTERNALS__],
-    ["Wry transport", globalThis.ipc ? "Present · unbound" : "Absent", true],
+    ["Wry transport", ipcAttempt[0], ipcAttempt[1]],
     ["Shell parent", parent === window ? "Separate view" : "Reachable", parent === window],
     ["Network", await blocked("https://example.invalid/"), true],
     ["Local file", await blocked("file:///__sqlite_capsule_probe__"), true],
+    ["Image token", await unavailable("/__host/image/guessed-selection-token"), true],
   ];
   checks[4][1] = checks[4][1] ? "Blocked" : "Reached";
   checks[4][2] = checks[4][1] === "Blocked";
   checks[5][1] = checks[5][1] ? "Blocked" : "Reached";
   checks[5][2] = checks[5][1] === "Blocked";
+  checks[6][1] = checks[6][1] ? "Unavailable" : "Reached";
+  checks[6][2] = checks[6][1] === "Unavailable";
   document.querySelector("#checks").replaceChildren(...checks.map(([label, value, ok]) => {
     const row = document.createElement("div");
     const term = document.createElement("dt");
@@ -674,20 +762,42 @@ struct SignatureReport {
     digest_matches: bool,
 }
 
+/// Deliberately narrow trusted-shell projection. `CapsuleIdentity` also owns
+/// executable asset names, the raw permissions JSON and additional format
+/// internals; serialising that type would turn the Overview command into a
+/// general metadata escape hatch.
+#[derive(Clone, Debug, Serialize)]
+struct ShellIdentityReport {
+    canonical_path: PathBuf,
+    format_version: String,
+    capsule_id: String,
+    app_id: String,
+    app_version: String,
+    title: String,
+    summary: String,
+}
+
 #[derive(Clone, Debug, Serialize)]
 struct CapsuleReport {
-    identity: CapsuleIdentity,
+    identity: ShellIdentityReport,
+    overview: CapsuleOverviewViewModel,
     source_sha256: String,
     application_digest: Option<String>,
     publisher: Option<PublisherReport>,
     signatures: Vec<SignatureReport>,
     decision: LaunchDecision,
     assets_released: bool,
+    /// Needed only by the native raw-window activation path. Never crosses the
+    /// trusted-shell serialization boundary.
+    #[serde(skip)]
+    entry_asset: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
 struct StartupReport {
     stage: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    selection_id: Option<String>,
     capsule: Option<CapsuleReport>,
     recovery: Option<RecoveryReport>,
     error: Option<String>,
@@ -1267,6 +1377,11 @@ struct SupportBundleContentPolicy {
 
 struct HostState {
     inspection: Option<LaunchInspection>,
+    safe_image: Option<SafeImageDerivative>,
+    selection_id: Option<String>,
+    selected_source_identity: Option<SourceIdentity>,
+    selected_path: Option<PathBuf>,
+    cabinet_cache: CabinetRecentCache,
     trust_store: Option<TrustStore>,
     trust_backup_directory: PathBuf,
     update_root: PathBuf,
@@ -1281,6 +1396,12 @@ impl HostState {
         update_root: PathBuf,
         bridge: Arc<Mutex<RuntimeBridge>>,
     ) -> Self {
+        let cabinet_cache = CabinetRecentCache::new(
+            trust_path
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .join("cabinet-v1"),
+        );
         let trust_store = match TrustStore::open(&trust_path) {
             Ok(store) => store,
             Err(error) => {
@@ -1288,18 +1409,25 @@ impl HostState {
                     trust_backup_directory,
                     update_root,
                     bridge,
+                    cabinet_cache,
                     format!("protected trust store: {error}"),
                 );
             }
         };
         let mut state = Self {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache,
             trust_store: Some(trust_store),
             trust_backup_directory,
             update_root,
             bridge,
             report: StartupReport {
                 stage: "no-capsule".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: None,
@@ -1312,42 +1440,94 @@ impl HostState {
     }
 
     fn load_capsule(&mut self, path: &Path) {
-        let writer_lock_root = match self.bridge.lock() {
+        self.selected_source_identity = None;
+        self.selected_path = Some(path.to_owned());
+        match self.bridge.lock() {
             Ok(mut bridge) => {
                 bridge.deactivate();
-                bridge.writer_lock_root.clone()
             }
             Err(_) => {
                 self.inspection = None;
+                self.safe_image = None;
+                self.selection_id = None;
                 self.report = StartupReport {
                     stage: "rejected".to_owned(),
+                    selection_id: None,
                     capsule: None,
                     recovery: None,
                     error: Some("capsule runtime state is unavailable".to_owned()),
                 };
                 return;
             }
+        }
+        if restore_marker_exists(path) {
+            self.inspection = None;
+            self.safe_image = None;
+            self.selection_id = None;
+            self.report = StartupReport {
+                stage: "rejected".to_owned(),
+                selection_id: None,
+                capsule: None,
+                recovery: None,
+                error: Some(
+                    "an interrupted restore marker is present; preserve the file and marker for explicit recovery"
+                        .to_owned(),
+                ),
+            };
+            return;
+        }
+        let selection_id = match generate_session_token() {
+            Ok(selection_id) => selection_id,
+            Err(error) => {
+                self.inspection = None;
+                self.safe_image = None;
+                self.selection_id = None;
+                self.report = StartupReport {
+                    stage: "rejected".to_owned(),
+                    selection_id: None,
+                    capsule: None,
+                    recovery: None,
+                    error: Some(error),
+                };
+                return;
+            }
         };
-        let (inspection, recovery) = match inspect_capsule_on_worker_stack(path, &writer_lock_root)
-        {
+        let (inspection, safe_image) = match inspect_capsule_on_worker_stack(path) {
             Ok(result) => result,
             Err(error) => {
                 self.inspection = None;
+                self.safe_image = None;
+                let recovery_required = rollback_journal_exists(path);
+                self.selection_id = recovery_required.then(|| selection_id.clone());
                 self.report = StartupReport {
-                    stage: "rejected".to_owned(),
+                    stage: if recovery_required {
+                        "recovery-required"
+                    } else {
+                        "rejected"
+                    }
+                    .to_owned(),
+                    selection_id: recovery_required.then_some(selection_id),
                     capsule: None,
                     recovery: None,
-                    error: Some(error.to_string()),
+                    error: Some(if recovery_required {
+                        "A rollback journal requires explicit recovery before inspection. The Cabinet did not modify the capsule."
+                            .to_owned()
+                    } else {
+                        error
+                    }),
                 };
                 return;
             }
         };
         let Some(trust_store) = self.trust_store.as_mut() else {
             self.inspection = None;
+            self.safe_image = None;
+            self.selection_id = None;
             self.report = StartupReport {
                 stage: "rejected".to_owned(),
+                selection_id: None,
                 capsule: None,
-                recovery,
+                recovery: None,
                 error: Some("protected trust store is unavailable".to_owned()),
             };
             return;
@@ -1359,43 +1539,88 @@ impl HostState {
             Ok(decision) => decision,
             Err(error) => {
                 self.inspection = None;
+                self.safe_image = None;
+                self.selection_id = None;
                 self.report = StartupReport {
                     stage: "rejected".to_owned(),
+                    selection_id: None,
                     capsule: None,
-                    recovery,
+                    recovery: None,
                     error: Some(format!("trust evaluation: {error}")),
                 };
                 return;
             }
         };
-        let executable_allowed = decision.executable_allowed;
-        if executable_allowed {
-            let activation = self
-                .bridge
-                .lock()
-                .map_err(|_| "runtime bridge is unavailable".to_owned())
-                .and_then(|mut bridge| bridge.activate(&inspection, &decision));
-            if let Err(error) = activation {
-                let mut report = report_for("runtime-rejected", &inspection, decision);
-                report.recovery = recovery;
-                report.error = Some(format!("verified runtime activation: {error}"));
-                self.report = report;
-                self.inspection = Some(inspection);
-                return;
-            }
-        }
-        self.report = report_for(
-            if executable_allowed {
-                "remembered-authorized"
-            } else {
-                "first-open"
-            },
+        let stage = if decision.executable_allowed {
+            "remembered-ready"
+        } else {
+            "first-open"
+        };
+        self.report = match report_for(
+            stage,
             &inspection,
             decision,
-        );
-        self.report.recovery = recovery;
-        if let Some(capsule) = self.report.capsule.as_mut() {
-            capsule.assets_released = executable_allowed;
+            &selection_id,
+            false,
+            safe_image.as_ref(),
+        ) {
+            Ok(report) => report,
+            Err(error) => {
+                self.inspection = None;
+                self.safe_image = None;
+                self.selection_id = None;
+                StartupReport {
+                    stage: "rejected".to_owned(),
+                    selection_id: None,
+                    capsule: None,
+                    recovery: None,
+                    error: Some(error),
+                }
+            }
+        };
+        if self.report.capsule.is_none() {
+            return;
+        }
+        self.selection_id = Some(selection_id);
+        self.safe_image = safe_image;
+        if let Ok(source) =
+            sqlite_capsule_lifecycle::PinnedSource::open(&inspection.identity.canonical_path, false)
+        {
+            self.selected_source_identity = Some(source.identity().clone());
+            let application = &inspection.identity.overview.application;
+            let instance = &inspection.identity.overview.instance;
+            let badge = if inspection.identity.user_version == 2 {
+                LastObservedBadge::LegacyV02
+            } else if decision_signature_valid(&self.report) {
+                LastObservedBadge::V03SignatureValid
+            } else if inspection.evidence.signatures.is_empty() {
+                LastObservedBadge::V03Unsigned
+            } else {
+                LastObservedBadge::V03InvalidSignature
+            };
+            let _ = self.cabinet_cache.record(CabinetObservation {
+                path: source.canonical_path().to_owned(),
+                source_identity: source.identity().clone(),
+                format_version: inspection.identity.format_version.clone(),
+                application_name: application.name.clone(),
+                instance_title: (inspection.identity.user_version == 3)
+                    .then(|| instance.title.clone()),
+                description: if inspection.identity.user_version == 3 {
+                    instance.description.clone()
+                } else {
+                    application.description.clone()
+                },
+                app_id: application.app_id.clone(),
+                app_version: application.app_version.clone(),
+                last_opened_at: current_utc_seconds().unwrap_or_else(|_| {
+                    if inspection.identity.user_version == 3 {
+                        instance.content_updated_at.clone()
+                    } else {
+                        instance.created_at.clone()
+                    }
+                }),
+                last_observed_badge: badge,
+            });
         }
         self.inspection = Some(inspection);
     }
@@ -1409,8 +1634,13 @@ impl HostState {
             Err(_) => "capsule runtime state is unavailable".to_owned(),
         };
         self.inspection = None;
+        self.safe_image = None;
+        self.selection_id = None;
+        self.selected_source_identity = None;
+        self.selected_path = None;
         self.report = StartupReport {
             stage: stage.to_owned(),
+            selection_id: None,
             capsule: None,
             recovery: None,
             error: Some(error),
@@ -1421,16 +1651,23 @@ impl HostState {
         trust_backup_directory: PathBuf,
         update_root: PathBuf,
         bridge: Arc<Mutex<RuntimeBridge>>,
+        cabinet_cache: CabinetRecentCache,
         error: String,
     ) -> Self {
         Self {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache,
             trust_store: None,
             trust_backup_directory,
             update_root,
             bridge,
             report: StartupReport {
                 stage: "rejected".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: Some(error),
@@ -1485,6 +1722,98 @@ fn native_e2e_restore_path(
         return None;
     }
     Some(canonical_parent.join(requested.file_name()?))
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_compare_path_from_process() -> Option<PathBuf> {
+    native_e2e_compare_path(
+        cdp_e2e_debug_ports_from_process().is_some(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_COMPARE_PATH"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn native_e2e_compare_path_from_process() -> Option<PathBuf> {
+    None
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_reconcile_path_from_process() -> Option<PathBuf> {
+    native_e2e_reconcile_path(
+        cdp_e2e_debug_ports_from_process().is_some(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_RECONCILE_PATH"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn native_e2e_reconcile_path_from_process() -> Option<PathBuf> {
+    None
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_reconcile_path(
+    cdp_automation: bool,
+    state_root: Option<OsString>,
+    requested: Option<OsString>,
+) -> Option<PathBuf> {
+    if !cdp_automation {
+        return None;
+    }
+    let state_root = PathBuf::from(state_root.filter(|value| !value.is_empty())?);
+    let requested = PathBuf::from(requested.filter(|value| !value.is_empty())?);
+    if !state_root.is_absolute()
+        || !state_root.is_dir()
+        || !requested.is_absolute()
+        || !matches!(
+            requested.extension().and_then(OsStr::to_str),
+            Some("sqlitecapsule" | "sqlite")
+        )
+    {
+        return None;
+    }
+    let canonical_root = state_root.canonicalize().ok()?;
+    let canonical_parent = requested.parent()?.canonicalize().ok()?;
+    if !canonical_parent.starts_with(canonical_root) {
+        return None;
+    }
+    Some(canonical_parent.join(requested.file_name()?))
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_reconcile_ancestor_path_from_process() -> Option<PathBuf> {
+    native_e2e_compare_path(
+        cdp_e2e_debug_ports_from_process().is_some(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_RECONCILE_ANCESTOR_PATH"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn native_e2e_reconcile_ancestor_path_from_process() -> Option<PathBuf> {
+    None
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_compare_path(
+    cdp_automation: bool,
+    state_root: Option<OsString>,
+    requested: Option<OsString>,
+) -> Option<PathBuf> {
+    if !cdp_automation {
+        return None;
+    }
+    let state_root = PathBuf::from(state_root.filter(|value| !value.is_empty())?);
+    let requested = PathBuf::from(requested.filter(|value| !value.is_empty())?);
+    if !state_root.is_absolute() || !requested.is_absolute() || !requested.is_file() {
+        return None;
+    }
+    let canonical_root = state_root.canonicalize().ok()?;
+    let canonical_requested = requested.canonicalize().ok()?;
+    canonical_requested
+        .starts_with(canonical_root)
+        .then_some(canonical_requested)
 }
 
 #[cfg(debug_assertions)]
@@ -1639,21 +1968,96 @@ fn initial_capsule_path(
 
 fn inspect_capsule_on_worker_stack(
     path: &Path,
-    writer_lock_root: &Path,
-) -> Result<(LaunchInspection, Option<RecoveryReport>), String> {
+) -> Result<(LaunchInspection, Option<SafeImageDerivative>), String> {
     let path = path.to_owned();
-    let writer_lock_root = writer_lock_root.to_owned();
     let worker = std::thread::Builder::new()
         .name("capsule-launch-inspection".to_owned())
         .stack_size(INSPECTION_STACK_BYTES)
         .spawn(move || {
-            inspect_launch_with_recovery(&path, &writer_lock_root)
-                .map_err(|error| error.to_string())
+            let retained = sqlite_capsule_launch::inspect_launch_retained(&path)
+                .map_err(|error| error.to_string())?;
+            let safe_image = project_safe_image(&retained, SafeImageSelection::ApplicationIcon)
+                .map_err(|error| error.to_string())?
+                .or(
+                    project_safe_image(&retained, SafeImageSelection::InstanceIcon)
+                        .map_err(|error| error.to_string())?,
+                );
+            Ok((retained.into_inspection(), safe_image))
         })
         .map_err(|error| format!("could not start capsule inspection worker: {error}"))?;
     worker
         .join()
         .map_err(|_| "capsule inspection worker terminated unexpectedly".to_owned())?
+}
+
+fn recover_capsule_on_worker_stack(
+    path: &Path,
+    writer_lock_root: &Path,
+) -> Result<Option<RecoveryReport>, String> {
+    let path = path.to_owned();
+    let writer_lock_root = writer_lock_root.to_owned();
+    let worker = std::thread::Builder::new()
+        .name("capsule-explicit-recovery".to_owned())
+        .stack_size(INSPECTION_STACK_BYTES)
+        .spawn(move || {
+            inspect_launch_with_recovery(&path, &writer_lock_root)
+                .map(|(_, report)| report)
+                .map_err(|_| "explicit SQLite recovery failed closed".to_owned())
+        })
+        .map_err(|_| "could not start the explicit recovery worker".to_owned())?;
+    worker
+        .join()
+        .map_err(|_| "explicit SQLite recovery worker terminated unexpectedly".to_owned())?
+}
+
+fn rollback_journal_exists(path: &Path) -> bool {
+    let mut journal = path.as_os_str().to_os_string();
+    journal.push("-journal");
+    PathBuf::from(journal).is_file()
+}
+
+fn restore_marker_exists(path: &Path) -> bool {
+    let mut marker = path.as_os_str().to_os_string();
+    marker.push(".capsule-restore-in-progress");
+    std::fs::symlink_metadata(PathBuf::from(marker)).is_ok()
+}
+
+fn decision_signature_valid(report: &StartupReport) -> bool {
+    report
+        .capsule
+        .as_ref()
+        .is_some_and(|capsule| capsule.decision.signature_valid)
+}
+
+fn current_utc_seconds() -> Result<String, String> {
+    utc_seconds_at(SystemTime::now())
+}
+
+fn utc_seconds_at(time: SystemTime) -> Result<String, String> {
+    let total = time
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "system clock precedes the Unix epoch".to_owned())?
+        .as_secs();
+    let seconds_of_day = total % 86_400;
+    let days =
+        i64::try_from(total / 86_400).map_err(|_| "system clock is out of range".to_owned())?;
+    let z = days + 719_468;
+    let era = z / 146_097;
+    let day_of_era = z - era * 146_097;
+    let year_of_era =
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let mut year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_prime = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
+    let month = month_prime + if month_prime < 10 { 3 } else { -9 };
+    year += i64::from(month <= 2);
+    let hour = seconds_of_day / 3_600;
+    let minute = (seconds_of_day % 3_600) / 60;
+    let second = seconds_of_day % 60;
+    Ok(format!(
+        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z"
+    ))
 }
 
 fn forwarded_capsule_path(args: &[String], cwd: &str) -> Result<Option<PathBuf>, String> {
@@ -1707,7 +2111,7 @@ fn schedule_forwarded_launch(app: &AppHandle, args: Vec<String>, cwd: String) {
 }
 
 fn load_host_path_state(app: &AppHandle, path: &Path) -> StartupReport {
-    match app.try_state::<Mutex<HostState>>() {
+    let report = match app.try_state::<Mutex<HostState>>() {
         Some(state) => match state.lock() {
             Ok(mut state) => {
                 state.load_capsule(path);
@@ -1715,6 +2119,7 @@ fn load_host_path_state(app: &AppHandle, path: &Path) -> StartupReport {
             }
             Err(_) => StartupReport {
                 stage: "open-rejected".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: Some("host trust state is unavailable".to_owned()),
@@ -1722,10 +2127,31 @@ fn load_host_path_state(app: &AppHandle, path: &Path) -> StartupReport {
         },
         None => StartupReport {
             stage: "open-rejected".to_owned(),
+            selection_id: None,
             capsule: None,
             recovery: None,
             error: Some("host trust state is not ready".to_owned()),
         },
+    };
+    invalidate_copy_selection(app, report.selection_id.as_deref());
+    report
+}
+
+fn invalidate_copy_selection(app: &AppHandle, selection_id: Option<&str>) {
+    if let Some(copy) = app.try_state::<CopyState>()
+        && let Ok(mut controller) = copy.0.lock()
+    {
+        controller.invalidate_selection(selection_id);
+    }
+    if let Some(compare) = app.try_state::<CompareState>()
+        && let Ok(mut controller) = compare.0.lock()
+    {
+        controller.invalidate_selection(selection_id);
+    }
+    if let Some(reconcile) = app.try_state::<ReconcileState>()
+        && let Ok(mut controller) = reconcile.0.lock()
+    {
+        controller.invalidate_selection(selection_id);
     }
 }
 
@@ -1742,6 +2168,7 @@ fn reject_host_file_delivery_state(
             }
             Err(_) => StartupReport {
                 stage: stage.to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: Some("host trust state is unavailable".to_owned()),
@@ -1749,6 +2176,7 @@ fn reject_host_file_delivery_state(
         },
         None => StartupReport {
             stage: stage.to_owned(),
+            selection_id: None,
             capsule: None,
             recovery: None,
             error: Some("host trust state is not ready".to_owned()),
@@ -1798,6 +2226,1186 @@ fn startup_report(state: State<'_, Mutex<HostState>>) -> Result<StartupReport, S
         .lock()
         .map(|state| state.report.clone())
         .map_err(|_| "host trust state is unavailable".to_owned())
+}
+
+#[tauri::command]
+fn cabinet_status(
+    state: State<'_, Mutex<HostState>>,
+) -> Result<CabinetRecentSnapshot, WorkspaceError> {
+    state
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .cabinet_cache
+        .load()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))
+}
+
+/// Resolve an opaque recent ID inside the host and perform a fresh,
+/// non-mutating inspection. Cached metadata and trust badges are never reused
+/// as execution authority, and the application renderer remains locked.
+#[tauri::command]
+fn open_recent_capsule(
+    recent_id: String,
+    state: State<'_, Mutex<HostState>>,
+    app: AppHandle,
+) -> Result<StartupReport, WorkspaceError> {
+    let mut state = state
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let path = state
+        .cabinet_cache
+        .resolve_path_hint(&recent_id)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    state.load_capsule(&path);
+    let report = state.report.clone();
+    drop(state);
+    invalidate_copy_selection(&app, report.selection_id.as_deref());
+    navigate_sandbox(&app, None)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    Ok(report)
+}
+
+fn selected_copy_binding(
+    state: &HostState,
+    selection_id: &str,
+) -> Result<(PathBuf, SourceIdentity, String), WorkspaceError> {
+    ensure_selection_binding(state.selection_id.as_deref(), selection_id)?;
+    let bridge = state
+        .bridge
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    if bridge.runtime.is_some() {
+        return Err(WorkspaceError::new(
+            WorkspaceErrorCode::UnsupportedOperation,
+        ));
+    }
+    drop(bridge);
+    let inspection = state
+        .inspection
+        .as_ref()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let capsule = state
+        .report
+        .capsule
+        .as_ref()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let source_identity = state
+        .selected_source_identity
+        .clone()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    Ok((
+        inspection.identity.canonical_path.clone(),
+        source_identity,
+        capsule.source_sha256.clone(),
+    ))
+}
+
+fn selected_reconcile_binding(state: &Mutex<HostState>) -> Result<String, WorkspaceError> {
+    let state = state
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let selection_id = state
+        .report
+        .selection_id
+        .as_deref()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let _ = selected_copy_binding(&state, selection_id)?;
+    Ok(selection_id.to_owned())
+}
+
+#[tauri::command]
+async fn choose_compare_capsule(
+    request: ChooseCompareCandidateRequest,
+    host: State<'_, Mutex<HostState>>,
+    compare: State<'_, CompareState>,
+    app: AppHandle,
+) -> Result<Option<CompareCandidateView>, WorkspaceError> {
+    {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = selected_copy_binding(&host, &request.selection_id)?;
+    }
+    let path = if let Some(path) = native_e2e_compare_path_from_process() {
+        path
+    } else {
+        let picker_app = app.clone();
+        let selected = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+                .blocking_pick_file()
+        })
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let Some(selected) = selected else {
+            return Ok(None);
+        };
+        selected
+            .into_path()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?
+    };
+    {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = selected_copy_binding(&host, &request.selection_id)?;
+    }
+    let candidate_id = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + CANDIDATE_LIFETIME)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    compare
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_candidate(&request.selection_id, path, candidate_id, expires_at)
+        .map(Some)
+}
+
+#[tauri::command]
+async fn start_compare(
+    request: StartCompareRequest,
+    host: State<'_, Mutex<HostState>>,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<CompareSessionView, WorkspaceError> {
+    let (left_path, expected_identity, expected_sha256) = {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        selected_copy_binding(&host, &request.selection_id)?
+    };
+    let right_path = compare
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .consume_candidate(&request.selection_id, &request.candidate_id)?;
+    let selection_id = request.selection_id.clone();
+    let worker_expected_identity = expected_identity.clone();
+    let worker_expected_sha256 = expected_sha256.clone();
+    let cancellation = CancellationToken::new();
+    let session_expires_at = SystemTime::now()
+        .checked_add(COMPARE_OPERATION_LIFETIME)
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let started = std::time::Instant::now();
+    let session_deadline = started
+        .checked_add(COMPARE_OPERATION_LIFETIME)
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let remaining_limits = || -> Result<WorkspaceLimits, WorkspaceError> {
+            let remaining = remaining_compare_lifetime(session_deadline)?;
+            Ok(WorkspaceLimits {
+                deadline: remaining,
+                ..WorkspaceLimits::default()
+            })
+        };
+        let left = VerifiedWorkspaceSource::open_with_control(
+            &left_path,
+            &remaining_limits()?,
+            &cancellation,
+        )?;
+        left.assert_source_binding(&worker_expected_identity, &worker_expected_sha256)?;
+        let right = VerifiedWorkspaceSource::open_with_control(
+            &right_path,
+            &remaining_limits()?,
+            &cancellation,
+        )?;
+        let remaining = remaining_compare_lifetime(session_deadline)?;
+        let report = compare_sources(
+            &left,
+            &right,
+            &CompareLimits {
+                operation_deadline: Some(remaining),
+                ..CompareLimits::default()
+            },
+            &cancellation,
+        )?;
+        Ok::<_, WorkspaceError>((left, right, report))
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))??;
+    {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let current = selected_copy_binding(&host, &selection_id)?;
+        if current.1 != expected_identity || current.2 != expected_sha256 {
+            return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+        }
+    }
+    let session_id = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    remaining_compare_lifetime(session_deadline)?;
+    let expires_at = utc_seconds_at(session_expires_at)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let view = compare
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_session(
+            selection_id.clone(),
+            session_id.clone(),
+            expires_at,
+            session_deadline,
+            result.0,
+            result.1,
+            result.2,
+        )?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .begin_compare_evidence(
+            &selection_id,
+            &session_id,
+            &view.report.report_digest,
+            format!(
+                "{} · revision {}",
+                view.report.left.capsule_id, view.report.left.revision_id
+            ),
+            format!(
+                "{} · revision {}",
+                view.report.right.capsule_id, view.report.right.revision_id
+            ),
+            view.report.compatibility.can_reconcile,
+        )?;
+    schedule_compare_session_expiry(
+        compare.inner().clone(),
+        reconcile.inner().clone(),
+        session_id,
+        session_deadline,
+    )?;
+    Ok(view)
+}
+
+fn schedule_compare_session_expiry(
+    compare: CompareState,
+    reconcile: ReconcileState,
+    session_id: String,
+    deadline: std::time::Instant,
+) -> Result<(), WorkspaceError> {
+    std::thread::Builder::new()
+        .name("capsule-compare-expiry".to_owned())
+        .spawn(move || {
+            std::thread::sleep(deadline.saturating_duration_since(std::time::Instant::now()));
+            if let Ok(slot) = compare.1.lock()
+                && let Some(active) = slot.as_ref()
+                && active.session_id == session_id
+            {
+                active.cancellation.cancel();
+            }
+            if let Ok(mut controller) = compare.0.lock() {
+                controller.expire_session(&session_id);
+            }
+            if let Ok(mut controller) = reconcile.0.lock() {
+                controller.expire_compare_evidence(&session_id);
+            }
+        })
+        .map(|_| ())
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))
+}
+
+async fn compare_page(
+    request: ComparePageRequest,
+    reveal_sensitive: bool,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ComparePageView, WorkspaceError> {
+    let shared = compare.0.clone();
+    let active = compare.1.clone();
+    let cancellation = CancellationToken::new();
+    let active_session_id = request.session_id.clone();
+    {
+        let mut slot = active
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        if slot.is_some() {
+            return Err(WorkspaceError::new(WorkspaceErrorCode::LimitExceeded));
+        }
+        *slot = Some(ActiveCompareRequest::new(
+            &active_session_id,
+            cancellation.clone(),
+        )?);
+    }
+    let reconcile_shared = reconcile.0.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let binding = controller.reconcile_page_binding(&request)?;
+        let page = controller.detail_page(&request, reveal_sensitive, &cancellation)?;
+        drop(controller);
+        reconcile_shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+            .record_compare_page(&binding, page.revealed, &page.rows)?;
+        Ok::<_, WorkspaceError>(page)
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    if let Ok(mut slot) = active.lock()
+        && slot
+            .as_ref()
+            .is_some_and(|request| request.session_id == active_session_id)
+    {
+        *slot = None;
+    }
+    result?
+}
+
+#[tauri::command]
+async fn get_compare_page(
+    request: ComparePageRequest,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ComparePageView, WorkspaceError> {
+    compare_page(request, false, compare, reconcile).await
+}
+
+#[tauri::command]
+async fn reveal_compare_page(
+    request: ComparePageRequest,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ComparePageView, WorkspaceError> {
+    compare_page(request, true, compare, reconcile).await
+}
+
+#[tauri::command]
+async fn get_compare_application_detail(
+    request: CompareApplicationRequest,
+    compare: State<'_, CompareState>,
+) -> Result<CompareApplicationDetail, WorkspaceError> {
+    let shared = compare.0.clone();
+    let active = compare.1.clone();
+    let cancellation = CancellationToken::new();
+    let active_session_id = request.session_id.clone();
+    {
+        let mut slot = active
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        if slot.is_some() {
+            return Err(WorkspaceError::new(WorkspaceErrorCode::LimitExceeded));
+        }
+        *slot = Some(ActiveCompareRequest::new(
+            &active_session_id,
+            cancellation.clone(),
+        )?);
+    }
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+            .application_detail(&request, &cancellation)
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    if let Ok(mut slot) = active.lock()
+        && slot
+            .as_ref()
+            .is_some_and(|request| request.session_id == active_session_id)
+    {
+        *slot = None;
+    }
+    result?
+}
+
+#[tauri::command]
+fn close_compare_session(
+    request: CloseCompareSessionRequest,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<(), WorkspaceError> {
+    if let Ok(slot) = compare.1.lock()
+        && let Some(active) = slot.as_ref()
+        && active.session_id == request.session_id
+    {
+        active.cancellation.cancel();
+    }
+    compare
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .close_session(&request.session_id)?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .expire_compare_evidence(&request.session_id);
+    Ok(())
+}
+
+#[tauri::command]
+fn get_reconcile_options(
+    request: ReconcileOptionsRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ReconcileOptionsView, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .options(&request, &selection_id)
+}
+
+#[tauri::command]
+async fn start_reconcile_review(
+    request: StartReconcileRequest,
+    host: State<'_, Mutex<HostState>>,
+    compare: State<'_, CompareState>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ReconcileSessionView, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    let binding = reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .authorize_handoff(&request, &selection_id)?;
+    let handoff = compare
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .take_for_reconcile(&binding.session_id, &binding.report_digest)?;
+    let worker_binding = binding.clone();
+    let cancellation = CancellationToken::new();
+    let oriented = tauri::async_runtime::spawn_blocking(move || {
+        orient_handoff(handoff, &worker_binding, &cancellation)
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))??;
+    let current_selection = selected_reconcile_binding(host.inner())?;
+    if current_selection != selection_id {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    let review_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + HUMAN_REVIEW_LIFETIME)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_human_session(binding, oriented, review_token, expires_at)
+}
+
+#[tauri::command]
+async fn choose_reconcile_destination(
+    request: ReconcileSessionRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+    app: AppHandle,
+) -> Result<Option<ReconcileDestinationView>, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    let path = if let Some(path) = native_e2e_reconcile_path_from_process() {
+        path
+    } else {
+        let picker_app = app.clone();
+        let selected = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+                .set_file_name("reconciled-copy.sqlitecapsule")
+                .blocking_save_file()
+        })
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let Some(selected) = selected else {
+            return Ok(None);
+        };
+        selected
+            .into_path()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?
+    };
+    let current_selection = selected_reconcile_binding(host.inner())?;
+    if current_selection != selection_id {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    let destination_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_destination(&request, &selection_id, path, destination_token)
+        .map(Some)
+}
+
+#[tauri::command]
+async fn choose_reconcile_ancestor(
+    request: ChooseReconcileAncestorRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+    app: AppHandle,
+) -> Result<Option<ReconcileThreeWayView>, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    let ancestor_path = if let Some(path) = native_e2e_reconcile_ancestor_path_from_process() {
+        path
+    } else {
+        let picker_app = app.clone();
+        let selected = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+                .blocking_pick_file()
+        })
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let Some(selected) = selected else {
+            return Ok(None);
+        };
+        selected
+            .into_path()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?
+    };
+    let current_selection = selected_reconcile_binding(host.inner())?;
+    if current_selection != selection_id {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    let started = std::time::Instant::now();
+    let operation_deadline = started
+        .checked_add(EXECUTION_LIFETIME)
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::LimitExceeded))?;
+    let ancestor_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let job = reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .take_three_way_job(
+            &request,
+            &selection_id,
+            ancestor_path,
+            ancestor_token,
+            operation_deadline,
+        )?;
+    let (shell, review) = tauri::async_runtime::spawn_blocking(move || job.classify())
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))??;
+    let current_selection = selected_reconcile_binding(host.inner())?;
+    if current_selection != selection_id {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_three_way(shell, review)
+        .map(Some)
+}
+
+#[tauri::command]
+async fn prepare_reconcile(
+    request: PrepareReconcileRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<PreparedReconcileView, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    let started = std::time::Instant::now();
+    let operation_deadline = started
+        .checked_add(EXECUTION_LIFETIME)
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::LimitExceeded))?;
+    let created_at = current_utc_seconds()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let operation_expires_at = utc_seconds_at(SystemTime::now() + EXECUTION_LIFETIME)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let plan_id = generate_uuid_v4()?;
+    let job = reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .take_prepare_job(
+            &request,
+            &selection_id,
+            plan_id,
+            created_at,
+            operation_expires_at,
+            operation_deadline,
+        )?;
+    let (shell, review) = tauri::async_runtime::spawn_blocking(move || job.prepare())
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))??;
+    let current_selection = selected_reconcile_binding(host.inner())?;
+    if current_selection != selection_id {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    let confirmation_nonce = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_prepared(shell, review, confirmation_nonce)
+}
+
+fn emit_reconcile_progress(
+    app: &AppHandle,
+    operation_token: &str,
+    sequence: u64,
+    phase: ReconcileOperationPhase,
+    cancellable: bool,
+) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit(
+            RECONCILE_PROGRESS_EVENT,
+            ReconcileProgressEvent {
+                profile: reconcile_flow::RECONCILE_STATUS_PROFILE,
+                operation_token: operation_token.to_owned(),
+                sequence,
+                phase,
+                cancellable,
+            },
+        );
+    }
+}
+
+#[tauri::command]
+fn execute_reconcile(
+    request: ExecuteReconcileRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+    app: AppHandle,
+) -> Result<ReconcileOperationStatus, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    let operation_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let shared = reconcile.0.clone();
+    let (started, status) = {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let started = controller.start(&request, &selection_id, operation_token.clone())?;
+        let status = controller.status(
+            &ReconcileOperationRequest {
+                operation_token: operation_token.clone(),
+            },
+            &selection_id,
+        )?;
+        emit_reconcile_progress(
+            &app,
+            &operation_token,
+            0,
+            ReconcileOperationPhase::Queued,
+            true,
+        );
+        (started, status)
+    };
+    let worker_app = app.clone();
+    let worker_operation = operation_token.clone();
+    let worker_state = shared.clone();
+    let spawn = std::thread::Builder::new()
+        .name("sqlite-capsule-reconcile-operation".to_owned())
+        .stack_size(RUNTIME_WORKER_STACK_BYTES)
+        .spawn(move || {
+            let mut sequence = 0_u64;
+            let result = started.execute(|phase, cancellable| {
+                sequence = sequence.saturating_add(1);
+                if let Ok(mut controller) = worker_state.lock() {
+                    let _ = controller.update_phase(&worker_operation, phase, cancellable);
+                }
+                emit_reconcile_progress(
+                    &worker_app,
+                    &worker_operation,
+                    sequence,
+                    phase,
+                    cancellable,
+                );
+            });
+            let terminal = worker_state
+                .lock()
+                .ok()
+                .and_then(|mut controller| controller.finish(&worker_operation, result).ok());
+            if let Some(terminal) = terminal {
+                sequence = sequence.saturating_add(1);
+                emit_reconcile_progress(
+                    &worker_app,
+                    &worker_operation,
+                    sequence,
+                    terminal.phase,
+                    false,
+                );
+            }
+        });
+    if spawn.is_err() {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = controller.finish(
+            &operation_token,
+            Err(WorkspaceError::new(WorkspaceErrorCode::InternalError)),
+        );
+        return Err(WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    }
+    Ok(status)
+}
+
+#[tauri::command]
+fn get_reconcile_operation(
+    request: ReconcileOperationRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<ReconcileOperationStatus, WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .status(&request, &selection_id)
+}
+
+#[tauri::command]
+fn cancel_reconcile_operation(
+    request: ReconcileOperationRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<(), WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .cancel(&request, &selection_id)
+}
+
+#[tauri::command]
+fn acknowledge_reconcile_result(
+    request: ReconcileOperationRequest,
+    host: State<'_, Mutex<HostState>>,
+    reconcile: State<'_, ReconcileState>,
+) -> Result<(), WorkspaceError> {
+    let selection_id = selected_reconcile_binding(host.inner())?;
+    reconcile
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .acknowledge(&request, &selection_id)
+}
+
+#[tauri::command]
+async fn preview_copy_profile(
+    request: PreviewCopyProfileRequest,
+    host: State<'_, Mutex<HostState>>,
+    copy: State<'_, CopyState>,
+) -> Result<CopyProfilePreviewView, WorkspaceError> {
+    let (path, expected_identity, expected_sha256) = {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        selected_copy_binding(&host, &request.selection_id)?
+    };
+    let mode = request.mode;
+    let selection_id = request.selection_id.clone();
+    let projection = tauri::async_runtime::spawn_blocking(move || {
+        let limits = WorkspaceLimits::default();
+        let cancellation = CancellationToken::new();
+        if let Some(semantic_mode) = mode.semantic() {
+            let source = open_semantic_copy_source(&path, &limits, &cancellation)?;
+            source.assert_source_binding(&expected_identity, &expected_sha256)?;
+            let mut datasets = Vec::with_capacity(source.data_contract().datasets.len());
+            let mut blockers = Vec::new();
+            if !source.has_complete_valid_signature_inventory() {
+                blockers.push("complete-valid-signature-inventory-required");
+            }
+            if semantic_mode == sqlite_capsule_workspace::SemanticCopyMode::CreateFromTemplate
+                && let Err(error) =
+                    verify_template_state(&source, &TemplateStateLimits::default(), &cancellation)
+            {
+                if matches!(
+                    error.kind(),
+                    WorkspaceErrorCode::Cancelled | WorkspaceErrorCode::LimitExceeded
+                ) {
+                    return Err(error);
+                }
+                blockers.push("authenticated-template-state-required");
+            }
+            for dataset in &source.data_contract().datasets {
+                let (fixed_action, choice, allow_include, allow_omit, default_disposition) =
+                    match (semantic_mode, dataset.fork, dataset.sensitivity) {
+                        (
+                            sqlite_capsule_workspace::SemanticCopyMode::CreateFromTemplate,
+                            ForkPolicy::Forbid,
+                            _,
+                        ) => {
+                            blockers.push("signed-policy-forbids-operation");
+                            (Some("forbid"), None, false, false, None)
+                        }
+                        (sqlite_capsule_workspace::SemanticCopyMode::CreateFromTemplate, _, _) => {
+                            (Some("reset"), None, false, false, None)
+                        }
+                        (_, ForkPolicy::Forbid, _) => {
+                            blockers.push("signed-policy-forbids-operation");
+                            (Some("forbid"), None, false, false, None)
+                        }
+                        (_, ForkPolicy::Reset, _) => {
+                            blockers.push("separate-clean-template-required");
+                            (Some("reset"), None, false, false, None)
+                        }
+                        (_, ForkPolicy::Omit, _) => (Some("omit"), None, false, false, None),
+                        (_, ForkPolicy::Copy, Sensitivity::Normal) => {
+                            (Some("copy"), None, false, false, None)
+                        }
+                        (_, ForkPolicy::Copy, Sensitivity::Sensitive) => (
+                            None,
+                            Some(generate_session_token().map_err(|_| {
+                                WorkspaceError::new(WorkspaceErrorCode::InternalError)
+                            })?),
+                            true,
+                            false,
+                            Some(ShellChoiceDisposition::Include),
+                        ),
+                        (_, ForkPolicy::Prompt, _) => (
+                            None,
+                            Some(generate_session_token().map_err(|_| {
+                                WorkspaceError::new(WorkspaceErrorCode::InternalError)
+                            })?),
+                            true,
+                            !dataset.required,
+                            Some(
+                                if dataset.sensitivity == Sensitivity::Sensitive
+                                    && !dataset.required
+                                {
+                                    ShellChoiceDisposition::Omit
+                                } else {
+                                    ShellChoiceDisposition::Include
+                                },
+                            ),
+                        ),
+                    };
+                datasets.push(ShellDatasetChoiceView {
+                    choice_id: choice,
+                    dataset_id: dataset.id.clone(),
+                    sensitivity: dataset.sensitivity,
+                    signed_fork_policy: dataset.fork,
+                    fixed_action,
+                    default_disposition,
+                    allow_include,
+                    allow_omit,
+                    sensitive_confirmation_required: dataset.sensitivity == Sensitivity::Sensitive
+                        && fixed_action.is_none(),
+                    dependencies: dataset
+                        .dependencies
+                        .iter()
+                        .map(|dependency| dependency.dataset_id.clone())
+                        .collect(),
+                    auto_selected_by_dependency: false,
+                });
+            }
+            let indices: BTreeMap<String, usize> = datasets
+                .iter()
+                .enumerate()
+                .map(|(index, dataset)| (dataset.dataset_id.clone(), index))
+                .collect();
+            let mut changed = true;
+            while changed {
+                changed = false;
+                let present = datasets
+                    .iter()
+                    .filter(|dataset| {
+                        dataset
+                            .fixed_action
+                            .is_some_and(|action| action == "copy" || action == "reset")
+                            || dataset.default_disposition == Some(ShellChoiceDisposition::Include)
+                    })
+                    .map(|dataset| dataset.dataset_id.clone())
+                    .collect::<BTreeSet<_>>();
+                let dependencies = datasets
+                    .iter()
+                    .filter(|dataset| present.contains(&dataset.dataset_id))
+                    .flat_map(|dataset| dataset.dependencies.clone())
+                    .collect::<BTreeSet<_>>();
+                for dependency in dependencies {
+                    let Some(index) = indices.get(&dependency).copied() else {
+                        blockers.push("dependency-not-permitted");
+                        continue;
+                    };
+                    let target = &mut datasets[index];
+                    if target.choice_id.is_some() && target.allow_include {
+                        if target.default_disposition != Some(ShellChoiceDisposition::Include) {
+                            target.default_disposition = Some(ShellChoiceDisposition::Include);
+                            target.auto_selected_by_dependency = true;
+                            target.allow_omit = false;
+                            changed = true;
+                        }
+                    } else if !target
+                        .fixed_action
+                        .is_some_and(|action| action == "copy" || action == "reset")
+                    {
+                        blockers.push("dependency-not-permitted");
+                    }
+                }
+            }
+            blockers.sort_unstable();
+            blockers.dedup();
+            Ok(("0.3".to_owned(), source.source_sha256(), datasets, blockers))
+        } else {
+            let source = VerifiedCopySource::open_with_control(&path, &limits, &cancellation)?;
+            source.assert_source_binding(&expected_identity)?;
+            if source.identity().file_sha256 != expected_sha256 {
+                return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+            }
+            Ok((
+                source.identity().format_version.clone(),
+                source.identity().file_sha256.clone(),
+                Vec::new(),
+                Vec::new(),
+            ))
+        }
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))??;
+    let expires_at = utc_seconds_at(SystemTime::now() + Duration::from_secs(5 * 60))
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_profile_preview(
+            &selection_id,
+            mode,
+            projection.0,
+            &projection.1,
+            projection.2,
+            projection.3,
+            expires_at,
+        )
+}
+
+#[tauri::command]
+async fn choose_copy_destination(
+    request: ChooseCopyDestinationRequest,
+    host: State<'_, Mutex<HostState>>,
+    copy: State<'_, CopyState>,
+    app: AppHandle,
+) -> Result<Option<CopyDestinationView>, WorkspaceError> {
+    {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = selected_copy_binding(&host, &request.selection_id)?;
+    }
+    let file_name = request.mode.suggested_leaf().to_owned();
+    let picker_app = app.clone();
+    let selected = tauri::async_runtime::spawn_blocking(move || {
+        picker_app
+            .dialog()
+            .file()
+            .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+            .set_file_name(file_name)
+            .blocking_save_file()
+    })
+    .await
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let Some(selected) = selected else {
+        return Ok(None);
+    };
+    let path = selected
+        .into_path()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?;
+    {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = selected_copy_binding(&host, &request.selection_id)?;
+    }
+    let destination_id = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + Duration::from_secs(5 * 60))
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_destination(
+            &request.selection_id,
+            request.mode,
+            path,
+            destination_id,
+            expires_at,
+        )
+        .map(Some)
+}
+
+#[tauri::command]
+fn cancel_copy_destination(
+    request: CancelCopyDestinationRequest,
+    copy: State<'_, CopyState>,
+) -> Result<(), WorkspaceError> {
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .cancel_destination(&request.destination_id)
+}
+
+#[tauri::command]
+fn prepare_copy(
+    request: PrepareCopyRequest,
+    host: State<'_, Mutex<HostState>>,
+    copy: State<'_, CopyState>,
+) -> Result<PreparedCopyView, WorkspaceError> {
+    let (path, source_identity, source_sha256) = {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        selected_copy_binding(&host, &request.selection_id)?
+    };
+    let plan_id = generate_uuid_v4()?;
+    let created_at = current_utc_seconds()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + copy_flow::PREPARED_AUTHORITY_LIFETIME)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let nonce = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .prepare(
+            &request,
+            &path,
+            &source_identity,
+            &source_sha256,
+            &plan_id,
+            &created_at,
+            &expires_at,
+            &nonce,
+        )
+}
+
+fn emit_copy_progress(
+    app: &AppHandle,
+    operation_id: &str,
+    sequence: u64,
+    mode: copy_flow::ShellCopyMode,
+    phase: CopyOperationPhase,
+    cancellable: bool,
+) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit(
+            COPY_PROGRESS_EVENT,
+            CopyProgressEvent {
+                profile: "org.sqlite-capsule.copy-progress/1",
+                operation_id: operation_id.to_owned(),
+                sequence,
+                mode,
+                phase,
+                cancellable,
+            },
+        );
+    }
+}
+
+#[tauri::command]
+fn execute_copy(
+    request: ExecuteCopyRequest,
+    copy: State<'_, CopyState>,
+    app: AppHandle,
+) -> Result<CopyOperationStatus, WorkspaceError> {
+    let operation_id = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let shared = copy.0.clone();
+    let started = {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let started = controller.start(&request, operation_id.clone())?;
+        let status = controller.status(&operation_id)?;
+        drop(controller);
+        emit_copy_progress(
+            &app,
+            &operation_id,
+            0,
+            started.mode,
+            CopyOperationPhase::Queued,
+            true,
+        );
+        (started, status)
+    };
+    let (started_copy, status) = started;
+    let worker_app = app.clone();
+    let worker_operation = operation_id.clone();
+    let worker_state = shared.clone();
+    let spawn = std::thread::Builder::new()
+        .name("sqlite-capsule-copy-operation".to_owned())
+        .stack_size(RUNTIME_WORKER_STACK_BYTES)
+        .spawn(move || {
+            let mut sequence = 0_u64;
+            let mode = started_copy.mode;
+            let result = started_copy.execute(|phase, cancellable| {
+                sequence = sequence.saturating_add(1);
+                if let Ok(mut controller) = worker_state.lock() {
+                    let _ = controller.update_phase(&worker_operation, phase, cancellable);
+                }
+                emit_copy_progress(
+                    &worker_app,
+                    &worker_operation,
+                    sequence,
+                    mode,
+                    phase,
+                    cancellable,
+                );
+            });
+            let terminal = worker_state
+                .lock()
+                .ok()
+                .and_then(|mut controller| controller.finish(&worker_operation, result).ok());
+            if let Some(terminal) = terminal {
+                sequence = sequence.saturating_add(1);
+                emit_copy_progress(
+                    &worker_app,
+                    &worker_operation,
+                    sequence,
+                    mode,
+                    terminal.phase,
+                    false,
+                );
+            }
+        });
+    if spawn.is_err() {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = controller.finish(
+            &operation_id,
+            Err(WorkspaceError::new(WorkspaceErrorCode::InternalError)),
+        );
+        return Err(WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    }
+    Ok(status)
+}
+
+#[tauri::command]
+fn get_copy_operation(
+    request: OperationRequest,
+    copy: State<'_, CopyState>,
+) -> Result<CopyOperationStatus, WorkspaceError> {
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .status(&request.operation_id)
+}
+
+#[tauri::command]
+fn cancel_copy_operation(
+    request: OperationRequest,
+    copy: State<'_, CopyState>,
+) -> Result<(), WorkspaceError> {
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .cancel(&request.operation_id)
+}
+
+#[tauri::command]
+fn acknowledge_copy_result(
+    request: OperationRequest,
+    copy: State<'_, CopyState>,
+) -> Result<(), WorkspaceError> {
+    copy.0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .acknowledge(&request.operation_id)
 }
 
 #[tauri::command]
@@ -1861,6 +3469,38 @@ fn checkpoint_for_close_on_worker(bridge: Arc<Mutex<RuntimeBridge>>) -> Result<(
 }
 
 fn handle_close_request(app: &AppHandle, api: &tauri::CloseRequestApi) {
+    if let Some(reconcile) = app.try_state::<ReconcileState>() {
+        let can_close = reconcile
+            .0
+            .lock()
+            .map(|mut controller| controller.prepare_for_close())
+            .unwrap_or(false);
+        if !can_close {
+            api.prevent_close();
+            emit_host_message(
+                app,
+                "reconcile-close-pending",
+                "Reconciliation is being cancelled or finishing its create-new publication. Close again after the operation reaches a terminal state.",
+            );
+            return;
+        }
+    }
+    if let Some(copy) = app.try_state::<CopyState>() {
+        let can_close = copy
+            .0
+            .lock()
+            .map(|mut controller| controller.prepare_for_close())
+            .unwrap_or(false);
+        if !can_close {
+            api.prevent_close();
+            emit_host_message(
+                app,
+                "copy-close-pending",
+                "The copy is being cancelled or finishing its create-new publication. Close again after the operation reaches a terminal state.",
+            );
+            return;
+        }
+    }
     let checkpoint = (|| -> Result<(), String> {
         let state = app.state::<Mutex<HostState>>();
         let state = state
@@ -3552,6 +5192,43 @@ fn reopen_current_capsule(
     Ok(load_host_path(&app, &path))
 }
 
+/// Perform the legacy SQLite rollback-journal recovery path only after an
+/// explicit trusted-shell action. Cabinet selection itself is strictly
+/// non-mutating. Recovery is followed by a fresh bounded inspection and still
+/// releases no executable asset.
+#[tauri::command]
+fn recover_selected_capsule(
+    selection_id: String,
+    state: State<'_, Mutex<HostState>>,
+    app: AppHandle,
+) -> Result<StartupReport, WorkspaceError> {
+    let mut state = state
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    ensure_selection_binding(state.selection_id.as_deref(), &selection_id)?;
+    if state.report.stage != "recovery-required" {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::InvalidContract));
+    }
+    let path = state
+        .selected_path
+        .clone()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let lock_root = state.trust_backup_directory.join("recovery-locks");
+    let recovery = recover_capsule_on_worker_stack(&path, &lock_root)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidCapsule))?
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    state.load_capsule(&path);
+    if state.report.capsule.is_some() {
+        state.report.recovery = Some(recovery);
+    }
+    let report = state.report.clone();
+    drop(state);
+    invalidate_copy_selection(&app, report.selection_id.as_deref());
+    navigate_sandbox(&app, None)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    Ok(report)
+}
+
 #[tauri::command]
 fn continue_current_read_only(
     state: State<'_, Mutex<HostState>>,
@@ -3623,10 +5300,18 @@ fn continue_current_read_only(
         bridge.activate_read_only(&inspection, &decision)?;
         bridge.conflict_backup = conflict_backup;
     }
-    let mut report = report_for("reopened-read-only", &inspection, decision);
-    if let Some(capsule) = report.capsule.as_mut() {
-        capsule.assets_released = true;
-    }
+    let selection_id = state
+        .selection_id
+        .clone()
+        .ok_or_else(|| "the selected capsule handle is unavailable".to_owned())?;
+    let report = report_for(
+        "reopened-read-only",
+        &inspection,
+        decision,
+        &selection_id,
+        true,
+        state.safe_image.as_ref(),
+    )?;
     state.report = report.clone();
     let entry_asset = inspection.identity.entry_asset.clone();
     drop(state);
@@ -3829,13 +5514,15 @@ struct FirstOpenRequest {
 
 #[tauri::command]
 fn first_open_decide(
+    selection_id: String,
     request: FirstOpenRequest,
     state: State<'_, Mutex<HostState>>,
     app: AppHandle,
-) -> Result<StartupReport, String> {
+) -> Result<StartupReport, WorkspaceError> {
     let mut state = state
         .lock()
-        .map_err(|_| "host trust state is unavailable".to_owned())?;
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    ensure_selection_binding(state.selection_id.as_deref(), &selection_id)?;
     if request.action == "cancel" {
         let mut report = state.report.clone();
         report.stage = "cancelled".to_owned();
@@ -3843,18 +5530,19 @@ fn first_open_decide(
         return Ok(report);
     }
     if !matches!(request.action.as_str(), "allow_once" | "always" | "deny") {
-        return Err("unknown first-open action".to_owned());
+        return Err(WorkspaceError::new(WorkspaceErrorCode::InvalidContract));
     }
     let evidence = state
         .inspection
         .as_ref()
         .map(|inspection| inspection.evidence.clone())
-        .ok_or_else(|| "no verified capsule is available".to_owned())?;
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
     let store = state
         .trust_store
         .as_mut()
-        .ok_or_else(|| "protected trust store is unavailable".to_owned())?;
-    let decision = apply_first_open_decision(request, &evidence, store)?;
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let decision = apply_first_open_decision(request, &evidence, store)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?;
     let stage = if decision.executable_allowed {
         "policy-authorized"
     } else {
@@ -3864,23 +5552,36 @@ fn first_open_decide(
         .inspection
         .as_ref()
         .cloned()
-        .ok_or_else(|| "verified capsule disappeared".to_owned())?;
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
     let executable_allowed = decision.executable_allowed;
     if executable_allowed {
         state
             .bridge
             .lock()
-            .map_err(|_| "runtime bridge is unavailable".to_owned())?
-            .activate(&inspection, &decision)?;
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+            .activate(&inspection, &decision)
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
     } else {
         state
             .bridge
             .lock()
-            .map_err(|_| "runtime bridge is unavailable".to_owned())?
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
             .deactivate();
     }
     let recovery = state.report.recovery.clone();
-    let mut report = report_for(stage, &inspection, decision);
+    let selection_id = state
+        .selection_id
+        .clone()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let mut report = report_for(
+        stage,
+        &inspection,
+        decision,
+        &selection_id,
+        executable_allowed,
+        state.safe_image.as_ref(),
+    )
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidCapsule))?;
     report.recovery = recovery;
     if let Some(capsule) = report.capsule.as_mut() {
         capsule.assets_released = executable_allowed;
@@ -3888,7 +5589,76 @@ fn first_open_decide(
     state.report = report.clone();
     let entry_asset = executable_allowed.then_some(inspection.identity.entry_asset);
     drop(state);
-    navigate_sandbox(&app, entry_asset.as_deref())?;
+    navigate_sandbox(&app, entry_asset.as_deref())
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    Ok(report)
+}
+
+fn ensure_selection_binding(
+    current_selection_id: Option<&str>,
+    supplied_selection_id: &str,
+) -> Result<(), WorkspaceError> {
+    if current_selection_id != Some(supplied_selection_id) {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    Ok(())
+}
+
+/// Activate an already-authorized retained selection only after the trusted
+/// Overview has been shown and the user explicitly chooses Open. The command
+/// accepts only the opaque current selection; JavaScript never supplies a path.
+#[tauri::command]
+fn open_selected_capsule(
+    selection_id: String,
+    state: State<'_, Mutex<HostState>>,
+    app: AppHandle,
+) -> Result<StartupReport, WorkspaceError> {
+    let mut state = state
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    if state.selection_id.as_deref() != Some(selection_id.as_str()) {
+        return Err(WorkspaceError::new(WorkspaceErrorCode::StalePlan));
+    }
+    let inspection = state
+        .inspection
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let decision = state
+        .report
+        .capsule
+        .as_ref()
+        .map(|capsule| capsule.decision.clone())
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    if !decision.executable_allowed {
+        return Err(WorkspaceError::new(
+            WorkspaceErrorCode::CapabilityReviewRequired,
+        ));
+    }
+    sqlite_capsule_lifecycle::PinnedSource::open(&inspection.identity.canonical_path, false)
+        .and_then(|source| source.assert_current())
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    state
+        .bridge
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .activate(&inspection, &decision)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::StalePlan))?;
+    let mut report = report_for(
+        "explicitly-opened",
+        &inspection,
+        decision,
+        &selection_id,
+        true,
+        state.safe_image.as_ref(),
+    )
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidCapsule))?;
+    report.recovery = state.report.recovery.clone();
+    state.report = report.clone();
+    let entry_asset = inspection.identity.entry_asset;
+    drop(state);
+    navigate_sandbox(&app, Some(&entry_asset))
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
     Ok(report)
 }
 
@@ -4023,9 +5793,21 @@ fn trust_admin(
         let inspection = state
             .inspection
             .as_ref()
+            .cloned()
             .ok_or_else(|| "verified capsule disappeared".to_owned())?;
         let recovery = state.report.recovery.clone();
-        state.report = report_for("trust-administration", inspection, decision);
+        let selection_id = state
+            .selection_id
+            .clone()
+            .ok_or_else(|| "the selected capsule handle is unavailable".to_owned())?;
+        state.report = report_for(
+            "trust-administration",
+            &inspection,
+            decision,
+            &selection_id,
+            false,
+            state.safe_image.as_ref(),
+        )?;
         state.report.recovery = recovery;
         state
             .bridge
@@ -4147,12 +5929,41 @@ fn report_for(
     stage: &str,
     inspection: &LaunchInspection,
     decision: LaunchDecision,
-) -> StartupReport {
+    selection_id: &str,
+    assets_released: bool,
+    safe_image: Option<&SafeImageDerivative>,
+) -> Result<StartupReport, String> {
     let evidence = &inspection.evidence;
-    StartupReport {
+    let mut overview = CapsuleOverviewViewModel::from_launch_inspection(
+        selection_id,
+        inspection,
+        &decision,
+        assets_released,
+    )
+    .map_err(|error| error.to_string())?;
+    if let Some(safe_image) = safe_image {
+        overview
+            .attach_application_image(
+                safe_image.data_url(),
+                safe_image.width(),
+                safe_image.height(),
+            )
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(StartupReport {
         stage: stage.to_owned(),
+        selection_id: Some(selection_id.to_owned()),
         capsule: Some(CapsuleReport {
-            identity: inspection.identity.clone(),
+            identity: ShellIdentityReport {
+                canonical_path: inspection.identity.canonical_path.clone(),
+                format_version: inspection.identity.format_version.clone(),
+                capsule_id: inspection.identity.capsule_id.clone(),
+                app_id: inspection.identity.app_id.clone(),
+                app_version: inspection.identity.app_version.clone(),
+                title: inspection.identity.title.clone(),
+                summary: inspection.identity.summary.clone(),
+            },
+            overview,
             source_sha256: lower_hex(&evidence.source_sha256),
             application_digest: evidence
                 .application_digest
@@ -4176,11 +5987,12 @@ fn report_for(
                 .collect(),
             decision,
             // Runtime activation is the only path that changes this to true.
-            assets_released: false,
+            assets_released,
+            entry_asset: inspection.identity.entry_asset.clone(),
         }),
         recovery: None,
         error: None,
-    }
+    })
 }
 
 fn released_entry_asset(report: &StartupReport) -> Option<String> {
@@ -4188,7 +6000,7 @@ fn released_entry_asset(report: &StartupReport) -> Option<String> {
         .capsule
         .as_ref()
         .filter(|capsule| capsule.assets_released && capsule.decision.executable_allowed)
-        .map(|capsule| capsule.identity.entry_asset.clone())
+        .map(|capsule| capsule.entry_asset.clone())
 }
 
 fn lower_hex(bytes: &[u8]) -> String {
@@ -4396,6 +6208,9 @@ pub fn run() {
             let initial_entry_asset = released_entry_asset(&host_state.report);
             app.manage(Mutex::new(host_state));
             app.manage(SigningState::default());
+            app.manage(CopyState::default());
+            app.manage(CompareState::default());
+            app.manage(ReconcileState::default());
             app.manage(UpdateCheckGate(AtomicBool::new(false)));
             app.manage(Mutex::new(HostUpdateFlow::default()));
             let window = app
@@ -4468,6 +6283,31 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             startup_report,
+            cabinet_status,
+            open_recent_capsule,
+            choose_compare_capsule,
+            start_compare,
+            get_compare_page,
+            reveal_compare_page,
+            get_compare_application_detail,
+            close_compare_session,
+            get_reconcile_options,
+            start_reconcile_review,
+            choose_reconcile_destination,
+            choose_reconcile_ancestor,
+            prepare_reconcile,
+            execute_reconcile,
+            get_reconcile_operation,
+            cancel_reconcile_operation,
+            acknowledge_reconcile_result,
+            preview_copy_profile,
+            choose_copy_destination,
+            cancel_copy_destination,
+            prepare_copy,
+            execute_copy,
+            get_copy_operation,
+            cancel_copy_operation,
+            acknowledge_copy_result,
             lifecycle_status,
             update_status,
             check_host_update,
@@ -4477,6 +6317,7 @@ pub fn run() {
             execute_update_installation,
             execute_update_rollback,
             open_capsule_picker,
+            recover_selected_capsule,
             reopen_current_capsule,
             continue_current_read_only,
             restore_backup_picker,
@@ -4489,6 +6330,7 @@ pub fn run() {
             execute_signing,
             clear_signing_session,
             first_open_decide,
+            open_selected_capsule,
             trust_admin
         ])
         .run(context)
@@ -4968,6 +6810,17 @@ mod tests {
     }
 
     #[test]
+    fn authority_actions_are_bound_to_the_current_overview_selection() {
+        assert!(ensure_selection_binding(Some("current-selection"), "current-selection").is_ok());
+        let error = ensure_selection_binding(Some("new-selection"), "stale-selection")
+            .expect_err("a stale Overview action must fail closed");
+        assert_eq!(error.code, "stale_plan");
+        let missing = ensure_selection_binding(None, "stale-selection")
+            .expect_err("an action without a current selection must fail closed");
+        assert_eq!(missing.code, "stale_plan");
+    }
+
+    #[test]
     fn same_signed_application_may_continue_read_only_after_domain_only_change() {
         let directory = TestDirectory::new();
         let prior_evidence = evidence();
@@ -5211,12 +7064,18 @@ mod tests {
         )));
         let mut state = HostState {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache: CabinetRecentCache::new(directory.0.join("cabinet-v1")),
             trust_store: Some(open_store(&directory)),
             trust_backup_directory: directory.0.join("trust-backups"),
             update_root: directory.0.join("host-updates"),
             bridge,
             report: StartupReport {
                 stage: "no-capsule".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: None,
@@ -5250,7 +7109,7 @@ mod tests {
     }
 
     #[test]
-    fn remembered_signed_release_reopens_without_another_first_open_decision() {
+    fn remembered_signed_release_stops_at_overview_until_explicit_open() {
         let directory = TestDirectory::new();
         let capsule = signed_example_capsule(&directory);
         let inspection =
@@ -5278,12 +7137,18 @@ mod tests {
         )));
         let mut state = HostState {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache: CabinetRecentCache::new(directory.0.join("cabinet-v1")),
             trust_store: Some(store),
             trust_backup_directory: directory.0.join("trust-backups"),
             update_root: directory.0.join("host-updates"),
             bridge: bridge.clone(),
             report: StartupReport {
                 stage: "no-capsule".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: None,
@@ -5292,22 +7157,27 @@ mod tests {
 
         state.load_capsule(&capsule);
 
-        assert_eq!(state.report.stage, "remembered-authorized");
+        assert_eq!(state.report.stage, "remembered-ready");
         let report = state.report.capsule.as_ref().expect("capsule report");
         assert_eq!(
             report.decision.trust_state,
             TrustState::LocallyTrustedExactRelease
         );
         assert!(report.decision.executable_allowed);
-        assert!(report.assets_released);
-        assert_eq!(
-            released_entry_asset(&state.report).as_deref(),
-            Some(report.identity.entry_asset.as_str())
-        );
-        let bridge = bridge.lock().expect("lock activated bridge");
-        assert!(bridge.runtime.is_some());
-        assert!(bridge.protocol.is_some());
-        assert_eq!(bridge.mode, "writable");
+        assert!(!report.assets_released);
+        let serialized = serde_json::to_string(report).expect("serialize trusted-shell report");
+        assert!(!serialized.contains("\"entry_asset\""));
+        assert!(!serialized.contains("\"permissions\""));
+        assert!(!serialized.contains("\"icon_asset\""));
+        assert!(!serialized.contains("\"release_notes_doc\""));
+        assert!(!serialized.contains("app/index.html"));
+        assert!(serialized.len() <= 6 * 1024 * 1024);
+        assert!(state.selection_id.is_some());
+        assert!(released_entry_asset(&state.report).is_none());
+        let bridge = bridge.lock().expect("lock inactive bridge");
+        assert!(bridge.runtime.is_none());
+        assert!(bridge.protocol.is_none());
+        assert_eq!(bridge.mode, "locked");
     }
 
     #[test]
@@ -5319,12 +7189,18 @@ mod tests {
         )));
         let mut state = HostState {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache: CabinetRecentCache::new(directory.0.join("cabinet-v1")),
             trust_store: Some(open_store(&directory)),
             trust_backup_directory: directory.0.join("trust-backups"),
             update_root: directory.0.join("host-updates"),
             bridge: bridge.clone(),
             report: StartupReport {
                 stage: "no-capsule".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: None,
@@ -5375,18 +7251,14 @@ mod tests {
     #[test]
     fn launch_inspection_uses_the_fixed_worker_stack() {
         assert_eq!(INSPECTION_STACK_BYTES, 8 * 1024 * 1024);
-        let directory = TestDirectory::new();
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
-        let (inspection, recovery) = inspect_capsule_on_worker_stack(
-            &root.join("capsules/diagram-studio.capsule.sqlite"),
-            &directory.0.join("worker-locks"),
-        )
-        .expect("worker-stack launch inspection");
+        let (inspection, _) =
+            inspect_capsule_on_worker_stack(&root.join("capsules/diagram-studio.capsule.sqlite"))
+                .expect("worker-stack launch inspection");
         assert_eq!(
             inspection.identity.app_id,
             "org.sqlite-capsule.diagram-studio"
         );
-        assert!(recovery.is_none());
     }
 
     #[test]
@@ -5398,12 +7270,18 @@ mod tests {
         )));
         let mut state = HostState {
             inspection: None,
+            safe_image: None,
+            selection_id: None,
+            selected_source_identity: None,
+            selected_path: None,
+            cabinet_cache: CabinetRecentCache::new(directory.0.join("cabinet-v1")),
             trust_store: Some(open_store(&directory)),
             trust_backup_directory: directory.0.join("trust-backups"),
             update_root: directory.0.join("host-updates"),
             bridge,
             report: StartupReport {
                 stage: "no-capsule".to_owned(),
+                selection_id: None,
                 capsule: None,
                 recovery: None,
                 error: None,
@@ -5832,6 +7710,98 @@ mod tests {
                 true,
                 Some(state_root.into_os_string()),
                 Some(requested.into_os_string()),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn native_e2e_compare_override_is_existing_and_confined_to_isolated_state() {
+        let directory = TestDirectory::new();
+        let state_root = directory.0.join("native-e2e-state");
+        std::fs::create_dir_all(&state_root).expect("create isolated state root");
+        let requested = state_root.join("comparison.sqlitecapsule");
+        std::fs::write(&requested, b"existing comparison fixture")
+            .expect("create comparison fixture");
+        let expected = requested
+            .canonicalize()
+            .expect("canonical comparison fixture");
+        assert_eq!(
+            native_e2e_compare_path(
+                true,
+                Some(state_root.clone().into_os_string()),
+                Some(requested.clone().into_os_string()),
+            ),
+            Some(expected)
+        );
+        assert_eq!(
+            native_e2e_compare_path(
+                false,
+                Some(state_root.clone().into_os_string()),
+                Some(requested.into_os_string()),
+            ),
+            None
+        );
+        let outside = directory.0.join("outside.sqlitecapsule");
+        std::fs::write(&outside, b"outside").expect("create outside fixture");
+        assert_eq!(
+            native_e2e_compare_path(
+                true,
+                Some(state_root.clone().into_os_string()),
+                Some(outside.into_os_string()),
+            ),
+            None
+        );
+        assert_eq!(
+            native_e2e_compare_path(
+                true,
+                Some(state_root.into_os_string()),
+                Some(directory.0.join("missing.sqlitecapsule").into_os_string()),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn native_e2e_reconcile_override_is_confined_but_allows_existing_race_fixture() {
+        let directory = TestDirectory::new();
+        let state_root = directory.0.join("native-e2e-state");
+        std::fs::create_dir_all(&state_root).expect("create isolated state root");
+        let requested = state_root.join("reconciled.sqlitecapsule");
+        let expected = state_root
+            .canonicalize()
+            .expect("canonical state root")
+            .join("reconciled.sqlitecapsule");
+        assert_eq!(
+            native_e2e_reconcile_path(
+                true,
+                Some(state_root.clone().into_os_string()),
+                Some(requested.clone().into_os_string()),
+            ),
+            Some(expected.clone())
+        );
+        std::fs::write(&requested, b"destination race").expect("create raced destination");
+        assert_eq!(
+            native_e2e_reconcile_path(
+                true,
+                Some(state_root.clone().into_os_string()),
+                Some(requested.into_os_string()),
+            ),
+            Some(expected)
+        );
+        assert_eq!(
+            native_e2e_reconcile_path(
+                false,
+                Some(state_root.clone().into_os_string()),
+                Some(state_root.join("other.sqlitecapsule").into_os_string()),
+            ),
+            None
+        );
+        assert_eq!(
+            native_e2e_reconcile_path(
+                true,
+                Some(state_root.into_os_string()),
+                Some(directory.0.join("outside.sqlitecapsule").into_os_string()),
             ),
             None
         );

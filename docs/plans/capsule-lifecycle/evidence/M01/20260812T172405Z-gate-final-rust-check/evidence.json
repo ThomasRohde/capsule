@@ -1,0 +1,37 @@
+{
+  "command": [
+    "cargo",
+    "check",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-12T17:24:10Z",
+  "cwd": "native",
+  "duration_ms": 4463,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-rust-check",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:24:05Z",
+  "stderr": {
+    "captured_bytes": 847,
+    "original_bytes": 847,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172405Z-gate-final-rust-check/stderr.txt",
+    "sha256_captured": "094b99412d31ecdb7c9ea5cc129e373fbaf97d0734c865d1915b103a8c03c765",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172405Z-gate-final-rust-check/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 900
+}

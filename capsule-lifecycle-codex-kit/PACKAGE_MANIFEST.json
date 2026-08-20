@@ -1,0 +1,587 @@
+{
+  "profile": "org.sqlite-capsule.codex-kit-manifest/1",
+  "package_id": "org.sqlite-capsule.lifecycle-codex-kit/1",
+  "package_version": "1.0.0",
+  "prepared_at": "2026-08-12T04:04:21Z",
+  "baseline_repository": "https://github.com/ThomasRohde/capsule",
+  "baseline_commit": "f67da560fb4baaa13144cea220c9329df87ad534",
+  "manifest_excludes_itself": true,
+  "file_count": 115,
+  "files": [
+    {
+      "path": "INSTALL.md",
+      "size_bytes": 2026,
+      "sha256": "e90af00868c7a0b32148bc16da92d90510948bd68cbd52442067937b0a4f3a38"
+    },
+    {
+      "path": "PACKAGE_INFO.json",
+      "size_bytes": 832,
+      "sha256": "e8f534167810a8183135c1a630a0ebdc6b847711c9434b4e1e1f4d076d5f6f40"
+    },
+    {
+      "path": "PACKAGE_NOTES.md",
+      "size_bytes": 1441,
+      "sha256": "edabe5d1b9f10970242155fea2e6414220b17bbbfe3fed841a7a6d3f3c2ee181"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 3970,
+      "sha256": "6c37281af2cbc582a87dfcb685f05321b1ce2c0d73cff2dd1e60cd45f9736fbf"
+    },
+    {
+      "path": "START_PROMPT.md",
+      "size_bytes": 1385,
+      "sha256": "d409f9339386c3b88fa3f71d496e973b8f2352f958840928a4454275a7bb7367"
+    },
+    {
+      "path": "UNINSTALL.md",
+      "size_bytes": 871,
+      "sha256": "f5f696b43e535cf01c918afb94ab45b9219acdcf113036264afc25464edfa16e"
+    },
+    {
+      "path": "VALIDATION_REPORT.md",
+      "size_bytes": 2443,
+      "sha256": "bf2425f30d00dddd2710428d8b67004edd6c1542461b018751f916064f665a97"
+    },
+    {
+      "path": "overlay/.agents/skills/capsule-lifecycle-program/SKILL.md",
+      "size_bytes": 2614,
+      "sha256": "b3ee68d7648c959320bdc61530b90d91cb7da2cdb397a110ffdc22de41e0588a"
+    },
+    {
+      "path": "overlay/CODEX_LIFECYCLE_START.md",
+      "size_bytes": 2483,
+      "sha256": "e51bf4ca534b34dbe7539b76b6a7e29d6a06c95ab53418864c39f3d0036f3138"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/PROGRAM_STATUS.json",
+      "size_bytes": 4836,
+      "sha256": "1279c51529e586e297a4a9720df462b9d1051c6180fc5f95f776d7202f2f9bc9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/README.md",
+      "size_bytes": 2161,
+      "sha256": "cf072da0792f4273bc52a3a9e4d731b5a8ceeeb83101a5fecf13c2295714919f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/README.md",
+      "size_bytes": 1820,
+      "sha256": "425f8066721a741ef42fb2711f6c0b0a3772889fe752ec267f33b6f3c40c6662"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-application-profile-v0.3.schema.json",
+      "size_bytes": 1872,
+      "sha256": "d81a9d89074ae23557377231488e01d4386f6b3648dd2e19ed217816f5aa4a82"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-data-contract-v0.3.schema.json",
+      "size_bytes": 4728,
+      "sha256": "14625a64e12fc17350917962708e02760b34a95f61ce97e33b08a614f7256fc5"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-instance-profile-v0.3.schema.json",
+      "size_bytes": 1783,
+      "sha256": "f43e88e7bb6d1834c1af6f7c6db65d1bf0d1843d0961847a511bdba9cd837105"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-lifecycle-v0.3.conformance.draft.json",
+      "size_bytes": 1923,
+      "sha256": "4e09039d7ac3959aac2eaeec13d63f5ba97e327347ba20ddd9fee348734b2712"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-lineage-v0.3.schema.json",
+      "size_bytes": 3394,
+      "sha256": "e5d83055a6d41f6657b4e757b1fdb238566ff356fe4bfd650b3b602e1ce6526f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-migration-v0.3.schema.json",
+      "size_bytes": 8127,
+      "sha256": "0e35f8a701ad5dc7827a97d795b64c4308f351ca6a96cf4b192e683bb035285e"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-signed-app-v0.3-draft.sql",
+      "size_bytes": 1412,
+      "sha256": "36cca7b7042ef8d33a4898e13c989d7b8d69a01b6e851717dbe20588a3c42924"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/capsule-v0.3-draft.sql",
+      "size_bytes": 14692,
+      "sha256": "8fe02199d4d248b3bf5fa80018d664fae5b52119e206f7314e01c3b4f7a1dc25"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/compare-report-v1.schema.json",
+      "size_bytes": 9746,
+      "sha256": "c7135a3504661182802b83f150e1c24eb6b24cb79e093119d2c3a33c8b24332e"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/lifecycle-error-codes-v1.json",
+      "size_bytes": 5008,
+      "sha256": "a4f0479c33678011870fa784b8465fc332d11fb6bdb4e01421b23b8fc5478d1b"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/lifecycle-plan-v1.schema.json",
+      "size_bytes": 7131,
+      "sha256": "af22010e2cfe187c82787a3f3e68dd5d9e62b673b90d2a5a7716e8e25a9ba05f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/reconcile-plan-v1.schema.json",
+      "size_bytes": 5897,
+      "sha256": "93742f2342737b5383730cb29563b82e5d1c6e65dfb090e498903d454e896d3b"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/contracts/upgrade-plan-v1.schema.json",
+      "size_bytes": 7302,
+      "sha256": "62fba62e8369741e4f6fa2d3499edafeb0319fd079f60e7352981bfe315ad817"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/evidence/README.md",
+      "size_bytes": 663,
+      "sha256": "7c220b9972494b87f64441c8a934e2de7aaf6f5b853ea9b321310b643968a28f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/README.md",
+      "size_bytes": 626,
+      "sha256": "c498d031bbadd1ae848909c9d1222b7e04b289e224092ecb5f35a779a9bf98c3"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-application-profile.json",
+      "size_bytes": 526,
+      "sha256": "3053fd1a8807503f27dcfc4128e095941bef08e3ba9275a704edd60ba73dc6a5"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-data-contract.json",
+      "size_bytes": 4969,
+      "sha256": "3b7cdac8352eb83b0abbcc09b40b0b0f3aa4a5f94b0519a6e13359a698137efb"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-instance-profile.json",
+      "size_bytes": 502,
+      "sha256": "564d1f49736b95c09a950753e0baebf7eaff8f7422775d49b53d7b7c77582b2d"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-lineage-example.json",
+      "size_bytes": 1761,
+      "sha256": "57989a05740434b067353637724cec31dae2640f435ab00a9f801d450f2f45e9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-migration-v1-to-v2.json",
+      "size_bytes": 4600,
+      "sha256": "ce107c4f439ca1f7aabc80047ef2d34c76956986cda020ba57bd9a59cbac9046"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-upgrade-plan-same-schema.json",
+      "size_bytes": 3608,
+      "sha256": "fd231782c227110543ea034b4ec3eba6b8a0a06d2318fd06193f53cade94139a"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/ACCEPTANCE.md",
+      "size_bytes": 2420,
+      "sha256": "1d8d99b2cb4ace90696239faef836cfe1eb978e931c5e4a86bce99e27c11c256"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/EXECPLAN.md",
+      "size_bytes": 6111,
+      "sha256": "7d6bfd59b39354f7d82f20a85f99ebb91355eef97cb5ea5e1d974d69005824ae"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/PROMPT.md",
+      "size_bytes": 2458,
+      "sha256": "bf9954769d00144503828be1c10b0fcfb4186a239c488ebf5bbbb3cadd70ee9b"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/RESULT.md",
+      "size_bytes": 1125,
+      "sha256": "f3b112ccfb5c9f1e6b0281f91442059b7cb5c6be5fc40a82a406716432dca1e7"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/ACCEPTANCE.md",
+      "size_bytes": 2384,
+      "sha256": "611e74b45cbbd5371c4acd4623673710e0fcc17da62f2175b796ec4ff4019caa"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/EXECPLAN.md",
+      "size_bytes": 5828,
+      "sha256": "58c4622ce6f2ee24e33f5e8cd9c3994f78e84ef123dc0fa0d8249eb4f100391e"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/PROMPT.md",
+      "size_bytes": 2429,
+      "sha256": "77339df8f0be74c1ad007752ee3a053f7b3cfec16411e56aab131df198ed29b0"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/RESULT.md",
+      "size_bytes": 1131,
+      "sha256": "f7e57aa59f71c94929d0ce0c1ff79ccc5a7ee0487fbb1d8d2438d8eedff28fd9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/ACCEPTANCE.md",
+      "size_bytes": 2346,
+      "sha256": "a5bcd9e858d94667647719e752b6abb04e1c9711bdc9c884977136c47d590b40"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/EXECPLAN.md",
+      "size_bytes": 6190,
+      "sha256": "ca2240092a18182926ff3e3b766c0d54c140aca55904fde557a75a92240ed6f0"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/PROMPT.md",
+      "size_bytes": 2421,
+      "sha256": "8744385cdb79e8e6c95e32ded74bd74a4db8ecb15d16df62c9b179ad88ad1bb2"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/RESULT.md",
+      "size_bytes": 1131,
+      "sha256": "d2bbe8d61567f51495fec587e2a9a9beca98d422913f5aa4d54c559f843072c4"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/ACCEPTANCE.md",
+      "size_bytes": 2313,
+      "sha256": "5645e4e83961a56c8b99c34f1592b874196921fc294058a5913e8238412496aa"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/EXECPLAN.md",
+      "size_bytes": 5580,
+      "sha256": "12010e5fb583bc695d6f3cf5e7b9413015594cff3661fc17b2a7d4257db0d0f3"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/PROMPT.md",
+      "size_bytes": 2432,
+      "sha256": "fc8bdc79edce509b286c6ca3dc1b149adb0e9efa5be182963bc09af7c8e4ed8a"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/RESULT.md",
+      "size_bytes": 1121,
+      "sha256": "0772b4c1061d901c5420d99848ae4f26c54beb62e0e230444dc0341f2876edf4"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/ACCEPTANCE.md",
+      "size_bytes": 2328,
+      "sha256": "0bb1f602de303ef9cb76c6bbc8d8231aa3569d0e85a4332a35ceef224d9cde77"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/EXECPLAN.md",
+      "size_bytes": 5663,
+      "sha256": "3f192bd479f8d341d67e1ac23cd60d9b6b3b92673f1f655afcda3cdf60da57ac"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/PROMPT.md",
+      "size_bytes": 2385,
+      "sha256": "fda0ff6cb3ae2c15be06cec570bc38412111ab849a1cc795453281df9be3b1ad"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/RESULT.md",
+      "size_bytes": 1132,
+      "sha256": "fe5ceed1d68c96989e0f5d45cd9880ba7c2c2955137d74fbe020293ccd43bf8c"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/ACCEPTANCE.md",
+      "size_bytes": 2320,
+      "sha256": "d91e33768afaa18b5565bdcca3e27162685ef5eb0c15c1a3f0b56b4d4a6bacf8"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/EXECPLAN.md",
+      "size_bytes": 5582,
+      "sha256": "b6409cc42ab642c6c2b8b1b97cb01607ff762dcd79d1b1238bf963af9c5e1000"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/PROMPT.md",
+      "size_bytes": 2398,
+      "sha256": "1c0cd5d3584cfb7992c341acfa4579fc534807279eb1cff7784647c5624c0252"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/RESULT.md",
+      "size_bytes": 1127,
+      "sha256": "47a82005da1c7920063aefaf90457bcd12ccbb8888ee3a838a6ece778ec577c7"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/ACCEPTANCE.md",
+      "size_bytes": 2286,
+      "sha256": "401317ad5223b99aed1ae743c97205d7b0f787b17f8d7f057b2ef34aa9946ac7"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/EXECPLAN.md",
+      "size_bytes": 5535,
+      "sha256": "ec41e7a0fcc7a4f7fe5eca6477c399cba9c271d6261ec96ba4e027b89f3a1402"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/PROMPT.md",
+      "size_bytes": 2402,
+      "sha256": "7e09c653bd7e5c50049e36b8c59dbb67d029ff9f018c4f5e43bd656ea82b85d9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/RESULT.md",
+      "size_bytes": 1127,
+      "sha256": "b81e21c95f09e14f3a91c8aa8d01f3690954945e26c827e60bba9569acf77be2"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/ACCEPTANCE.md",
+      "size_bytes": 2305,
+      "sha256": "2aa0ec2114ce844909fa671a900d1df544e0577e3858e033ab02d6b1b7a4aa72"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/EXECPLAN.md",
+      "size_bytes": 5374,
+      "sha256": "67ead8b3ce50e1709727e77e9155f2bad3af6aabe0c188cdb039b2e4f910abef"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/PROMPT.md",
+      "size_bytes": 2376,
+      "sha256": "570672f646ef125afcc41e9389316d6b1000fff5e288cda65ce2ea0b93a100b4"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/RESULT.md",
+      "size_bytes": 1130,
+      "sha256": "e37098e972e3872eb7751ec7599951b272bb22180c97917ade83968e990e1eea"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/ACCEPTANCE.md",
+      "size_bytes": 2304,
+      "sha256": "84ee188f7bd7fe2de8c93c72e568c21941d65e3664972dc3af3564f5f097e090"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/EXECPLAN.md",
+      "size_bytes": 5926,
+      "sha256": "6040eccc96f315108b2798d0076db853a0aa13dbc3a2bb20e6f7605e844e0a43"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/PROMPT.md",
+      "size_bytes": 2403,
+      "sha256": "106b6fdf8cb90d54c874c479bf25a3c13cd14c2d3428fe16063a5dde877a2f67"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/RESULT.md",
+      "size_bytes": 1114,
+      "sha256": "6c47fba3ca783f6f91a7e9765c42605b40235b60a1af13398e688a30a3907533"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/ACCEPTANCE.md",
+      "size_bytes": 2457,
+      "sha256": "745f6ef3f22291f052274c08d810b7a1391ba1b19e04abf6de5d60074a4fafa3"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/EXECPLAN.md",
+      "size_bytes": 6123,
+      "sha256": "9a85674952609cda530ee27d4c126699320b1407cfa5176baf52385ea0c1d069"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/PROMPT.md",
+      "size_bytes": 2401,
+      "sha256": "52256a6c74456dbbbb097bb3a0b89a335b4cb4db8c1d6c01449414e520ae4e24"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/RESULT.md",
+      "size_bytes": 1125,
+      "sha256": "2a6090fdb1f7d213446e8bddb7749ae0a04b97aecf2f6a32cc0de4b89c6cb89b"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/milestones/README.md",
+      "size_bytes": 531,
+      "sha256": "31752206668f2f484aed40e4ffa53064183c5bbabfbe86da6b0a6c230b871574"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/00-CHARTER.md",
+      "size_bytes": 2890,
+      "sha256": "84cab7e2854bb9b2e2fac95a8c1dc36c5ea04972ec6ad3bbfe10e05de03e2056"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/01-CURRENT-STATE-BASELINE.md",
+      "size_bytes": 2861,
+      "sha256": "581b73ba96beea98747ee2dd8bcfac4c77374c1ed03447e1b7b5e71711bae379"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/02-PRODUCT-REQUIREMENTS.md",
+      "size_bytes": 5496,
+      "sha256": "60394bea92d5f4f46720263f187738590e82055b2f9ec3e7ef3409115d723c3f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/03-TARGET-ARCHITECTURE.md",
+      "size_bytes": 8754,
+      "sha256": "9845b9a81dbb3bbe07ddcd771bcca2480682eb41deba11bd55880b75a64d9378"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/04-SECURITY-AND-TRUST.md",
+      "size_bytes": 6269,
+      "sha256": "072473b982f26309570ffce229a221d7704dcb56175351a6f7225fc6f25214e1"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/05-UX-SPECIFICATION.md",
+      "size_bytes": 6120,
+      "sha256": "779093ad549dba9f316e5e4c5c2f947ae862a522d517a3e3d268fd7fcf0e90ae"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/06-FORMAT-V0.3-PROPOSAL.md",
+      "size_bytes": 5076,
+      "sha256": "692155962b453b20b567afb98487bba91e1370415adec56ddbd66788efa13c40"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/07-COPY-FORK-LINEAGE.md",
+      "size_bytes": 4448,
+      "sha256": "600f69938b5104e9fa063c7da9bc69bd913a8a51411ba5bfb42422bde5b109db"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/08-COMPARE-AND-RECONCILE.md",
+      "size_bytes": 4928,
+      "sha256": "3d1f3b68eaaa28d03071f5039f8bb6e6b9438ffd8473a50679c06512e233970f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/09-APPLICATION-UPGRADE-AND-MIGRATION.md",
+      "size_bytes": 6140,
+      "sha256": "aa068e939833f72b7eef7efc7b7c173080365622bb99727fb990b5e571d459f6"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/10-TEST-EVIDENCE-RELEASE.md",
+      "size_bytes": 4338,
+      "sha256": "92f6c3d88ef7cfccc92c956c2eaa2201a8a6a4f04a64518541bc37360ec130d8"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/11-COMPATIBILITY-AND-ROLLOUT.md",
+      "size_bytes": 2574,
+      "sha256": "a8416ccadf6087ea2a03214628f3fb5fd3cd5290148d4b2df0478cc05ddc9dec"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/12-DECISION-REGISTER.md",
+      "size_bytes": 2546,
+      "sha256": "d70cb9075750d6fbab9380947592f423a9379b0f3b2223c6512c6ea390965da4"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/13-SOURCE-MAP.md",
+      "size_bytes": 2029,
+      "sha256": "f552129061494b8f42ee92e1bcdc2c222ee987b194c7f9189ef28afd3162fce5"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/14-RUST-API-AND-ERRORS.md",
+      "size_bytes": 6442,
+      "sha256": "7ef246b4580f111f7e690dffcbae73adc59552c17e50118f94fa6da92b7c67ab"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/15-TAURI-COMMAND-CONTRACT.md",
+      "size_bytes": 5971,
+      "sha256": "e19a82c96ead0a59b558998b93312902bb85698254b18c18c47fe9fe9e383bb5"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/16-CANONICAL-DATA-AND-DIGESTS.md",
+      "size_bytes": 5759,
+      "sha256": "bd565242b44e2cad02d84080df348fc122b72f4b6ba31a07e01603109737e2c8"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/17-FIXTURE-AND-BENCHMARK-STRATEGY.md",
+      "size_bytes": 5024,
+      "sha256": "0639f355457fef2d3c51622b64de7a738ae203fc56df85f48bd62a9bc08946f8"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/program/18-PROGRAMME-OPERATING-MODEL.md",
+      "size_bytes": 3062,
+      "sha256": "321ea07743002b53789986ebc9f17d43c73d483c0fe35989ef6c42a1ddd6f97c"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/RELEASE_QUALIFICATION.md",
+      "size_bytes": 1248,
+      "sha256": "f747af1878e19c349536cf4816156ecff54da25c301401d3cd56b784dc1efca9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/RESUME_PROGRAM.md",
+      "size_bytes": 817,
+      "sha256": "a4a2e6eb8ce45d7f4a59829b21bfff1aad9f09e84db2820d474a0a0e9b8e492a"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/REVIEW_CURRENT_MILESTONE.md",
+      "size_bytes": 1378,
+      "sha256": "af8cb02e29964fecd75414ea43959638d99abd1adc556f0f250ff532ed6b34b9"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/RUN_ENTIRE_PROGRAM.md",
+      "size_bytes": 2323,
+      "sha256": "b3b8b97876a74db6528d394e288d042675544481b5169dcf49c934e55d0e9f57"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/RUN_NEXT_MILESTONE.md",
+      "size_bytes": 576,
+      "sha256": "e5f431a9e9a5db85491a55d7fbcf963311da60698bc433f30cc2f1fee208b4dc"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/SECURITY_GAUNTLET.md",
+      "size_bytes": 5172,
+      "sha256": "67e7c147d1902087cb8cf47844e66691b6737850c82da04273c599b8a6240a1d"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/prompts/UX_ACCESSIBILITY_REVIEW.md",
+      "size_bytes": 1316,
+      "sha256": "b82d94e5041d8e9df41b66cf094cf7a845c032161c45f120be0e8aec79f0636b"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/ADR.md",
+      "size_bytes": 1666,
+      "sha256": "2210f3f4339ff07821c8fd64c1bc82680799643013410dc541a170528711fbe3"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/COMPATIBILITY_FIXTURE.md",
+      "size_bytes": 984,
+      "sha256": "e07cd56381dbdedc57da3d6cae725461e9ab2f4638d15162af5791c5b9102ace"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/MILESTONE_RESULT.md",
+      "size_bytes": 1326,
+      "sha256": "9e7274519af4bbebfb7ff50ead499674957f90ebd813bc3c0373e0e2f17f08da"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/OPERATION_TEST_MATRIX.md",
+      "size_bytes": 1407,
+      "sha256": "db09f9f8f01431694d84da0591cf59ec57f3102022044eee8daceeb07288919d"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/SECURITY_REVIEW.md",
+      "size_bytes": 1530,
+      "sha256": "de64fa45f836f72db99acb98ad4cd288dcc558c950a83cea8e503c0be964fe87"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/TEST_EVIDENCE.template.json",
+      "size_bytes": 881,
+      "sha256": "745b68f9622d2fc37862b38107edb9315e304afe732ceca83ad78e639db0deed"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/templates/UX_ACCEPTANCE.md",
+      "size_bytes": 1137,
+      "sha256": "a7befabf71d04b7c05aa8023d89d4baee152afce979a45aaa9126076bda74429"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/README.md",
+      "size_bytes": 653,
+      "sha256": "2c58017fd071b20063f2fc093ff1323800ac2498fc58b7ea60713da634e815d1"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/__init__.py",
+      "size_bytes": 83,
+      "sha256": "6f406790ad8f2306b008f81348e78639f15835c280d2dbc7ff6720d80cc0eca8"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/capture_baseline.py",
+      "size_bytes": 8490,
+      "sha256": "f85f0e8b2db935984614471bee8881feee31dd23d9cec864ba5fd04d00b4665f"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/program_status.py",
+      "size_bytes": 7793,
+      "sha256": "1270327509d797e9be2665ac3b097b2800e276409633ac2b5c950b24b24d6ed1"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/run_evidence.py",
+      "size_bytes": 5598,
+      "sha256": "f966d6e3102aca0253e316b15c196f4cf722339fec91b085592fc71f5e8e9d1c"
+    },
+    {
+      "path": "overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py",
+      "size_bytes": 7867,
+      "sha256": "a71dfd3692722170fa64d43b369749d6585cb07ad78540a14329b0efde08b76e"
+    },
+    {
+      "path": "scripts/install.py",
+      "size_bytes": 5033,
+      "sha256": "2c37bd65ce91644e251d2132486aad5a89a9051e1a121795b4a16f3f401dda44"
+    },
+    {
+      "path": "scripts/validate_package.py",
+      "size_bytes": 6045,
+      "sha256": "7da22af6722c734b5698db7126796e1826a1d9b9c46c1eeceb8f7c8de1916a25"
+    }
+  ]
+}

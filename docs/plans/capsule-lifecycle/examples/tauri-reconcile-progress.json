@@ -1,0 +1,7 @@
+{
+  "profile": "org.sqlite-capsule.tauri-reconcile-status/1",
+  "operation_token": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "sequence": 3,
+  "phase": "validate",
+  "cancellable": true
+}

@@ -1,0 +1,14 @@
+{
+  "profile": "org.sqlite-capsule.reconcile-cli-result/1",
+  "operation_count": 4,
+  "plan_digest": "2929292929292929292929292929292929292929292929292929292929292929",
+  "payload_digest": "2828282828282828282828282828282828282828282828282828282828282828",
+  "compare_report_digest": "1010101010101010101010101010101010101010101010101010101010101010",
+  "output_leaf": "reconciled.sqlitecapsule",
+  "output_bytes": 65536,
+  "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+  "revision_id": "b5eff64a-7244-46f1-b5d6-34735579eef6",
+  "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+  "preserves_target_application_digest": true,
+  "verified_reopened": true
+}

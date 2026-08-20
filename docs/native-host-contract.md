@@ -15,6 +15,24 @@ The desktop host has three deliberately separate surfaces:
    host-owned native application window, with no Tauri initialization and no
    Wry IPC handler.
 
+The verifier dispatches the complete format tuple for v0.2 or v0.3. Before any
+application asset, signing preview, or runtime session is released, the same
+read-only connection must pass exhaustive machine conformance, integrity and
+foreign-key checks, asset and endpoint validation, bounded declared checks, and
+profile-specific signature evidence. Before/after source hashes detect path
+replacement or mutation; signing additionally binds and re-verifies the exact
+private snapshot before adding signature rows.
+
+Launch/signing inputs must be standalone SQLite main databases: adjacent WAL,
+SHM, or rollback-journal state and a WAL-mode database header are rejected
+without opening the source through SQLite. The verifier raw-copies the pinned
+main bytes into private create-new storage, compares before/snapshot/after
+SHA-256, and runs every logical phase only on that held private snapshot.
+Signing stages bytes from that verified snapshot rather than reopening the live
+source path. A writable runtime starts a rollback-mode read transaction before
+logical verification and rebinds the main-file digest while that transaction
+prevents a concurrent rollback-journal commit.
+
 The application window is created hidden and remains hidden while trust or
 capability decisions are unresolved. Once execution is authorised, the host
 shows it maximized and the raw renderer fills its client area. Rejection,
@@ -31,6 +49,104 @@ native events. Secondary-instance inspection runs outside the synchronous
 platform message callback; only the completed bounded report is published back
 to the trusted shell on the main thread.
 
+M04 adds an opaque create-copy controller only to the trusted `main` Tauri
+WebView. The renderer supplies a current Overview selection ID, closed copy
+mode, opaque dataset-choice tokens and a one-use confirmation token; Rust keeps
+the source path, verified snapshot, destination path/held parent, plan and
+publication capability private. Switching selections invalidates pending
+authority. Progress is targeted only to `main`, and the raw Wry application
+renderer still has no IPC or lifecycle event access. Narrow diagnostic CLIs emit
+bounded overview, signed data-contract, redacted lineage, and deterministic
+plan-review JSON. Their root response profiles are respectively
+`org.sqlite-capsule.workspace-overview-response/1`,
+`org.sqlite-capsule.workspace-data-contract-response/1`, and
+`org.sqlite-capsule.workspace-lineage-response/1`; a serialized plan cannot
+hold a filesystem capability or authorize publication.
+
+Exact and compact duplicates support verified v0.2/v0.3 signed or unsigned
+sources. Fork, authenticated template creation and selective fork require a
+complete valid signed-v0.3 signature inventory and signed data contract.
+Semantic actions are re-derived throughout execution; template-state is
+reproduced from the same retained snapshot, `forbid` fails closed, sensitive
+state defaults out, dependencies and restrictive cross-dataset FKs are
+enforced, and the private output is compacted before no-replace publication.
+
+M05 compare commands are registered only for the trusted `main` WebView. The
+shell submits the current opaque Overview selection and a host-picker-minted
+candidate; Rust retains both verified sources, numeric contract positions and
+continuation cursors. Responses contain bounded summary projections and random
+dataset/table/page tokens, never source paths, raw SQL, arbitrary identifiers or
+unbounded values. `ignore`/`summary` policies never yield detail pages,
+`row` never yields field values, sensitive datasets require an explicit reveal,
+and BLOB content is always length/hash only. Application expansion is a
+separate explicit command over thirteen fixed host-owned families; it returns
+only bounded counts and digests bound to the reviewed pair, never compartment
+values. Closing or switching the selected Capsule releases the retained pair
+and tokens. The raw Wry renderer has no compare handler, event or capability.
+
+M06 reconcile commands are likewise registered only for `main`. The shell can
+orient the retained pair explicitly, select only row actions previously
+disclosed by Compare, and optionally use a host-picker-minted ancestor token.
+Rust holds the source, target, optional ancestor, comparison rows, primary keys,
+row values, canonical plan/payload and destination path. Three-way response
+objects expose bounded identity/count projections plus random conflict and
+resolution tokens; JavaScript never supplies a conflict digest or resolution
+vocabulary directly. `prepare_reconcile` accepts either closed two-way
+selection tokens or one ancestor token plus an exhaustive set of resolution
+tokens, never both.
+
+The reconciliation core reopens no renderer-supplied path. It consumes pinned
+verified inputs, re-computes the exact source/target comparison, checks signed
+manual/three-way policy and immutable fields, and turns the reviewed selection
+into a one-use in-memory capability. Execution copies the target to private
+staging, applies only the bound operations transactionally, preserves target
+capsule/application/signature identity, creates a new revision and two-parent
+lineage, then verifies and publishes create-new. Progress is sequenced and
+targeted only to `main`; cancellation is allowed only before publication. The
+raw Wry renderer has no reconcile handler, progress listener or capability.
+
+Create-new publication walks the destination parent component-by-component
+without following reparse points or symbolic links, retains its stable parent
+handle, creates owner-only staging on the same filesystem, and binds the held
+staged object by identity, length, and SHA-256. The workspace verifies the exact
+held output before and after the no-replace publish, rebinds all inputs, and
+returns success only after the final leaf still names that exact object.
+Test-only child-process crash points cover private creation, exact snapshot
+copy, sealed verification, and the post-rename reopen boundary. Each stage
+proves the input digest unchanged and refuses incomplete final-name success.
+
+The trusted shell exposes the M03 Cabinet/Overview surface only to the exact
+`main` Tauri WebView. Picker and recent-card actions mint or resolve opaque
+host-owned selection identifiers; no command accepts a capsule path supplied by
+JavaScript. The bounded `org.sqlite-capsule.tauri-overview/1` response separates
+structural profile, cryptographic signature evidence, local publisher
+trust/revocation, mutable self-described instance metadata, and last-observed
+file state. It omits entry assets, permission declarations, endpoint SQL,
+capsule asset identifiers, and filesystem capabilities.
+
+Overview inspection uses one retained private snapshot and is both non-mutating
+and non-activating. A rollback journal produces an actionable recovery state;
+only a later explicit recovery action may use the legacy writable recovery path,
+after which the host freshly inspects the result. Remembered authorization is a
+`remembered-ready` state, not automatic execution: the bridge remains inactive,
+the raw application window stays hidden at `/__host/locked`, and assets remain
+unreleased until the user explicitly opens the application from the trusted
+shell.
+
+The Cabinet cache is a distinct owner-protected `cabinet-v1` store with strict
+size/count/schema bounds and create-new replacement. Trusted UI receives only
+opaque recent IDs plus bounded last-observed labels. Rust resolves a recent ID
+and performs fresh pinned inspection before any action; cache deletion or
+corruption cannot change trust, grants, capsule bytes, or recovery state.
+
+PNG/WebP Overview artwork is selected from the retained verified snapshot,
+hash-checked, bounded to 512 KiB compressed, preflighted to 1024 by 1024 pixels
+and 4 MiB decoded RGBA, decoded off the UI thread, and re-encoded as a static
+metadata-free host PNG. Animation, malformed/truncated data, media mismatch,
+dimension mismatch, overflow, and unsupported formats use the deterministic
+host fallback. Only that derivative is embedded in the selection-bound trusted
+Overview; it is never served to the raw origin.
+
 The trusted shell may forget an active exact decision only after the literal
 confirmation `FORGET-CURRENT-DECISION`. The host-local transaction may delete
 the current exact-file exception, exact signed-release row, and grants for the
@@ -42,8 +158,8 @@ the raw child, and re-renders the current capsule as a promptable decision.
 ## Launch state machine
 
 ```text
-received -> metadata inspected -> structurally verified
-         -> publisher evaluated -> capabilities decided -> runnable
+received -> metadata inspected -> structurally verified -> overview
+         -> publisher evaluated -> capabilities decided -> explicit open -> runnable
          -> application window released
 ```
 
@@ -53,11 +169,12 @@ of identity fields, never asset bytes or endpoint SQL. Unknown or unsupported
 format versions remain inspectable only when that can be done safely.
 
 After verification, a complete stored `always` decision for the exact signed
-release moves directly from capability evaluation to `runnable`: the host
-activates the bridge and shows the application window without repeating the
-first-open prompt. A changed capsule/application identity, digest, signing key,
-permission request, missing grant, deny, revocation, or invalid signature stays
-locked and cannot take this path.
+release moves to `remembered-ready`. The trusted Overview remains first and the
+host does not repeat the capability prompt, but it activates the bridge and
+shows the application window only after the explicit trusted-shell open action.
+A changed capsule/application identity, digest, signing key, permission request,
+missing grant, deny, revocation, or invalid signature stays locked and cannot
+take this path.
 
 Every selected or dropped replacement path first deactivates the prior runtime.
 A drop containing anything other than exactly one path becomes stored

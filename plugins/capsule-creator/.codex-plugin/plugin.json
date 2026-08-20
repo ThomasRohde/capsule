@@ -1,7 +1,7 @@
 {
   "name": "capsule-creator",
-  "version": "0.2.6",
-  "description": "Create, build, verify, run, and black-box test exceptional offline SQLite Capsule applications without a repository checkout or native client.",
+  "version": "0.3.0",
+  "description": "Create, build, verify, run, and black-box test v0.2 and v0.3 offline SQLite Capsule applications without a repository checkout or native client.",
   "author": {
     "name": "SQLite Capsule contributors"
   },

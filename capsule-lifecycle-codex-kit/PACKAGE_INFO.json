@@ -1,0 +1,20 @@
+{
+  "package_id": "org.sqlite-capsule.lifecycle-codex-kit/1",
+  "package_version": "1.0.0",
+  "prepared_at": "2026-08-12T04:04:21Z",
+  "target_repository": "https://github.com/ThomasRohde/capsule",
+  "baseline_commit": "f67da560fb4baaa13144cea220c9329df87ad534",
+  "delivery_type": "non-invasive Codex implementation programme overlay",
+  "milestone_count": 10,
+  "first_milestone": "M00",
+  "final_milestone": "M09",
+  "entry_points": {
+    "human_readme": "README.md",
+    "installation": "INSTALL.md",
+    "standalone_prompt": "START_PROMPT.md",
+    "installed_codex_start": "overlay/CODEX_LIFECYCLE_START.md",
+    "codex_skill": "overlay/.agents/skills/capsule-lifecycle-program/SKILL.md",
+    "programme_status": "overlay/docs/plans/capsule-lifecycle/PROGRAM_STATUS.json"
+  },
+  "integrity_manifest": "PACKAGE_MANIFEST.json"
+}

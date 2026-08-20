@@ -1,0 +1,95 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "empty",
+      "stage": "no-capsule",
+      "scaling": {
+        "visualScale": 2,
+        "visualViewport": {
+          "left": 288,
+          "top": 48,
+          "width": 590,
+          "height": 450
+        },
+        "viewportWidth": 1180,
+        "documentWidth": 1180,
+        "titleVisible": true,
+        "titleInsideVisualViewport": true,
+        "openButtonVisible": true,
+        "openButtonInsideVisualViewport": true,
+        "openButtonRight": 455.48960876464844
+      },
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\cabinet-empty.png"
+    },
+    {
+      "name": "legacy-v02",
+      "stage": "first-open",
+      "signature": "Unsigned",
+      "profile": "Legacy v0.2",
+      "sourceSha256": "10a6db3300991970b5e36c1460898534cf5e88ef70a7f0ac15432916150c6b67",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-legacy-v02.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null,
+      "compareScreenshot": null,
+      "compareReportDigest": null
+    },
+    {
+      "name": "signed-v03",
+      "stage": "first-open",
+      "signature": "Signature valid",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "70ec3b439ae9e4769c6007a9f7742aa6996b5fbea6aa942210084b439d30362d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-signed-v03.png",
+      "copyScreenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\copy-selective-v03.png",
+      "exactCopySha256": null,
+      "compareScreenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\compare-field-v03.png",
+      "compareReportDigest": "Selected applicationorg.sqlite-capsule.vector · 3.0.0Comparison applicationorg.sqlite-capsule.vector · 3.0.0Selected instance11111111-1111-4111-8111-111111111111 · revision 22222222-2222-4222-8222-222222222222Comparison instance11111111-1111-4111-8111-111111111111 · revision 11111111-2222-4333-8444-555555555555Selected signature evidence1 valid envelope · Vector PublisherComparison signature evidence1 valid envelope · Vector PublisherReport digest4aa8421b557d0d9ddba9919cf7899c13c05c968a707291eaab053e8eeb940ddd"
+    },
+    {
+      "name": "sensitive-v03",
+      "stage": "first-open",
+      "signature": "Signature valid",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "9adfa60bdf4c9626f81a4c5eb92aaf853b4a9e612545916f98c3531fb0c80e60",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-sensitive-v03.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null,
+      "compareScreenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\compare-sensitive-v03.png",
+      "compareReportDigest": "Selected applicationorg.sqlite-capsule.vector · 3.0.0Comparison applicationorg.sqlite-capsule.vector · 3.0.0Selected instance11111111-1111-4111-8111-111111111111 · revision 22222222-2222-4222-8222-222222222222Comparison instance11111111-1111-4111-8111-111111111111 · revision 11111111-2222-4333-8444-555555555555Selected signature evidence1 valid envelope · Vector PublisherComparison signature evidence1 valid envelope · Vector PublisherReport digestd787e45669d2cff06a5e472c57bb0afb33d3795d1cd49015247c370d0cb62c25"
+    },
+    {
+      "name": "unsigned-v03",
+      "stage": "first-open",
+      "signature": "Unsigned",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "3ce3fa2689e2539ed6fad1c7ccb3b75e0df66de298baa56feca2da63ab6ad3ee",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-unsigned-v03.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null,
+      "compareScreenshot": null,
+      "compareReportDigest": null
+    },
+    {
+      "name": "invalid-v03",
+      "stage": "first-open",
+      "signature": "Invalid signature",
+      "profile": "Lifecycle v0.3",
+      "sourceSha256": "01dcbddafd959eaefea7a91e081083cc72c5c4f0f7054e1bfd9a8b003754d10d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-invalid-v03.png",
+      "copyScreenshot": null,
+      "exactCopySha256": null,
+      "compareScreenshot": null,
+      "compareReportDigest": null
+    },
+    {
+      "name": "remembered-ready",
+      "stage": "remembered-ready",
+      "assetsBeforeExplicitOpen": false,
+      "rawLockedBeforeExplicitOpen": true,
+      "assetsAfterExplicitOpen": true,
+      "sourceSha256": "70ec3b439ae9e4769c6007a9f7742aa6996b5fbea6aa942210084b439d30362d",
+      "screenshot": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\.tmp\\native-m03-overview-evidence\\overview-remembered-ready.png"
+    }
+  ]
+}

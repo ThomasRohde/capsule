@@ -1,0 +1,37 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--all-targets"
+  ],
+  "completed_at": "2026-08-13T07:21:06Z",
+  "cwd": "native",
+  "duration_ms": 117964,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-rust-workspace-post-deadline",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:19:08Z",
+  "stderr": {
+    "captured_bytes": 2072,
+    "original_bytes": 2072,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T071908Z-gate-final-rust-workspace-post-deadline/stderr.txt",
+    "sha256_captured": "90813977855cb6549032582237acf8665c6023d4bb740e9658adb1000e5f3306",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 29215,
+    "original_bytes": 29215,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T071908Z-gate-final-rust-workspace-post-deadline/stdout.txt",
+    "sha256_captured": "130f5386bcc4485364efe8dca4b5fdfe4c9ec6ea33fe0e94d1c188779380dea5",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

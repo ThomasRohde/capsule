@@ -1,0 +1,93 @@
+{
+  "profile": "org.sqlite-capsule.upgrade-plan/1",
+  "plan_id": "c5f44498-1a23-4c15-a384-e8a4782d0984",
+  "source": {
+    "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+    "revision_id": "80b1d11e-76fe-45be-a941-a448614d1a59",
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.4.0",
+    "application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "publisher_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "target_release": {
+    "file_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "capsule_id": null,
+    "revision_id": null,
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.5.0",
+    "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "publisher_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1
+  },
+  "output": {
+    "path": "Payments architecture sketch-upgraded.capsule.sqlite",
+    "preserve_capsule_id": true,
+    "new_revision_id": "a742f286-1c77-4f92-a14d-25a49585ab1d",
+    "must_not_exist": true
+  },
+  "publisher_continuity": {
+    "state": "same-key",
+    "source_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "target_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "delegation_digest": null
+  },
+  "capability_delta": {
+    "added": [],
+    "removed": [],
+    "changed": [],
+    "requires_review": false
+  },
+  "migration_path": [],
+  "dataset_actions": [
+    {
+      "dataset_id": "diagram-content",
+      "policy": "copy",
+      "action": "copy",
+      "reason": "The data schema is unchanged and the dataset is user-owned content."
+    },
+    {
+      "dataset_id": "edit-history",
+      "policy": "copy",
+      "action": "copy",
+      "reason": "The user selected preservation of sensitive edit history."
+    }
+  ],
+  "checks": [
+    {
+      "stage": "source",
+      "check_id": "integrity",
+      "severity": "error"
+    },
+    {
+      "stage": "target-release",
+      "check_id": "signed-application",
+      "severity": "error"
+    },
+    {
+      "stage": "pre-publish",
+      "check_id": "foreign-keys",
+      "severity": "error"
+    },
+    {
+      "stage": "pre-publish",
+      "check_id": "target-application-digest",
+      "severity": "error"
+    },
+    {
+      "stage": "post-publish",
+      "check_id": "reopen-and-verify",
+      "severity": "error"
+    }
+  ],
+  "limits": {
+    "max_input_bytes": 67108864,
+    "max_output_bytes": 67108864,
+    "max_rows_written": 10000000,
+    "deadline_ms": 300000
+  },
+  "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

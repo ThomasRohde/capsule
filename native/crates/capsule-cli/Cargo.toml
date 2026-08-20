@@ -19,3 +19,4 @@ sqlite-capsule-crypto = { path = "../capsule-crypto" }
 sqlite-capsule-launch = { path = "../capsule-launch" }
 sqlite-capsule-policy = { path = "../capsule-policy" }
 sqlite-capsule-signing = { path = "../capsule-signing" }
+sqlite-capsule-workspace = { path = "../capsule-workspace" }

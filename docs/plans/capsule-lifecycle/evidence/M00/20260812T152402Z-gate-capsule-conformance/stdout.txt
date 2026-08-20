@@ -1,0 +1,13 @@
+{
+  "capsule": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\capsules\\diagram-studio.capsule.sqlite",
+  "errors": [],
+  "identity": {
+    "application_id": 1129337676,
+    "format_id": "org.sqlite-capsule",
+    "format_version": "0.2",
+    "runtime_protocol": "capsule-http/0.2",
+    "user_version": 2
+  },
+  "ok": true,
+  "spec": "C:\\Users\\thoma\\Projects\\sqlite-capsule\\format\\capsule-v0.2.conformance.json"
+}

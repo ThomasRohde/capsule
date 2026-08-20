@@ -1,0 +1,32 @@
+{
+  "profile": "org.sqlite-capsule.semantic-copy-preview/1",
+  "mode": "selective-fork",
+  "source_format_version": "0.3",
+  "signature_count": 1,
+  "publisher_trust": "separate-host-policy",
+  "output_capsule_id": "59e233ce-fdc8-4319-8ee9-fea93320d07f",
+  "output_revision_id": "e222ec17-dcb9-476f-8923-49d34735ec9c",
+  "capsule_identity": "new-uuid-v4",
+  "revision_identity": "new-uuid-v4",
+  "application_identity": "preserved",
+  "application_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+  "datasets": [
+    {
+      "dataset_id": "content",
+      "action": "omit",
+      "sensitivity": "sensitive",
+      "sensitive_confirmed": false,
+      "source_row_count": 2,
+      "source_state_profile": "org.sqlite-capsule.dataset-state/1",
+      "source_state_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+    }
+  ],
+  "grants": "cleared",
+  "change_log": "cleared",
+  "prior_lineage": "cleared",
+  "lineage_events": 1,
+  "instance_text": "signed-app-defaults",
+  "instance_assets": "cleared",
+  "destination": "create-new-no-replace",
+  "overwrite_allowed": false
+}

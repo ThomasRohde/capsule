@@ -1,0 +1,96 @@
+{
+  "profile": "org.sqlite-capsule.lifecycle-plan/1",
+  "plan_id": "91967b4a-8cc0-4f0a-a9a4-78bc53b46490",
+  "operation": "reconcile-to-copy",
+  "created_at": "2026-08-13T08:00:00Z",
+  "expires_at": "2026-08-13T08:05:00Z",
+  "inputs": [
+    {
+      "role": "source",
+      "path_hint": "Source.capsule.sqlite",
+      "file_sha256": "5151515151515151515151515151515151515151515151515151515151515151",
+      "snapshot_sha256": "5252525252525252525252525252525252525252525252525252525252525252",
+      "size_bytes": 8192,
+      "filesystem_identity": {
+        "platform": "windows",
+        "volume_or_device": "volume:1",
+        "file_id_or_inode": "file:source",
+        "modified_ns": 1000
+      },
+      "capsule": {
+        "format_version": "0.3",
+        "capsule_id": "8a89b412-32ec-49ec-9e61-bce3538fa8d2",
+        "revision_id": "39dd777e-f135-4ab0-8924-4c04570dde65",
+        "app_id": "org.example.notes",
+        "app_version": "1.0.0",
+        "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+        "data_schema_id": "org.example.notes-data",
+        "data_schema_version": 1,
+        "publisher_key_id": "ed25519:sha256:source"
+      }
+    },
+    {
+      "role": "target",
+      "path_hint": "Target.capsule.sqlite",
+      "file_sha256": "5454545454545454545454545454545454545454545454545454545454545454",
+      "snapshot_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "size_bytes": 8192,
+      "filesystem_identity": {
+        "platform": "windows",
+        "volume_or_device": "volume:1",
+        "file_id_or_inode": "file:target",
+        "modified_ns": 2000
+      },
+      "capsule": {
+        "format_version": "0.3",
+        "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+        "revision_id": "b117c3ad-4205-43a9-b0d0-9d4f8dfa5734",
+        "app_id": "org.example.notes",
+        "app_version": "1.0.0",
+        "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+        "data_schema_id": "org.example.notes-data",
+        "data_schema_version": 1,
+        "publisher_key_id": "ed25519:sha256:target"
+      }
+    }
+  ],
+  "output": {
+    "path": "Reconciled.capsule.sqlite",
+    "leaf_name": "Reconciled.capsule.sqlite",
+    "parent_filesystem_identity": {
+      "platform": "windows",
+      "volume_or_device": "volume:1",
+      "file_id_or_inode": "directory:output"
+    },
+    "must_not_exist": true,
+    "publish_mode": "create-new-no-replace"
+  },
+  "decisions": [
+    {
+      "scope": "application",
+      "subject": "org.example.notes",
+      "action": "bind-reconcile-payload",
+      "reason": "Apply only the exact reviewed value-free reconciliation payload to a new target-derived copy.",
+      "parameters": {
+        "reconcile_payload_digest": "2828282828282828282828282828282828282828282828282828282828282828"
+      }
+    }
+  ],
+  "limits": {
+    "max_input_bytes": 67108864,
+    "max_output_bytes": 67108864,
+    "max_rows_inspected": 100000,
+    "max_rows_written": 100000,
+    "deadline_ms": 30000
+  },
+  "expected": {
+    "capsule_id": "fd48aa17-fb96-4716-97fc-0c40fd23ed2a",
+    "revision_id": "b5eff64a-7244-46f1-b5d6-34735579eef6",
+    "app_id": "org.example.notes",
+    "application_digest": "5353535353535353535353535353535353535353535353535353535353535353",
+    "data_schema_id": "org.example.notes-data",
+    "data_schema_version": 1
+  },
+  "plan_digest": "2929292929292929292929292929292929292929292929292929292929292929"
+}
+

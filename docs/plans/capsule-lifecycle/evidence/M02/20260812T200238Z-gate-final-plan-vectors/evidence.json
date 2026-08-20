@@ -1,0 +1,35 @@
+{
+  "command": [
+    "python",
+    "tools/check_lifecycle_plan_vectors.py"
+  ],
+  "completed_at": "2026-08-12T20:02:38Z",
+  "cwd": ".",
+  "duration_ms": 62,
+  "exit_code": 0,
+  "milestone": "M02",
+  "name": "gate-final-plan-vectors",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T20:02:38Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-plan-vectors/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 613,
+    "original_bytes": 613,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200238Z-gate-final-plan-vectors/stdout.txt",
+    "sha256_captured": "4f809dc06657de0718c405ea609f3c2f3732a3c4dddafeff9fc0d75f150064da",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

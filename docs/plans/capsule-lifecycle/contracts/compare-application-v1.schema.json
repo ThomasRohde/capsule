@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/compare-application-v1.schema.json",
+  "title": "Bounded Capsule application-compartment comparison",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile", "comparison_report_digest", "left_file_sha256", "right_file_sha256",
+    "families", "limits", "detail_digest"
+  ],
+  "properties": {
+    "profile": {"const": "org.sqlite-capsule.compare-application/1"},
+    "comparison_report_digest": {"$ref": "#/$defs/sha256"},
+    "left_file_sha256": {"$ref": "#/$defs/sha256"},
+    "right_file_sha256": {"$ref": "#/$defs/sha256"},
+    "families": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "prefixItems": [
+        {"$ref":"#/$defs/manifest_permissions"},
+        {"$ref":"#/$defs/application_identity"},
+        {"$ref":"#/$defs/publisher_identity"},
+        {"$ref":"#/$defs/assets"},
+        {"$ref":"#/$defs/commands"},
+        {"$ref":"#/$defs/runbooks"},
+        {"$ref":"#/$defs/documents"},
+        {"$ref":"#/$defs/prompts"},
+        {"$ref":"#/$defs/checks"},
+        {"$ref":"#/$defs/endpoints"},
+        {"$ref":"#/$defs/data_contracts"},
+        {"$ref":"#/$defs/migration_contracts"},
+        {"$ref":"#/$defs/signature_inventory"}
+      ],
+      "items": false
+    },
+    "limits": {"$ref": "#/$defs/limits"},
+    "detail_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family", "state", "table_count", "left_rows", "right_rows",
+        "left_digest", "right_digest", "change_count"
+      ],
+      "properties": {
+        "family": {"type": "string"},
+        "state": {"enum": ["same", "different"]},
+        "table_count": {"type": "integer", "minimum": 1, "maximum": 32},
+        "left_rows": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "right_rows": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "left_digest": {"$ref": "#/$defs/sha256"},
+        "right_digest": {"$ref": "#/$defs/sha256"},
+        "change_count": {"type": "integer", "minimum": 0, "maximum": 100000}
+      }
+    },
+    "manifest_permissions": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"manifest-permissions"},"table_count":{"const":1}}}]},
+    "application_identity": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"application-identity"},"table_count":{"const":2}}}]},
+    "publisher_identity": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"publisher-identity"},"table_count":{"const":1}}}]},
+    "assets": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"assets"},"table_count":{"const":1}}}]},
+    "commands": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"commands"},"table_count":{"const":1}}}]},
+    "runbooks": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"runbooks"},"table_count":{"const":1}}}]},
+    "documents": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"documents"},"table_count":{"const":1}}}]},
+    "prompts": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"prompts"},"table_count":{"const":1}}}]},
+    "checks": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"checks"},"table_count":{"const":1}}}]},
+    "endpoints": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"endpoints"},"table_count":{"const":2}}}]},
+    "data_contracts": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"data-contracts"},"table_count":{"const":3}}}]},
+    "migration_contracts": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"migration-contracts"},"table_count":{"const":3}}}]},
+    "signature_inventory": {"allOf":[{"$ref":"#/$defs/family"},{"properties":{"family":{"const":"signature-inventory"},"table_count":{"const":1}}}]},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_tables", "max_rows_per_table", "max_total_rows", "max_value_bytes",
+        "max_stream_bytes", "max_report_bytes", "deadline_ms"
+      ],
+      "properties": {
+        "max_tables": {"type": "integer", "minimum": 1, "maximum": 32},
+        "max_rows_per_table": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "max_total_rows": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "max_value_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "max_stream_bytes": {"type": "integer", "minimum": 1, "maximum": 268435456},
+        "max_report_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "deadline_ms": {"type": "integer", "minimum": 1, "maximum": 30000}
+      }
+    }
+  }
+}

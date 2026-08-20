@@ -1,0 +1,40 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--workspace",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "completed_at": "2026-08-13T07:24:09Z",
+  "cwd": "native",
+  "duration_ms": 784,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-clippy-workspace-settled",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:24:08Z",
+  "stderr": {
+    "captured_bytes": 72,
+    "original_bytes": 72,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072408Z-gate-final-clippy-workspace-settled/stderr.txt",
+    "sha256_captured": "dccad65a474a0e64d7c677fc96c87f30265067841005a793f4d82605fea6fe77",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072408Z-gate-final-clippy-workspace-settled/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 600
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/tauri-compare-v1.schema.json",
+  "title": "Trusted-shell compare projections",
+  "description": "Opaque candidate and retained comparison-session projections. Filesystem paths, SQL, table authority, cursors and disclosure state remain in Rust.",
+  "oneOf": [
+    {"$ref": "#/$defs/candidate"},
+    {"$ref": "#/$defs/session"},
+    {"$ref": "compare-application-v1.schema.json"}
+  ],
+  "$defs": {
+    "token": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "candidate_id", "display", "expires_at"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.tauri-compare-candidate/1"},
+        "candidate_id": {"$ref": "#/$defs/token"},
+        "display": {"const": "Selected Capsule"},
+        "expires_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "session_id", "expires_at", "report", "selectors"],
+      "properties": {
+        "profile": {"const": "org.sqlite-capsule.tauri-compare-session/1"},
+        "session_id": {"$ref": "#/$defs/token"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "report": {"$ref": "compare-report-v1.schema.json"},
+        "selectors": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/dataset_selector"}
+        }
+      }
+    },
+    "dataset_selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_label", "dataset_token", "tables"],
+      "properties": {
+        "dataset_label": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+        "dataset_token": {"$ref": "#/$defs/token"},
+        "tables": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/table_selector"}}
+      }
+    },
+    "table_selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["table_label", "table_token", "sensitivity", "detail_available"],
+      "properties": {
+        "table_label": {"type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256},
+        "table_token": {"$ref": "#/$defs/token"},
+        "sensitivity": {"enum": ["normal", "sensitive"]},
+        "detail_available": {"type": "boolean"}
+      }
+    }
+  }
+}

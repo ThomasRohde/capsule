@@ -1,0 +1,559 @@
+{
+  "captured_at": "2026-08-12T14:32:05Z",
+  "host": {
+    "machine": "AMD64",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_implementation": "CPython",
+    "release": "11",
+    "system": "Windows"
+  },
+  "key_files": [
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "AGENTS.md",
+      "sha256": "1a5ba9b595c02aaa682520191d7aedd3c1fe43bd1a715410c0aebeda848705b0",
+      "size_bytes": 3538
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "CONTRIBUTING.md",
+      "sha256": "d8cd59332e7141e39b67609a06fb08222a5b7c3b372cb1f1059f3ea5beb7f6f8",
+      "size_bytes": 3938
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "README.md",
+      "sha256": "95b25e006c246b66202e47a9e700986dcd96400d38149450aaf2636c2f910729",
+      "size_bytes": 11536
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "pyproject.toml",
+      "sha256": "68f41a414140a1f4c8acdb6d311f4aece15abdb9ab63e0275de9c1a6f8f61550",
+      "size_bytes": 225
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "package.json",
+      "sha256": "dadc56cdf10cf1b52a49114377e138189da65d807822c0c6eeaa151cc17da008",
+      "size_bytes": 1355
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "format/capsule-v0.2.sql",
+      "sha256": "540af31cb7555aea6bd61bb13a90dfac48cbb9ec746e2320b1c346514e9f0230",
+      "size_bytes": 5389
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "format/capsule-signed-app-v0.2.sql",
+      "sha256": "03a0d5c11b7247819304edb189657b6ff4f12f166470c8e79ef5fa4d3ed691ed",
+      "size_bytes": 1302
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/Cargo.toml",
+      "sha256": "c8d1ed095cc5572b4eebb764d2c99c338107f11916aa8daf111cdfac72f1a25b",
+      "size_bytes": 1594
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/Cargo.lock",
+      "sha256": "5fb1d73ec4a6e6ccffb5ad587195f9f376dece6c94cf6ebaa0abb5877b4bb93b",
+      "size_bytes": 154403
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/README.md",
+      "sha256": "bafe84c2168f0d4ccf6809ce53f5e4fc14fa6b563f80b7e04cdb1c1fece8ffec",
+      "size_bytes": 7193
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/desktop/ui/index.html",
+      "sha256": "ca6f132cfbf9116e4e7683633d8036e4133b4e53bd21d4055346b4942b6586e1",
+      "size_bytes": 20877
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/desktop/ui/app.js",
+      "sha256": "38325d0b1766322437655830ea45343dccb26cb92b39ac9b4a5aaa68b969e026",
+      "size_bytes": 43813
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/crates/capsule-core/src/lib.rs",
+      "sha256": "2b8316585087b0afe4d6c01b26c82e6be498046a04ea60fb9cb17c475d9510e9",
+      "size_bytes": 11655
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/crates/capsule-crypto/src/lib.rs",
+      "sha256": "a5509970a2d834a465b5f5508612cceb34251683fd71e4963c96c45b2675caf7",
+      "size_bytes": 34636
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/crates/capsule-lifecycle/src/lib.rs",
+      "sha256": "1b9482be32373cc4cbc687f722eccf0bb826f3a6b8b5b98b90c37de95dc9186b",
+      "size_bytes": 22650
+    }
+  ],
+  "notes": [
+    "No tests or builders were run by this script.",
+    "Paths and remotes may be sensitive; retain evidence according to repository policy."
+  ],
+  "profile": "org.sqlite-capsule.lifecycle-baseline/1",
+  "repository": {
+    "branch": "main",
+    "commit": "e73cf948fba233ef84d4680930b61549012020a7",
+    "commit_time": "2026-08-12T06:37:21+02:00",
+    "dirty": true,
+    "remotes": [
+      "origin\thttps://github.com/ThomasRohde/capsule.git (fetch)",
+      "origin\thttps://github.com/ThomasRohde/capsule.git (push)"
+    ],
+    "root": "C:\\Users\\thoma\\Projects\\sqlite-capsule",
+    "status_porcelain": [
+      "?? .agents/skills/capsule-lifecycle-program/SKILL.md",
+      "?? CODEX_LIFECYCLE_START.md",
+      "?? capsule-lifecycle-codex-kit/INSTALL.md",
+      "?? capsule-lifecycle-codex-kit/PACKAGE_INFO.json",
+      "?? capsule-lifecycle-codex-kit/PACKAGE_MANIFEST.json",
+      "?? capsule-lifecycle-codex-kit/PACKAGE_NOTES.md",
+      "?? capsule-lifecycle-codex-kit/README.md",
+      "?? capsule-lifecycle-codex-kit/START_PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/UNINSTALL.md",
+      "?? capsule-lifecycle-codex-kit/VALIDATION_REPORT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/.agents/skills/capsule-lifecycle-program/SKILL.md",
+      "?? capsule-lifecycle-codex-kit/overlay/CODEX_LIFECYCLE_START.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/PROGRAM_STATUS.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-application-profile-v0.3.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-data-contract-v0.3.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-instance-profile-v0.3.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-lifecycle-v0.3.conformance.draft.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-lineage-v0.3.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-migration-v0.3.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-signed-app-v0.3-draft.sql",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/capsule-v0.3-draft.sql",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/compare-report-v1.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/lifecycle-error-codes-v1.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/lifecycle-plan-v1.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/reconcile-plan-v1.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/contracts/upgrade-plan-v1.schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/evidence/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-application-profile.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-data-contract.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-instance-profile.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-lineage-example.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-migration-v1-to-v2.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/examples/diagram-studio-upgrade-plan-same-schema.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/EXECPLAN.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/PROMPT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/milestones/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/00-CHARTER.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/01-CURRENT-STATE-BASELINE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/02-PRODUCT-REQUIREMENTS.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/03-TARGET-ARCHITECTURE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/04-SECURITY-AND-TRUST.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/05-UX-SPECIFICATION.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/06-FORMAT-V0.3-PROPOSAL.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/07-COPY-FORK-LINEAGE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/08-COMPARE-AND-RECONCILE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/09-APPLICATION-UPGRADE-AND-MIGRATION.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/10-TEST-EVIDENCE-RELEASE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/11-COMPATIBILITY-AND-ROLLOUT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/12-DECISION-REGISTER.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/13-SOURCE-MAP.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/14-RUST-API-AND-ERRORS.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/15-TAURI-COMMAND-CONTRACT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/16-CANONICAL-DATA-AND-DIGESTS.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/17-FIXTURE-AND-BENCHMARK-STRATEGY.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/program/18-PROGRAMME-OPERATING-MODEL.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/RELEASE_QUALIFICATION.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/RESUME_PROGRAM.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/REVIEW_CURRENT_MILESTONE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/RUN_ENTIRE_PROGRAM.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/RUN_NEXT_MILESTONE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/SECURITY_GAUNTLET.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/prompts/UX_ACCESSIBILITY_REVIEW.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/ADR.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/COMPATIBILITY_FIXTURE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/MILESTONE_RESULT.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/OPERATION_TEST_MATRIX.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/SECURITY_REVIEW.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/TEST_EVIDENCE.template.json",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/templates/UX_ACCEPTANCE.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/README.md",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/__init__.py",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/capture_baseline.py",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/program_status.py",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/run_evidence.py",
+      "?? capsule-lifecycle-codex-kit/overlay/docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py",
+      "?? capsule-lifecycle-codex-kit/scripts/install.py",
+      "?? capsule-lifecycle-codex-kit/scripts/validate_package.py",
+      "?? docs/plans/capsule-lifecycle/PROGRAM_STATUS.json",
+      "?? docs/plans/capsule-lifecycle/README.md",
+      "?? docs/plans/capsule-lifecycle/contracts/README.md",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-application-profile-v0.3.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-data-contract-v0.3.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-instance-profile-v0.3.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-lifecycle-v0.3.conformance.draft.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-lineage-v0.3.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-migration-v0.3.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-signed-app-v0.3-draft.sql",
+      "?? docs/plans/capsule-lifecycle/contracts/capsule-v0.3-draft.sql",
+      "?? docs/plans/capsule-lifecycle/contracts/compare-report-v1.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/lifecycle-error-codes-v1.json",
+      "?? docs/plans/capsule-lifecycle/contracts/lifecycle-plan-v1.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/reconcile-plan-v1.schema.json",
+      "?? docs/plans/capsule-lifecycle/contracts/upgrade-plan-v1.schema.json",
+      "?? docs/plans/capsule-lifecycle/evidence/README.md",
+      "?? docs/plans/capsule-lifecycle/examples/README.md",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-application-profile.json",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-data-contract.json",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-instance-profile.json",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-lineage-example.json",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-migration-v1-to-v2.json",
+      "?? docs/plans/capsule-lifecycle/examples/diagram-studio-upgrade-plan-same-schema.json",
+      "?? docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M00-baseline-and-decisions/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M01-format-identity-profile-signature/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M02-data-contract-lineage-workspace-core/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M03-tauri-overview-cabinet/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M04-copy-fork-template/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M05-compare-engine-and-ui/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M06-reconcile-to-copy/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M07-application-upgrade-same-schema/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M08-declarative-migration-engine/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/EXECPLAN.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/PROMPT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/M09-ecosystem-hardening-release/RESULT.md",
+      "?? docs/plans/capsule-lifecycle/milestones/README.md",
+      "?? docs/plans/capsule-lifecycle/program/00-CHARTER.md",
+      "?? docs/plans/capsule-lifecycle/program/01-CURRENT-STATE-BASELINE.md",
+      "?? docs/plans/capsule-lifecycle/program/02-PRODUCT-REQUIREMENTS.md",
+      "?? docs/plans/capsule-lifecycle/program/03-TARGET-ARCHITECTURE.md",
+      "?? docs/plans/capsule-lifecycle/program/04-SECURITY-AND-TRUST.md",
+      "?? docs/plans/capsule-lifecycle/program/05-UX-SPECIFICATION.md",
+      "?? docs/plans/capsule-lifecycle/program/06-FORMAT-V0.3-PROPOSAL.md",
+      "?? docs/plans/capsule-lifecycle/program/07-COPY-FORK-LINEAGE.md",
+      "?? docs/plans/capsule-lifecycle/program/08-COMPARE-AND-RECONCILE.md",
+      "?? docs/plans/capsule-lifecycle/program/09-APPLICATION-UPGRADE-AND-MIGRATION.md",
+      "?? docs/plans/capsule-lifecycle/program/10-TEST-EVIDENCE-RELEASE.md",
+      "?? docs/plans/capsule-lifecycle/program/11-COMPATIBILITY-AND-ROLLOUT.md",
+      "?? docs/plans/capsule-lifecycle/program/12-DECISION-REGISTER.md",
+      "?? docs/plans/capsule-lifecycle/program/13-SOURCE-MAP.md",
+      "?? docs/plans/capsule-lifecycle/program/14-RUST-API-AND-ERRORS.md",
+      "?? docs/plans/capsule-lifecycle/program/15-TAURI-COMMAND-CONTRACT.md",
+      "?? docs/plans/capsule-lifecycle/program/16-CANONICAL-DATA-AND-DIGESTS.md",
+      "?? docs/plans/capsule-lifecycle/program/17-FIXTURE-AND-BENCHMARK-STRATEGY.md",
+      "?? docs/plans/capsule-lifecycle/program/18-PROGRAMME-OPERATING-MODEL.md",
+      "?? docs/plans/capsule-lifecycle/prompts/RELEASE_QUALIFICATION.md",
+      "?? docs/plans/capsule-lifecycle/prompts/RESUME_PROGRAM.md",
+      "?? docs/plans/capsule-lifecycle/prompts/REVIEW_CURRENT_MILESTONE.md",
+      "?? docs/plans/capsule-lifecycle/prompts/RUN_ENTIRE_PROGRAM.md",
+      "?? docs/plans/capsule-lifecycle/prompts/RUN_NEXT_MILESTONE.md",
+      "?? docs/plans/capsule-lifecycle/prompts/SECURITY_GAUNTLET.md",
+      "?? docs/plans/capsule-lifecycle/prompts/UX_ACCESSIBILITY_REVIEW.md",
+      "?? docs/plans/capsule-lifecycle/templates/ADR.md",
+      "?? docs/plans/capsule-lifecycle/templates/COMPATIBILITY_FIXTURE.md",
+      "?? docs/plans/capsule-lifecycle/templates/MILESTONE_RESULT.md",
+      "?? docs/plans/capsule-lifecycle/templates/OPERATION_TEST_MATRIX.md",
+      "?? docs/plans/capsule-lifecycle/templates/SECURITY_REVIEW.md",
+      "?? docs/plans/capsule-lifecycle/templates/TEST_EVIDENCE.template.json",
+      "?? docs/plans/capsule-lifecycle/templates/UX_ACCEPTANCE.md",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/README.md",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/__init__.py",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/capture_baseline.py",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/program_status.py",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/run_evidence.py",
+      "?? docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py"
+    ]
+  },
+  "required_paths": [
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "AGENTS.md",
+      "sha256": "1a5ba9b595c02aaa682520191d7aedd3c1fe43bd1a715410c0aebeda848705b0",
+      "size_bytes": 3538
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "CONTRIBUTING.md",
+      "sha256": "d8cd59332e7141e39b67609a06fb08222a5b7c3b372cb1f1059f3ea5beb7f6f8",
+      "size_bytes": 3938
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "README.md",
+      "sha256": "95b25e006c246b66202e47a9e700986dcd96400d38149450aaf2636c2f910729",
+      "size_bytes": 11536
+    },
+    {
+      "exists": true,
+      "file_count": 6,
+      "kind": "directory",
+      "path": "format"
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "tools/capsule.py",
+      "sha256": "f65f69ed3319392da535030fd7bd7c17ad35d0902a2a50399f853c875e7b966d",
+      "size_bytes": 2468
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "tools/capsule_author.py",
+      "sha256": "bfdffcd520bc5919a6b0c24da3b376a563fb195aaf3f198fcd54a3d9d2d750f5",
+      "size_bytes": 28646
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "tools/capsule_conformance.py",
+      "sha256": "0e1ca3debdb68405444a256226c42d72cb3dbcd72df7d087e5350ad50ed8d8f2",
+      "size_bytes": 10745
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "tools/capsule_signatures.py",
+      "sha256": "6355e9ab3d0c466c9003a57f39f74d07187e8785166189c166e7dfda52ce195d",
+      "size_bytes": 11106
+    },
+    {
+      "exists": true,
+      "kind": "file",
+      "path": "native/Cargo.toml",
+      "sha256": "c8d1ed095cc5572b4eebb764d2c99c338107f11916aa8daf111cdfac72f1a25b",
+      "size_bytes": 1594
+    },
+    {
+      "exists": true,
+      "file_count": 4,
+      "kind": "directory",
+      "path": "native/crates/capsule-core"
+    },
+    {
+      "exists": true,
+      "file_count": 2,
+      "kind": "directory",
+      "path": "native/crates/capsule-crypto"
+    },
+    {
+      "exists": true,
+      "file_count": 2,
+      "kind": "directory",
+      "path": "native/crates/capsule-lifecycle"
+    },
+    {
+      "exists": true,
+      "file_count": 5,
+      "kind": "directory",
+      "path": "native/crates/capsule-runtime"
+    },
+    {
+      "exists": true,
+      "file_count": 21,
+      "kind": "directory",
+      "path": "native/desktop/src-tauri"
+    },
+    {
+      "exists": true,
+      "file_count": 3,
+      "kind": "directory",
+      "path": "native/desktop/ui"
+    },
+    {
+      "exists": true,
+      "file_count": 40,
+      "kind": "directory",
+      "path": "plugins/capsule-creator"
+    },
+    {
+      "exists": true,
+      "file_count": 18,
+      "kind": "directory",
+      "path": "examples/diagram-studio"
+    },
+    {
+      "exists": true,
+      "file_count": 74,
+      "kind": "directory",
+      "path": "tests"
+    }
+  ],
+  "tools": {
+    "cargo": {
+      "available": true,
+      "path": "C:\\Users\\thoma\\.cargo\\bin\\cargo.EXE",
+      "result": {
+        "argv": [
+          "C:\\Users\\thoma\\.cargo\\bin\\cargo.EXE",
+          "--version",
+          "--verbose"
+        ],
+        "available": true,
+        "exit_code": 0,
+        "stderr": "warn: could not canonicalize path C:\\Users\\thoma",
+        "stdout": "cargo 1.97.1 (c980f4866 2026-06-30)\nrelease: 1.97.1\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-pc-windows-msvc\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:Schannel)\nos: Windows 10.0.26200 (Windows 11 Core) [64-bit]"
+      }
+    },
+    "git": {
+      "available": true,
+      "path": "C:\\Program Files\\Git\\cmd\\git.EXE",
+      "result": {
+        "argv": [
+          "C:\\Program Files\\Git\\cmd\\git.EXE",
+          "--version"
+        ],
+        "available": true,
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "git version 2.45.2.windows.1"
+      }
+    },
+    "node": {
+      "available": true,
+      "path": "C:\\Program Files\\nodejs\\node.EXE",
+      "result": {
+        "argv": [
+          "C:\\Program Files\\nodejs\\node.EXE",
+          "--version"
+        ],
+        "available": true,
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "v25.9.0"
+      }
+    },
+    "npm": {
+      "available": true,
+      "path": "C:\\Program Files\\nodejs\\npm.CMD",
+      "result": {
+        "argv": [
+          "C:\\Program Files\\nodejs\\npm.CMD",
+          "--version"
+        ],
+        "available": true,
+        "exit_code": 0,
+        "stderr": "",
+        "stdout": "11.12.1"
+      }
+    },
+    "python": {
+      "available": true,
+      "path": "C:\\Program Files\\Python313\\python.exe",
+      "version": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]"
+    },
+    "rustc": {
+      "available": true,
+      "path": "C:\\Users\\thoma\\.cargo\\bin\\rustc.EXE",
+      "result": {
+        "argv": [
+          "C:\\Users\\thoma\\.cargo\\bin\\rustc.EXE",
+          "--version",
+          "--verbose"
+        ],
+        "available": true,
+        "exit_code": 0,
+        "stderr": "warn: could not canonicalize path C:\\Users\\thoma",
+        "stdout": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-pc-windows-msvc\nrelease: 1.97.1\nLLVM version: 22.1.6"
+      }
+    },
+    "sqlite3_cli": {
+      "available": false,
+      "path": null,
+      "result": null
+    }
+  }
+}

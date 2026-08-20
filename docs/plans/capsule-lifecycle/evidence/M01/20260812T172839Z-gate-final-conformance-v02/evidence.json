@@ -1,0 +1,37 @@
+{
+  "command": [
+    "python",
+    "tools\\capsule.py",
+    "conformance",
+    "capsules\\diagram-studio.capsule.sqlite"
+  ],
+  "completed_at": "2026-08-12T17:28:39Z",
+  "cwd": ".",
+  "duration_ms": 136,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-conformance-v02",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:28:39Z",
+  "stderr": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172839Z-gate-final-conformance-v02/stderr.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 430,
+    "original_bytes": 430,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172839Z-gate-final-conformance-v02/stdout.txt",
+    "sha256_captured": "ce6b3cd2afa5ad99987c3f632803bd17d72ab918624cd5eff02147e2f772e2ff",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

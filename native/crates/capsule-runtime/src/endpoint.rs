@@ -3,6 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::{
+    ENDPOINT_TIMEOUT_SECONDS, MAX_ENDPOINT_STEPS, MAX_RESULT_BYTES, MAX_RESULT_ROWS, RuntimeError,
+};
 use rusqlite::{
     Connection, OptionalExtension,
     hooks::{AuthAction, AuthContext, Authorization},
@@ -10,12 +13,6 @@ use rusqlite::{
 };
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
-use sqlite_capsule_core::CapsuleIdentity;
-
-use crate::{
-    CheckResult, ENDPOINT_TIMEOUT_SECONDS, MAX_ENDPOINT_STEPS, MAX_RESULT_BYTES, MAX_RESULT_ROWS,
-    RuntimeError,
-};
 
 #[derive(Debug)]
 struct Endpoint {
@@ -49,187 +46,6 @@ struct ParameterRule {
 struct BoundValue {
     sql: SqlValue,
     log: Value,
-}
-
-pub(crate) fn verify_declarations(
-    connection: &Connection,
-    identity: &CapsuleIdentity,
-    errors: &mut Vec<String>,
-) -> Result<(), RuntimeError> {
-    let mut statement = connection.prepare(
-        "SELECT name, operation, sql_text, parameters_json, result_mode, enabled \
-         FROM capsule_endpoint ORDER BY name",
-    )?;
-    let rows = statement
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, String>(4)?,
-                row.get::<_, i64>(5)?,
-            ))
-        })?
-        .collect::<Result<Vec<_>, _>>()?;
-    drop(statement);
-    for (name, operation, sql_text, parameters_json, result_mode, enabled) in rows {
-        let parameters: BTreeMap<String, ParameterRule> =
-            match serde_json::from_str(&parameters_json) {
-                Ok(parameters) => parameters,
-                Err(error) => {
-                    errors.push(format!("endpoint {name} parameter schema: {error}"));
-                    continue;
-                }
-            };
-        if let Err(error) = validate_spec(&parameters) {
-            errors.push(format!("endpoint {name}: {error}"));
-            continue;
-        }
-        if !matches!(operation.as_str(), "read" | "write")
-            || !matches!(result_mode.as_str(), "rows" | "row" | "scalar" | "changes")
-            || !matches!(enabled, 0 | 1)
-        {
-            errors.push(format!(
-                "endpoint {name} has invalid operation/result/enabled fields"
-            ));
-            continue;
-        }
-        if enabled == 1 {
-            let capability = format!("database.{operation}");
-            if !identity
-                .permissions
-                .get(&capability)
-                .is_some_and(Value::is_object)
-            {
-                errors.push(format!("endpoint {name} is not declared by {capability}"));
-            }
-        }
-        let steps = load_steps(connection, identity.user_version, &name)?;
-        let statements: Vec<_> = if steps.is_empty() {
-            vec![sql_text.as_str()]
-        } else {
-            if identity.user_version != 2
-                || operation != "write"
-                || result_mode != "changes"
-                || !(2..=MAX_ENDPOINT_STEPS).contains(&steps.len())
-                || steps
-                    .iter()
-                    .enumerate()
-                    .any(|(index, step)| step.sequence != (index + 1) as i64)
-                || steps[0].sql_text != sql_text
-            {
-                errors.push(format!(
-                    "endpoint {name} has an invalid compound-step declaration"
-                ));
-                continue;
-            }
-            steps.iter().map(|step| step.sql_text.as_str()).collect()
-        };
-        let mut used = BTreeSet::new();
-        let mut unsupported = BTreeSet::new();
-        for sql in statements {
-            if !single_statement(sql) {
-                errors.push(format!("endpoint {name} is not one SQL statement per step"));
-                continue;
-            }
-            let kind = statement_kind(sql);
-            let kind_allowed = if operation == "read" {
-                matches!(kind, "SELECT" | "WITH")
-            } else {
-                matches!(kind, "INSERT" | "UPDATE" | "DELETE" | "REPLACE" | "WITH")
-            };
-            if !kind_allowed {
-                errors.push(format!("endpoint {name} starts with disallowed {kind}"));
-            }
-            let (names, markers) = sql_parameters(sql);
-            used.extend(names);
-            unsupported.extend(markers);
-            if let Err(error) =
-                compile_statement(connection, sql, &parameters, operation == "write")
-            {
-                errors.push(format!("endpoint {name} does not compile: {error}"));
-            }
-        }
-        if !unsupported.is_empty() {
-            errors.push(format!(
-                "endpoint {name} uses unsupported parameter markers"
-            ));
-        }
-        let declared: BTreeSet<_> = parameters.keys().cloned().collect();
-        if used != declared {
-            errors.push(format!(
-                "endpoint {name} parameters do not match SQL placeholders"
-            ));
-        }
-    }
-    Ok(())
-}
-
-pub(crate) fn run_declared_checks(
-    connection: &Connection,
-) -> Result<Vec<CheckResult>, RuntimeError> {
-    let query_only: bool = connection.pragma_query_value(None, "query_only", |row| row.get(0))?;
-    connection.pragma_update(None, "query_only", true)?;
-    let checks = connection
-        .prepare(
-            "SELECT id, severity, sql_text, result_mode, expected_json \
-             FROM capsule_check ORDER BY id",
-        )?
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, String>(4)?,
-            ))
-        })?
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut output = Vec::with_capacity(checks.len());
-    for (id, severity, sql, mode, expected_json) in checks {
-        let result = (|| -> Result<(bool, String), RuntimeError> {
-            if !single_statement(&sql) || !matches!(statement_kind(&sql), "SELECT" | "WITH") {
-                return Ok((false, "not one read-only statement".to_owned()));
-            }
-            let expected: Value = serde_json::from_str(&expected_json)?;
-            install_runtime_guards(connection, false)?;
-            let actual = run_query(connection, &sql, &BTreeMap::new(), &mode, false);
-            clear_runtime_guards(connection);
-            let actual = actual?;
-            let (actual, passed) = if mode == "empty" {
-                let passed = actual.as_array().is_some_and(Vec::is_empty);
-                (actual, passed)
-            } else {
-                let passed = actual == expected;
-                (actual, passed)
-            };
-            Ok((
-                passed,
-                if passed {
-                    "ok".to_owned()
-                } else {
-                    format!("expected {expected}, got {actual}")
-                },
-            ))
-        })();
-        match result {
-            Ok((passed, detail)) => output.push(CheckResult {
-                id,
-                severity,
-                passed,
-                detail,
-            }),
-            Err(error) => output.push(CheckResult {
-                id,
-                severity,
-                passed: false,
-                detail: error.to_string(),
-            }),
-        }
-    }
-    connection.pragma_update(None, "query_only", query_only)?;
-    Ok(output)
 }
 
 pub(crate) fn execute(
@@ -302,7 +118,7 @@ fn load_steps(
     user_version: i64,
     endpoint: &str,
 ) -> Result<Vec<EndpointStep>, RuntimeError> {
-    if user_version != 2 {
+    if !matches!(user_version, 2 | 3) {
         return Ok(Vec::new());
     }
     Ok(connection
@@ -404,71 +220,123 @@ fn execute_write(
     bound: &BTreeMap<String, BoundValue>,
 ) -> Result<Value, RuntimeError> {
     connection.execute_batch("BEGIN IMMEDIATE")?;
-    install_runtime_guards(connection, true)?;
-    let execution = (|| -> Result<(Value, Vec<i64>, i64), RuntimeError> {
-        let statements: Vec<_> = if steps.is_empty() {
-            vec![(endpoint.sql_text.as_str(), None)]
-        } else {
-            steps
-                .iter()
-                .map(|step| (step.sql_text.as_str(), step.required_changes))
-                .collect()
-        };
-        let mut step_changes = Vec::with_capacity(statements.len());
-        let mut lastrowid = 0_i64;
-        let mut result = Value::Null;
-        for (index, (sql, required_changes)) in statements.into_iter().enumerate() {
-            result = run_query(connection, sql, bound, &endpoint.result_mode, true)?;
-            let changes =
-                i64::try_from(connection.changes()).map_err(|_| RuntimeError::ResultPolicy)?;
-            if required_changes.is_some_and(|required| required != changes) {
-                return Err(RuntimeError::Endpoint(format!(
-                    "compound step {} changed {changes} rows; expected {}",
-                    index + 1,
-                    required_changes.unwrap()
-                )));
+    let transaction_result = (|| -> Result<Value, RuntimeError> {
+        let application_execution = (|| -> Result<(Value, Vec<i64>, i64), RuntimeError> {
+            install_runtime_guards(connection, true)?;
+            let statements: Vec<_> = if steps.is_empty() {
+                vec![(endpoint.sql_text.as_str(), None)]
+            } else {
+                steps
+                    .iter()
+                    .map(|step| (step.sql_text.as_str(), step.required_changes))
+                    .collect()
+            };
+            let mut step_changes = Vec::with_capacity(statements.len());
+            let mut lastrowid = 0_i64;
+            let mut result = Value::Null;
+            for (index, (sql, required_changes)) in statements.into_iter().enumerate() {
+                result = run_query(connection, sql, bound, &endpoint.result_mode, true)?;
+                let changes =
+                    i64::try_from(connection.changes()).map_err(|_| RuntimeError::ResultPolicy)?;
+                if let Some(required_changes) = required_changes
+                    && required_changes != changes
+                {
+                    return Err(RuntimeError::Endpoint(format!(
+                        "compound step {} changed {changes} rows; expected {required_changes}",
+                        index + 1
+                    )));
+                }
+                step_changes.push(changes);
+                lastrowid = connection.last_insert_rowid();
             }
-            step_changes.push(changes);
-            lastrowid = connection.last_insert_rowid();
+            Ok((result, step_changes, lastrowid))
+        })();
+        clear_runtime_guards(connection);
+        let (mut result, step_changes, lastrowid) = application_execution?;
+        let total_changes: i64 = step_changes.iter().sum();
+        let log_parameters: Map<_, _> = bound
+            .iter()
+            .map(|(name, value)| (name.clone(), value.log.clone()))
+            .collect();
+        let parameters_json = serde_json::to_string(&log_parameters)?;
+        connection.execute(
+            "INSERT INTO capsule_change_log \
+             (endpoint_name, parameters_json, changed_rows, occurred_at) \
+             VALUES (?1, ?2, ?3, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))",
+            rusqlite::params![endpoint.name, parameters_json, total_changes],
+        )?;
+        let user_version: i64 =
+            connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
+        if user_version == 3 {
+            let revision_id = uuid_v4()?;
+            let updated = connection.execute(
+                "UPDATE capsule_instance SET revision_id = ?1, \
+                 content_updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = 1",
+                [revision_id],
+            )?;
+            if updated != 1 {
+                return Err(RuntimeError::Endpoint(
+                    "v0.3 instance revision row is missing".to_owned(),
+                ));
+            }
         }
-        Ok((result, step_changes, lastrowid))
+        if endpoint.result_mode == "changes" {
+            result = if steps.is_empty() {
+                json!({"changes": total_changes, "lastrowid": lastrowid})
+            } else {
+                json!({
+                    "changes": total_changes,
+                    "step_changes": step_changes,
+                    "lastrowid": lastrowid
+                })
+            };
+        }
+        Ok(result)
     })();
-    clear_runtime_guards(connection);
-    let (mut result, step_changes, lastrowid) = match execution {
-        Ok(value) => value,
+    let result = match transaction_result {
+        Ok(result) => result,
         Err(error) => {
-            let _ = connection.execute_batch("ROLLBACK");
+            if connection.execute_batch("ROLLBACK").is_err() {
+                return Err(RuntimeError::SessionPoisoned);
+            }
             return Err(error);
         }
     };
-    let total_changes: i64 = step_changes.iter().sum();
-    let log_parameters: Map<_, _> = bound
-        .iter()
-        .map(|(name, value)| (name.clone(), value.log.clone()))
-        .collect();
-    let parameters_json = serde_json::to_string(&log_parameters)?;
-    if let Err(error) = connection.execute(
-        "INSERT INTO capsule_change_log \
-         (endpoint_name, parameters_json, changed_rows, occurred_at) \
-         VALUES (?1, ?2, ?3, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))",
-        rusqlite::params![endpoint.name, parameters_json, total_changes],
-    ) {
+    if connection.execute_batch("COMMIT").is_err() {
+        // A COMMIT error is conservatively treated as ambiguous even if a
+        // best-effort rollback succeeds. The caller must close this session
+        // instead of making further requests against uncertain state.
         let _ = connection.execute_batch("ROLLBACK");
-        return Err(RuntimeError::Sqlite(error));
-    }
-    connection.execute_batch("COMMIT")?;
-    if endpoint.result_mode == "changes" {
-        result = if steps.is_empty() {
-            json!({"changes": total_changes, "lastrowid": lastrowid})
-        } else {
-            json!({
-                "changes": total_changes,
-                "step_changes": step_changes,
-                "lastrowid": lastrowid
-            })
-        };
+        return Err(RuntimeError::SessionPoisoned);
     }
     Ok(result)
+}
+
+fn uuid_v4() -> Result<String, RuntimeError> {
+    let mut bytes = [0_u8; 16];
+    getrandom::fill(&mut bytes)
+        .map_err(|_| RuntimeError::Endpoint("secure UUID generation failed".to_owned()))?;
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Ok(format!(
+        "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        bytes[0],
+        bytes[1],
+        bytes[2],
+        bytes[3],
+        bytes[4],
+        bytes[5],
+        bytes[6],
+        bytes[7],
+        bytes[8],
+        bytes[9],
+        bytes[10],
+        bytes[11],
+        bytes[12],
+        bytes[13],
+        bytes[14],
+        bytes[15]
+    ))
 }
 
 fn run_query(
@@ -769,38 +637,6 @@ fn ensure_json_depth(value: &Value, depth: usize) -> Result<(), RuntimeError> {
     Ok(())
 }
 
-fn compile_statement(
-    connection: &Connection,
-    sql: &str,
-    spec: &BTreeMap<String, ParameterRule>,
-    write: bool,
-) -> Result<(), RuntimeError> {
-    let probe: BTreeMap<_, _> = spec
-        .iter()
-        .map(|(name, rule)| {
-            let value = match rule.kind.as_str() {
-                "string" => Value::String(String::new()),
-                "number" => Value::from(0.0),
-                "integer" => Value::from(0),
-                "boolean" => Value::Bool(false),
-                "json" => Value::Null,
-                _ => Value::Null,
-            };
-            Ok((name.clone(), coerce(name, &value, rule)?))
-        })
-        .collect::<Result<_, RuntimeError>>()?;
-    install_authorizer(connection, write)?;
-    let result = (|| -> Result<(), RuntimeError> {
-        let mut statement = connection.prepare(&format!("EXPLAIN {sql}"))?;
-        bind_statement(&mut statement, &probe)?;
-        let mut rows = statement.raw_query();
-        while rows.next()?.is_some() {}
-        Ok(())
-    })();
-    clear_authorizer(connection);
-    result
-}
-
 fn install_runtime_guards(connection: &Connection, write: bool) -> Result<(), RuntimeError> {
     let deadline = Instant::now() + Duration::from_secs(ENDPOINT_TIMEOUT_SECONDS);
     connection.progress_handler(1_000, Some(move || Instant::now() > deadline))?;
@@ -974,6 +810,161 @@ mod tests {
                 .query_row("SELECT count(*) FROM item", [], |row| row.get::<_, i64>(0))
                 .expect("count statement rows"),
             3
+        );
+    }
+
+    fn v03_endpoint_fixture() -> Connection {
+        let connection = Connection::open_in_memory().expect("open v0.3 fixture");
+        connection
+            .execute_batch(
+                "PRAGMA foreign_keys=ON;
+                 PRAGMA user_version=3;
+                 CREATE TABLE capsule_endpoint (
+                   name TEXT PRIMARY KEY, operation TEXT NOT NULL, sql_text TEXT NOT NULL,
+                   parameters_json TEXT NOT NULL, result_mode TEXT NOT NULL,
+                   description TEXT NOT NULL, enabled INTEGER NOT NULL
+                 );
+                 CREATE TABLE capsule_endpoint_step (
+                   endpoint_name TEXT NOT NULL, sequence INTEGER NOT NULL,
+                   sql_text TEXT NOT NULL, required_changes INTEGER,
+                   PRIMARY KEY(endpoint_name, sequence)
+                 );
+                 CREATE TABLE capsule_change_log (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT, endpoint_name TEXT NOT NULL,
+                   parameters_json TEXT NOT NULL, changed_rows INTEGER NOT NULL,
+                   occurred_at TEXT NOT NULL
+                 );
+                 CREATE TABLE capsule_instance (
+                   id INTEGER PRIMARY KEY, revision_id TEXT NOT NULL,
+                   content_updated_at TEXT NOT NULL
+                 );
+                 CREATE TABLE domain_item (id TEXT PRIMARY KEY, value TEXT NOT NULL);
+                 CREATE TABLE domain_parent (id TEXT PRIMARY KEY);
+                 CREATE TABLE domain_commit_fail (
+                   id TEXT PRIMARY KEY,
+                   parent_id TEXT NOT NULL REFERENCES domain_parent(id)
+                     DEFERRABLE INITIALLY DEFERRED
+                 );
+                 INSERT INTO capsule_instance VALUES (
+                   1, '22222222-2222-4222-8222-222222222222', '2026-08-08T00:00:00Z'
+                 );
+                 INSERT INTO domain_item VALUES ('one', 'before');
+                 INSERT INTO capsule_endpoint VALUES (
+                   'write.ok', 'write',
+                   'UPDATE domain_item SET value = :value WHERE id = ''one''',
+                   '{\"value\":{\"type\":\"string\",\"required\":true}}',
+                   'changes', 'write', 1
+                 );
+                 INSERT INTO capsule_endpoint VALUES (
+                   'write.fail', 'write',
+                   'UPDATE domain_item SET value = :value WHERE id = ''one''',
+                   '{\"value\":{\"type\":\"string\",\"required\":true}}',
+                   'changes', 'write', 1
+                 );
+                 INSERT INTO capsule_endpoint VALUES (
+                   'write.commit-fail', 'write',
+                   'INSERT INTO domain_commit_fail (id, parent_id) \
+                    VALUES (''child'', ''missing-parent'')',
+                   '{}', 'changes', 'commit failure', 1
+                 );
+                 INSERT INTO capsule_endpoint_step VALUES
+                   ('write.fail', 1, 'UPDATE domain_item SET value = :value WHERE id = ''one''', 2),
+                   ('write.fail', 2, 'UPDATE domain_item SET value = value WHERE id = ''one''', 1);",
+            )
+            .expect("v0.3 endpoint fixture");
+        connection
+    }
+
+    #[test]
+    fn v03_write_advances_revision_and_failure_rolls_back_both() {
+        let mut connection = v03_endpoint_fixture();
+        let arguments = serde_json::from_value::<Map<String, Value>>(json!({"value":"after"}))
+            .expect("arguments");
+        execute(&mut connection, true, "write.ok", &arguments).expect("successful write");
+        let revision: String = connection
+            .query_row(
+                "SELECT revision_id FROM capsule_instance WHERE id=1",
+                [],
+                |row| row.get(0),
+            )
+            .expect("revision");
+        assert_ne!(revision, "22222222-2222-4222-8222-222222222222");
+        assert_eq!(revision.as_bytes()[14], b'4');
+        assert!(matches!(revision.as_bytes()[19], b'8' | b'9' | b'a' | b'b'));
+
+        let before_failure = revision;
+        assert!(execute(&mut connection, true, "write.fail", &arguments).is_err());
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT revision_id FROM capsule_instance WHERE id=1",
+                    [],
+                    |row| row.get::<_, String>(0)
+                )
+                .expect("revision after failure"),
+            before_failure
+        );
+        assert_eq!(
+            connection
+                .query_row("SELECT value FROM domain_item WHERE id='one'", [], |row| {
+                    row.get::<_, String>(0)
+                })
+                .expect("domain after failure"),
+            "after"
+        );
+        assert_eq!(
+            connection
+                .query_row("SELECT count(*) FROM capsule_change_log", [], |row| row
+                    .get::<_, i64>(0))
+                .expect("change log"),
+            1
+        );
+    }
+
+    #[test]
+    fn commit_failure_explicitly_rolls_back_domain_revision_and_change_log() {
+        let mut connection = v03_endpoint_fixture();
+        let revision_before: String = connection
+            .query_row(
+                "SELECT revision_id FROM capsule_instance WHERE id=1",
+                [],
+                |row| row.get(0),
+            )
+            .expect("revision before commit failure");
+
+        let error = execute(&mut connection, true, "write.commit-fail", &Map::new())
+            .expect_err("deferred foreign key must fail commit");
+        assert!(matches!(error, RuntimeError::SessionPoisoned));
+        assert!(error.session_must_close());
+        assert!(
+            connection.is_autocommit(),
+            "failed COMMIT left a transaction open"
+        );
+        assert_eq!(
+            connection
+                .query_row("SELECT count(*) FROM domain_commit_fail", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("domain rows after commit failure"),
+            0
+        );
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT revision_id FROM capsule_instance WHERE id=1",
+                    [],
+                    |row| row.get::<_, String>(0)
+                )
+                .expect("revision after commit failure"),
+            revision_before
+        );
+        assert_eq!(
+            connection
+                .query_row("SELECT count(*) FROM capsule_change_log", [], |row| {
+                    row.get::<_, i64>(0)
+                })
+                .expect("change log after commit failure"),
+            0
         );
     }
 }

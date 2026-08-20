@@ -32,14 +32,45 @@ SQLite WASM travel with it. It is for new application-specific source trees;
 it does not add product logic to the generic host, require this repository, or
 depend on the native Tauri client.
 
+The no-flag path continues to author format v0.2. Choose v0.3 explicitly when
+the application needs separate immutable application and mutable instance
+metadata plus an exhaustive dataset lifecycle contract. V0.3 projects include
+`source/data-contract.json`; every ordinary domain table must be classified in
+exactly one dataset.
+
 ```bash
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-app --title "My App" --app-id org.example.my-app
+python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py init my-v03-app --title "My v0.3 App" --app-id org.example.my-v03-app --format-version 0.3
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py build my-app my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host instructions my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py host verify my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py conformance my-app.capsule.sqlite
 python plugins/capsule-creator/skills/create-capsule/scripts/capsule_project.py check my-app my-app.capsule.sqlite
 ```
+
+For an intentionally clean v0.3 seed release, add `--template`. The builder
+derives an exhaustive template-state proof from the generated dataset rows;
+authors classify each dataset as `seed` or `empty` but never provide proof
+hashes. The proof becomes usable only after signing and host-side reproduction
+against the exact verified snapshot. Ordinary signed releases are not inferred
+to be templates.
+
+For reconciliation, author each dataset's signed policy deliberately:
+
+- `ignore` excludes the dataset from reconciliation;
+- `forbid` blocks every reconciliation transform;
+- `manual` permits only explicit two-way row/field selections;
+- `three-way` permits clean-change classification only with a separately
+  verified exact ancestor and therefore requires `compare_policy` `row` or
+  `field`.
+
+Every reconciled table needs an ordered explicit primary key. Put timestamps or
+other intentionally non-semantic noise in `ignored_columns_json`; these columns
+cannot be selected or compared. Put identity and ownership fields in
+`immutable_columns_json`; three-way divergence there can only keep the target.
+Dependencies must reflect every cross-dataset reference. The creator plugin
+authors and verifies this signed authority but never reconciles files itself;
+the native host always creates a new target-derived copy.
 
 The generated source separates stable identity, domain SQL, seed rows, offline
 browser assets, named endpoints, application checks, prompts, documents, and
@@ -112,7 +143,8 @@ Raw key files are a development adapter, not the production key-management
 recommendation. Release publishers should use a reviewed hardware/KMS or
 protected CI signer. The only repository seed is public, deterministic, clearly
 labelled test material under `compatibility/signed-app-v0.2/`; it confers no
-identity or trust.
+identity or trust. The v0.3 interoperability vector lives separately under
+`compatibility/signed-app-v0.3/` and uses a distinct signing profile/context.
 
 The trusted desktop shell also exposes **Publisher signing** for a local,
 use-once key workflow. Its native pickers accept the existing 32-byte seed and
@@ -130,6 +162,11 @@ are deliberately not part of this use-once adapter.
 The CLI and desktop both call `sqlite-capsule-signing`; neither reimplements the
 signed-extension SQL or copy/publish sequence. The Python environment-variable
 wrapper remains the non-interactive CI path.
+
+Signing dispatches only after the complete v0.2 or v0.3 format tuple is known.
+Preparation holds one verified read-only connection across exhaustive
+conformance and declared checks, binds an exact private snapshot to the reviewed
+source digest, and re-verifies that snapshot before adding extension rows.
 
 ### Automated release signing
 

@@ -1,0 +1,8 @@
+{
+  "profile": "org.sqlite-capsule.copy-progress/1",
+  "operation_id": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "sequence": 4,
+  "mode": "compact-duplicate",
+  "phase": "validate",
+  "cancellable": true
+}

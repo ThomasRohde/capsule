@@ -1,0 +1,38 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "safe.directory=C:/Users/thoma/Projects/sqlite-capsule",
+    "diff",
+    "--check"
+  ],
+  "completed_at": "2026-08-12T17:28:39Z",
+  "cwd": ".",
+  "duration_ms": 163,
+  "exit_code": 0,
+  "milestone": "M01",
+  "name": "gate-final-git-diff-check",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T17:28:39Z",
+  "stderr": {
+    "captured_bytes": 142,
+    "original_bytes": 142,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172839Z-gate-final-git-diff-check/stderr.txt",
+    "sha256_captured": "8acc285f57602258eabd06af2b408f28dd0f29ca62169087c6d3d0358f6554c5",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 0,
+    "original_bytes": 0,
+    "path": "docs/plans/capsule-lifecycle/evidence/M01/20260812T172839Z-gate-final-git-diff-check/stdout.txt",
+    "sha256_captured": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 300
+}

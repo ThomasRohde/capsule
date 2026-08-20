@@ -1,0 +1,203 @@
+{
+  "profile": "org.sqlite-capsule.data-contract/0.3",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "data_schema": {
+    "id": "org.sqlite-capsule.diagram-studio-data",
+    "version": 1,
+    "description": "Diagram documents, visual elements, connectors, scenes, preferences and rebuildable layout cache."
+  },
+  "datasets": [
+    {
+      "id": "diagram-content",
+      "role": "user-content",
+      "description": "User-created diagrams and ordered presentation scenes.",
+      "sensitivity": "normal",
+      "required": true,
+      "fork": "copy",
+      "compare": "field",
+      "reconcile": "three-way",
+      "upgrade": "migrate",
+      "depends_on": [],
+      "tables": [
+        {
+          "name": "diagram",
+          "sequence": 0,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [
+            "updated_at"
+          ],
+          "immutable_columns": [
+            "id"
+          ],
+          "row_limit_hint": 10000,
+          "contains_blobs": false
+        },
+        {
+          "name": "diagram_node",
+          "sequence": 1,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [
+            "updated_at"
+          ],
+          "immutable_columns": [
+            "id",
+            "diagram_id"
+          ],
+          "row_limit_hint": 1000000,
+          "contains_blobs": false
+        },
+        {
+          "name": "diagram_edge",
+          "sequence": 2,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [
+            "updated_at"
+          ],
+          "immutable_columns": [
+            "id",
+            "diagram_id"
+          ],
+          "row_limit_hint": 1000000,
+          "contains_blobs": false
+        },
+        {
+          "name": "diagram_scene",
+          "sequence": 3,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [
+            "updated_at"
+          ],
+          "immutable_columns": [
+            "id",
+            "diagram_id"
+          ],
+          "row_limit_hint": 100000,
+          "contains_blobs": false
+        }
+      ]
+    },
+    {
+      "id": "application-presets",
+      "role": "seed",
+      "description": "Publisher-supplied shape, connector and layout presets.",
+      "sensitivity": "normal",
+      "required": true,
+      "fork": "reset",
+      "compare": "summary",
+      "reconcile": "ignore",
+      "upgrade": "target",
+      "depends_on": [],
+      "tables": [
+        {
+          "name": "shape_preset",
+          "sequence": 0,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [],
+          "immutable_columns": [
+            "id"
+          ],
+          "row_limit_hint": 10000,
+          "contains_blobs": false
+        }
+      ]
+    },
+    {
+      "id": "user-settings",
+      "role": "settings",
+      "description": "Per-capsule editor preferences that may be copied after user review.",
+      "sensitivity": "normal",
+      "required": false,
+      "fork": "prompt",
+      "compare": "field",
+      "reconcile": "manual",
+      "upgrade": "copy",
+      "depends_on": [],
+      "tables": [
+        {
+          "name": "diagram_preference",
+          "sequence": 0,
+          "primary_key": [
+            "key"
+          ],
+          "ignored_columns": [],
+          "immutable_columns": [
+            "key"
+          ],
+          "row_limit_hint": 10000,
+          "contains_blobs": false
+        }
+      ]
+    },
+    {
+      "id": "layout-cache",
+      "role": "derived",
+      "description": "Rebuildable layout results and viewport thumbnails.",
+      "sensitivity": "normal",
+      "required": false,
+      "fork": "omit",
+      "compare": "ignore",
+      "reconcile": "ignore",
+      "upgrade": "rebuild",
+      "depends_on": [
+        "diagram-content"
+      ],
+      "tables": [
+        {
+          "name": "diagram_layout_cache",
+          "sequence": 0,
+          "primary_key": [
+            "diagram_id",
+            "layout_profile"
+          ],
+          "ignored_columns": [],
+          "immutable_columns": [
+            "diagram_id",
+            "layout_profile"
+          ],
+          "row_limit_hint": 100000,
+          "contains_blobs": true
+        }
+      ]
+    },
+    {
+      "id": "edit-history",
+      "role": "history",
+      "description": "Optional append-only diagram edit history.",
+      "sensitivity": "sensitive",
+      "required": false,
+      "fork": "prompt",
+      "compare": "summary",
+      "reconcile": "manual",
+      "upgrade": "copy",
+      "depends_on": [
+        "diagram-content"
+      ],
+      "tables": [
+        {
+          "name": "diagram_edit_history",
+          "sequence": 0,
+          "primary_key": [
+            "id"
+          ],
+          "ignored_columns": [],
+          "immutable_columns": [
+            "id",
+            "occurred_at"
+          ],
+          "row_limit_hint": 10000000,
+          "contains_blobs": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+        Info `tauri-build` dependency has workspace inheritance enabled. The features array won't be automatically rewritten. Expected features: []
+        Info `tauri` dependency has workspace inheritance enabled. The features array won't be automatically rewritten. Expected features: []
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling sqlite-capsule-desktop v0.3.0 (C:\Users\thoma\Projects\sqlite-capsule\native\desktop\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 19.77s
+       Built application at: C:\Users\thoma\Projects\sqlite-capsule\native\target\x86_64-pc-windows-msvc\debug\sqlite-capsule-desktop.exe
+        Info Patching C:\Users\thoma\Projects\sqlite-capsule\native\target\x86_64-pc-windows-msvc\debug\sqlite-capsule-desktop.exe with bundle type information: nsis
+        Info Target: x64
+     Running makensis to produce C:\Users\thoma\Projects\sqlite-capsule\native\target\x86_64-pc-windows-msvc\debug\bundle\nsis\SQLite Capsule Host_0.3.0_x64-setup.exe
+    Finished 1 bundle at:
+        C:\Users\thoma\Projects\sqlite-capsule\native\target\x86_64-pc-windows-msvc\debug\bundle\nsis\SQLite Capsule Host_0.3.0_x64-setup.exe
+

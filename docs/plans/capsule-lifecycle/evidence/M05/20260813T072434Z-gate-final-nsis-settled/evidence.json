@@ -1,0 +1,37 @@
+{
+  "command": [
+    "python",
+    "native\\tools\\build_installers.py",
+    "--bundles",
+    "nsis"
+  ],
+  "completed_at": "2026-08-13T07:25:21Z",
+  "cwd": ".",
+  "duration_ms": 47282,
+  "exit_code": 0,
+  "milestone": "M05",
+  "name": "gate-final-nsis-settled",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-13T07:24:34Z",
+  "stderr": {
+    "captured_bytes": 1218,
+    "original_bytes": 1218,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072434Z-gate-final-nsis-settled/stderr.txt",
+    "sha256_captured": "517e117eb05d93a8417e86a546884aa47aac0943ae4a502fee8b40d9ba86958f",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 767,
+    "original_bytes": 767,
+    "path": "docs/plans/capsule-lifecycle/evidence/M05/20260813T072434Z-gate-final-nsis-settled/stdout.txt",
+    "sha256_captured": "3309f10cfeae42e3da5bf51885e273f76d20a267b4c98e64e6b3038093ca906c",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 1800
+}

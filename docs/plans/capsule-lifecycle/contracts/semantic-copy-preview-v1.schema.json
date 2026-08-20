@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sqlite-capsule.org/schema/semantic-copy-preview-v1.schema.json",
+  "title": "Semantic copy review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "mode", "source_format_version", "signature_count", "publisher_trust", "output_capsule_id", "output_revision_id", "capsule_identity", "revision_identity", "application_identity", "application_digest", "datasets", "grants", "change_log", "prior_lineage", "lineage_events", "instance_text", "instance_assets", "destination", "overwrite_allowed"],
+  "properties": {
+    "profile": { "const": "org.sqlite-capsule.semantic-copy-preview/1" },
+    "mode": { "enum": ["fork", "create-from-template", "selective-fork"] },
+    "source_format_version": { "const": "0.3" },
+    "signature_count": { "type": "integer", "minimum": 1, "maximum": 32 },
+    "publisher_trust": { "const": "separate-host-policy" },
+    "output_capsule_id": { "$ref": "#/$defs/uuid" },
+    "output_revision_id": { "$ref": "#/$defs/uuid" },
+    "capsule_identity": { "const": "new-uuid-v4" },
+    "revision_identity": { "const": "new-uuid-v4" },
+    "application_identity": { "const": "preserved" },
+    "application_digest": { "$ref": "#/$defs/sha256" },
+    "datasets": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/dataset" } },
+    "grants": { "const": "cleared" },
+    "change_log": { "const": "cleared" },
+    "prior_lineage": { "const": "cleared" },
+    "lineage_events": { "const": 1 },
+    "instance_text": { "enum": ["preserved-nonauthoritative", "signed-app-defaults"] },
+    "instance_assets": { "const": "cleared" },
+    "destination": { "const": "create-new-no-replace" },
+    "overwrite_allowed": { "const": false }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "action", "sensitivity", "sensitive_confirmed", "source_row_count", "source_state_profile", "source_state_sha256"],
+      "properties": {
+        "dataset_id": { "type": "string", "minLength": 1, "maxLength": 256, "x-maxUtf8Bytes": 256 },
+        "action": { "enum": ["copy", "omit", "reset"] },
+        "sensitivity": { "enum": ["normal", "sensitive"] },
+        "sensitive_confirmed": { "type": "boolean" },
+        "source_row_count": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "source_state_profile": { "const": "org.sqlite-capsule.dataset-state/1" },
+        "source_state_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

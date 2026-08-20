@@ -6,7 +6,7 @@ all resolved target branches; workspace crates are MIT and are not repeated.
 A package without a Cargo license expression or declared license file makes
 generation fail.
 
-Resolved third-party package records: **580**.
+Resolved third-party package records: **584**.
 
 License expressions/files present:
 
@@ -88,6 +88,7 @@ License expressions/files present:
 | `bumpalo` | `3.20.3` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `bytemuck` | `1.25.2` | `Zlib OR Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `byteorder` | `1.5.0` | `Unlicense OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `byteorder-lite` | `0.1.0` | `Unlicense OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `bytes` | `1.12.1` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `cairo-rs` | `0.18.5` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `cairo-sys-rs` | `0.18.2` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
@@ -246,6 +247,8 @@ License expressions/files present:
 | `ident_case` | `1.0.1` | `MIT/Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `idna` | `1.1.0` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `idna_adapter` | `1.2.2` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `image` | `0.25.5` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `image-webp` | `0.2.0` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `indexmap` | `1.9.3` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `indexmap` | `2.14.0` | `Apache-2.0 OR MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `infer` | `0.19.0` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
@@ -352,6 +355,7 @@ License expressions/files present:
 | `proc-macro-error` | `1.0.4` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `proc-macro-error-attr` | `1.0.4` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `proc-macro2` | `1.0.107` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
+| `quick-error` | `2.0.1` | `MIT/Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `quick-xml` | `0.41.0` | `MIT` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `quote` | `1.0.47` | `MIT OR Apache-2.0` | `registry+https://github.com/rust-lang/crates.io-index` |
 | `r-efi` | `5.3.0` | `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | `registry+https://github.com/rust-lang/crates.io-index` |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small, dependency-free host for SQLite Capsule v0.2 files.
+"""Small, dependency-free host for SQLite Capsule v0.2 and v0.3 files.
 
 This file is intentionally self-contained so a copy can be embedded in a capsule
 and extracted by a coding agent when no installed host is available.
@@ -26,6 +26,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 import webbrowser
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -40,7 +41,18 @@ FORMAT_VERSION = "0.2"
 RUNTIME_PROTOCOL = "capsule-http/0.2"
 USER_VERSION = 2
 SUPPORTED_FORMAT_PROFILES = {
-    USER_VERSION: {"format_version": FORMAT_VERSION, "runtime_protocol": RUNTIME_PROTOCOL}
+    2: {
+        "format_id": FORMAT_ID,
+        "format_version": "0.2",
+        "runtime_protocol": RUNTIME_PROTOCOL,
+        "minimum_host_profile": None,
+    },
+    3: {
+        "format_id": FORMAT_ID,
+        "format_version": "0.3",
+        "runtime_protocol": RUNTIME_PROTOCOL,
+        "minimum_host_profile": "org.sqlite-capsule.host-profile/0.3",
+    },
 }
 SUPPORTED_RUNTIME_PROTOCOLS = {RUNTIME_PROTOCOL}
 MAX_REQUEST_BYTES = 1_048_576
@@ -146,8 +158,19 @@ REQUIRED_TABLE_COLUMNS = {
         "occurred_at",
     },
 }
-OPTIONAL_TABLE_COLUMNS: dict[str, dict[str, str]] = {}
-OPTIONAL_PRIMARY_KEYS: dict[str, tuple[str, ...]] = {}
+OPTIONAL_TABLE_COLUMNS: dict[str, dict[str, str]] = {
+    "capsule_publisher": {
+        "id": "INTEGER", "profile": "TEXT", "publisher_id": "TEXT", "publisher_name": "TEXT",
+    },
+    "capsule_signature": {
+        "key_id": "TEXT", "algorithm": "TEXT", "public_key": "BLOB",
+        "application_digest": "BLOB", "signature": "BLOB", "signed_at": "TEXT",
+    },
+}
+OPTIONAL_PRIMARY_KEYS: dict[str, tuple[str, ...]] = {
+    "capsule_publisher": ("id",),
+    "capsule_signature": ("key_id",),
+}
 START_HERE_COLUMNS = (
     "sequence",
     "audience",
@@ -240,7 +263,229 @@ NULLABLE_COLUMNS = {
     ("capsule_endpoint_step", "required_changes"),
     ("capsule_grant", "granted_at"),
 }
+
+
+@dataclass(frozen=True)
+class FormatContract:
+    format_version: str
+    runtime_protocol: str
+    required_table_columns: Mapping[str, set[str]]
+    required_column_types: Mapping[str, Mapping[str, str]]
+    required_primary_keys: Mapping[str, tuple[str, ...]]
+    required_foreign_keys: Mapping[str, set[tuple[str, str, str]]]
+    nullable_columns: set[tuple[str, str]]
+    required_content_tables: Mapping[str, str]
+
+
+V03_REQUIRED_TABLE_COLUMNS = {
+    "capsule_manifest": {
+        "id", "format_id", "format_version", "app_id", "app_version",
+        "entry_asset", "runtime_protocol", "permissions_json", "data_schema_id",
+        "data_schema_version", "minimum_host_profile", "released_at",
+    },
+    "capsule_application": {
+        "id", "name", "description", "category", "icon_asset", "release_notes_doc",
+    },
+    "capsule_instance_asset": {
+        "id", "media_type", "content", "sha256", "width", "height", "description",
+    },
+    "capsule_instance": {
+        "id", "capsule_id", "revision_id", "title", "description", "document_kind",
+        "tags_json", "icon_asset_id", "cover_asset_id", "created_at",
+        "content_updated_at",
+    },
+    "capsule_grant": {"capability", "decision", "reason", "granted_at"},
+    "capsule_asset": REQUIRED_TABLE_COLUMNS["capsule_asset"],
+    "capsule_command": REQUIRED_TABLE_COLUMNS["capsule_command"],
+    "capsule_runbook": REQUIRED_TABLE_COLUMNS["capsule_runbook"],
+    "capsule_doc": REQUIRED_TABLE_COLUMNS["capsule_doc"],
+    "capsule_endpoint": REQUIRED_TABLE_COLUMNS["capsule_endpoint"],
+    "capsule_endpoint_step": REQUIRED_TABLE_COLUMNS["capsule_endpoint_step"],
+    "capsule_check": REQUIRED_TABLE_COLUMNS["capsule_check"],
+    "capsule_prompt": REQUIRED_TABLE_COLUMNS["capsule_prompt"],
+    "capsule_dataset": {
+        "id", "role", "description", "fork_policy", "compare_policy",
+        "reconcile_policy", "upgrade_policy", "sensitivity", "required",
+    },
+    "capsule_dataset_table": {
+        "dataset_id", "table_name", "sequence", "primary_key_json",
+        "ignored_columns_json", "immutable_columns_json",
+    },
+    "capsule_dataset_dependency": {"dataset_id", "depends_on_dataset_id", "reason"},
+    "capsule_migration": {
+        "id", "data_schema_id", "from_version", "to_version", "description",
+        "operation_profile", "reversible",
+    },
+    "capsule_migration_step": {"migration_id", "sequence", "operation", "definition_json"},
+    "capsule_migration_check": {
+        "migration_id", "sequence", "stage", "severity", "description", "definition_json",
+    },
+    "capsule_lineage_event": {
+        "event_id", "sequence", "operation", "result_capsule_id", "result_revision_id",
+        "occurred_at", "application_digest", "data_schema_id", "data_schema_version",
+        "plan_digest", "details_json",
+    },
+    "capsule_lineage_parent": {
+        "event_id", "ordinal", "relation", "parent_capsule_id", "parent_revision_id",
+        "parent_file_sha256",
+    },
+    "capsule_change_log": REQUIRED_TABLE_COLUMNS["capsule_change_log"],
+}
+
+
+def _declared_types(
+    columns: set[str],
+    *,
+    integers: Iterable[str] = (),
+    blobs: Iterable[str] = (),
+) -> dict[str, str]:
+    result = dict.fromkeys(columns, "TEXT")
+    result.update(dict.fromkeys(integers, "INTEGER"))
+    result.update(dict.fromkeys(blobs, "BLOB"))
+    return result
+
+
+V03_REQUIRED_COLUMN_TYPES = {
+    "capsule_manifest": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_manifest"],
+        integers=("id", "data_schema_version"),
+    ),
+    "capsule_application": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_application"], integers=("id",)
+    ),
+    "capsule_instance_asset": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_instance_asset"],
+        integers=("width", "height"), blobs=("content",),
+    ),
+    "capsule_instance": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_instance"], integers=("id",)
+    ),
+    "capsule_dataset": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_dataset"], integers=("required",)
+    ),
+    "capsule_dataset_table": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_dataset_table"], integers=("sequence",)
+    ),
+    "capsule_dataset_dependency": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_dataset_dependency"]
+    ),
+    "capsule_migration": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_migration"],
+        integers=("from_version", "to_version", "reversible"),
+    ),
+    "capsule_migration_step": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_migration_step"], integers=("sequence",)
+    ),
+    "capsule_migration_check": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_migration_check"], integers=("sequence",)
+    ),
+    "capsule_lineage_event": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_lineage_event"],
+        integers=("sequence", "data_schema_version"),
+    ),
+    "capsule_lineage_parent": _declared_types(
+        V03_REQUIRED_TABLE_COLUMNS["capsule_lineage_parent"], integers=("ordinal",)
+    ),
+    **{
+        table: REQUIRED_COLUMN_TYPES[table]
+        for table in (
+            "capsule_grant", "capsule_asset", "capsule_command", "capsule_runbook",
+            "capsule_doc", "capsule_endpoint", "capsule_endpoint_step", "capsule_check",
+            "capsule_prompt", "capsule_change_log",
+        )
+    },
+}
+
+V03_REQUIRED_PRIMARY_KEYS = {
+    "capsule_manifest": ("id",),
+    "capsule_application": ("id",),
+    "capsule_instance_asset": ("id",),
+    "capsule_instance": ("id",),
+    "capsule_grant": ("capability",),
+    "capsule_asset": ("path",),
+    "capsule_command": ("id",),
+    "capsule_runbook": ("id",),
+    "capsule_doc": ("slug",),
+    "capsule_endpoint": ("name",),
+    "capsule_endpoint_step": ("endpoint_name", "sequence"),
+    "capsule_check": ("id",),
+    "capsule_prompt": ("id",),
+    "capsule_dataset": ("id",),
+    "capsule_dataset_table": ("dataset_id", "table_name"),
+    "capsule_dataset_dependency": ("dataset_id", "depends_on_dataset_id"),
+    "capsule_migration": ("id",),
+    "capsule_migration_step": ("migration_id", "sequence"),
+    "capsule_migration_check": ("migration_id", "sequence"),
+    "capsule_lineage_event": ("event_id",),
+    "capsule_lineage_parent": ("event_id", "ordinal"),
+    "capsule_change_log": ("id",),
+}
+
+V03_REQUIRED_FOREIGN_KEYS = {
+    "capsule_application": {
+        ("icon_asset", "capsule_asset", "path"),
+        ("release_notes_doc", "capsule_doc", "slug"),
+    },
+    "capsule_instance": {
+        ("icon_asset_id", "capsule_instance_asset", "id"),
+        ("cover_asset_id", "capsule_instance_asset", "id"),
+    },
+    "capsule_runbook": {("command_id", "capsule_command", "id")},
+    "capsule_endpoint_step": {("endpoint_name", "capsule_endpoint", "name")},
+    "capsule_dataset_table": {("dataset_id", "capsule_dataset", "id")},
+    "capsule_dataset_dependency": {
+        ("dataset_id", "capsule_dataset", "id"),
+        ("depends_on_dataset_id", "capsule_dataset", "id"),
+    },
+    "capsule_migration_step": {("migration_id", "capsule_migration", "id")},
+    "capsule_migration_check": {("migration_id", "capsule_migration", "id")},
+    "capsule_lineage_parent": {("event_id", "capsule_lineage_event", "event_id")},
+}
+
+V03_NULLABLE_COLUMNS = {
+    ("capsule_application", "icon_asset"),
+    ("capsule_application", "release_notes_doc"),
+    ("capsule_instance", "icon_asset_id"),
+    ("capsule_instance", "cover_asset_id"),
+    ("capsule_asset", "description"),
+    ("capsule_command", "argv_json"),
+    ("capsule_runbook", "command_id"),
+    ("capsule_endpoint_step", "required_changes"),
+    ("capsule_grant", "granted_at"),
+    ("capsule_lineage_parent", "parent_capsule_id"),
+    ("capsule_lineage_parent", "parent_revision_id"),
+}
+
+FORMAT_CONTRACTS = {
+    2: FormatContract(
+        "0.2", RUNTIME_PROTOCOL, REQUIRED_TABLE_COLUMNS, REQUIRED_COLUMN_TYPES,
+        REQUIRED_PRIMARY_KEYS, REQUIRED_FOREIGN_KEYS, NULLABLE_COLUMNS,
+        REQUIRED_CONTENT_TABLES,
+    ),
+    3: FormatContract(
+        "0.3", RUNTIME_PROTOCOL, V03_REQUIRED_TABLE_COLUMNS,
+        V03_REQUIRED_COLUMN_TYPES, V03_REQUIRED_PRIMARY_KEYS,
+        V03_REQUIRED_FOREIGN_KEYS, V03_NULLABLE_COLUMNS,
+        {
+            "capsule_application": "application metadata",
+            "capsule_instance": "instance metadata",
+            "capsule_asset": "application assets",
+            "capsule_command": "launch commands",
+            "capsule_runbook": "agent runbook steps",
+            "capsule_doc": "embedded documentation",
+            "capsule_endpoint": "named data-access endpoints",
+            "capsule_check": "application validation checks",
+            "capsule_prompt": "agent prompts",
+            "capsule_dataset": "declared data contracts",
+            "capsule_dataset_table": "classified domain tables",
+        },
+    ),
+}
 ENDPOINT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
+DOCUMENT_KIND_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 MEDIA_TYPE_PATTERN = re.compile(
     r"^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+"
     r"(?:\s*;\s*[A-Za-z0-9!#$&^_.+-]+\s*=\s*[A-Za-z0-9!#$&^_.+'-]+)*$"
@@ -339,13 +584,21 @@ def safe_media_type(value: Any) -> bool:
 
 
 def parse_utc_timestamp(value: Any) -> bool:
-    if not isinstance(value, str) or not value.endswith("Z"):
+    if not isinstance(value, str) or len(value) != 20:
         return False
     try:
-        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+        parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:
         return False
-    return parsed.tzinfo is not None and parsed.utcoffset() == timezone.utc.utcoffset(parsed)
+    return parsed.strftime("%Y-%m-%dT%H:%M:%SZ") == value
+
+
+def _bounded_text(value: Any, *, minimum: int = 0, maximum: int) -> bool:
+    return (
+        isinstance(value, str)
+        and minimum <= len(value) <= maximum
+        and len(value.encode("utf-8")) <= maximum
+    )
 
 
 def sql_parameters(sql_text: str) -> tuple[set[str], set[str]]:
@@ -557,6 +810,189 @@ class CapsuleDatabase:
             raise CapsuleError("Missing capsule manifest")
         return decode_row(row)
 
+    def _overview_manifest_profile(self) -> tuple[int, dict[str, Any]]:
+        """Select one exact supported identity profile without executing capsule code."""
+
+        try:
+            with self._lock:
+                application_id = int(
+                    self._connection.execute("PRAGMA application_id").fetchone()[0]
+                )
+                user_version = int(
+                    self._connection.execute("PRAGMA user_version").fetchone()[0]
+                )
+                rows = self._connection.execute(
+                    "SELECT * FROM capsule_manifest ORDER BY id LIMIT 2"
+                ).fetchall()
+        except sqlite3.DatabaseError as exc:
+            raise CapsuleError(f"Could not select capsule identity profile: {exc}") from exc
+        if application_id != APPLICATION_ID:
+            raise CapsuleError(
+                f"Unexpected application_id {application_id}; expected {APPLICATION_ID}"
+            )
+        if len(rows) != 1 or rows[0]["id"] != 1:
+            raise CapsuleError("capsule_manifest must contain exactly one row with id = 1")
+        profile = SUPPORTED_FORMAT_PROFILES.get(user_version)
+        if profile is None:
+            raise CapsuleError(f"Unsupported capsule user_version: {user_version}")
+        manifest = decode_row(rows[0])
+        expected_tuple = (
+            profile["format_id"],
+            profile["format_version"],
+            profile["runtime_protocol"],
+        )
+        actual_tuple = (
+            manifest.get("format_id"),
+            manifest.get("format_version"),
+            manifest.get("runtime_protocol"),
+        )
+        if actual_tuple != expected_tuple:
+            raise CapsuleError(
+                "Manifest format_id, format_version, and runtime_protocol do not match "
+                f"the supported user_version {user_version} profile"
+            )
+        if user_version == 3:
+            if manifest.get("minimum_host_profile") != profile["minimum_host_profile"]:
+                raise CapsuleError("Manifest has an unsupported minimum_host_profile")
+            if not parse_utc_timestamp(manifest.get("released_at")):
+                raise CapsuleError(
+                    "Manifest released_at must be a present exact UTC-seconds timestamp"
+                )
+        return user_version, manifest
+
+    def overview(self) -> dict[str, Any]:
+        """Return version-dispatched application, instance, and schema identity.
+
+        This reads bounded metadata references only. It never decodes an icon or
+        releases executable asset bytes.
+        """
+
+        user_version, manifest = self._overview_manifest_profile()
+        if user_version == 2:
+            return {
+                "format": {"id": manifest["format_id"], "version": manifest["format_version"]},
+                "application": {
+                    "app_id": manifest["app_id"],
+                    "app_version": manifest["app_version"],
+                    "name": manifest["title"],
+                    "description": manifest["summary"],
+                    "icon_asset": None,
+                    "legacy_fallback": True,
+                },
+                "instance": {
+                    "capsule_id": manifest["capsule_id"],
+                    "revision_id": None,
+                    "title": manifest["title"],
+                    "description": manifest["summary"],
+                    "document_kind": "legacy-v0.2",
+                    "tags": [],
+                    "icon_asset_id": None,
+                    "cover_asset_id": None,
+                    "created_at": manifest["created_at"],
+                    "content_updated_at": manifest["updated_at"],
+                },
+                "data_schema": None,
+            }
+        if user_version != 3:
+            raise CapsuleError(f"Unsupported capsule user_version: {user_version}")
+        application_count = int(
+            self._connection.execute("SELECT count(*) FROM capsule_application").fetchone()[0]
+        )
+        instance_count = int(
+            self._connection.execute("SELECT count(*) FROM capsule_instance").fetchone()[0]
+        )
+        application_rows = self._connection.execute(
+            "SELECT name, description, category, icon_asset, release_notes_doc "
+            "FROM capsule_application WHERE id = 1"
+        ).fetchall()
+        instance_rows = self._connection.execute(
+            "SELECT capsule_id, revision_id, title, description, document_kind, tags_json, "
+            "icon_asset_id, cover_asset_id, created_at, content_updated_at "
+            "FROM capsule_instance WHERE id = 1"
+        ).fetchall()
+        if (
+            application_count != 1
+            or instance_count != 1
+            or len(application_rows) != 1
+            or len(instance_rows) != 1
+        ):
+            raise CapsuleError(
+                "v0.3 application and instance identity must each contain exactly one id=1 row"
+            )
+        application = decode_row(application_rows[0])
+        instance = decode_row(instance_rows[0])
+        if not (
+            _bounded_text(manifest.get("app_id"), minimum=1, maximum=512)
+            and _bounded_text(manifest.get("app_version"), minimum=1, maximum=128)
+            and re.fullmatch(
+                r"[0-9A-Za-z][0-9A-Za-z.+_-]*", str(manifest.get("app_version"))
+            )
+        ):
+            raise CapsuleError("v0.3 application release identity violates its bound")
+        for field, minimum, maximum in (
+            ("name", 1, 256),
+            ("description", 0, 4096),
+            ("category", 1, 128),
+        ):
+            if not _bounded_text(application.get(field), minimum=minimum, maximum=maximum):
+                raise CapsuleError(f"v0.3 application field {field!r} violates its bound")
+        for field in ("icon_asset", "release_notes_doc"):
+            value = application.get(field)
+            if value is not None and not _bounded_text(
+                value,
+                minimum=1 if field == "icon_asset" else 0,
+                maximum=1024,
+            ):
+                raise CapsuleError(f"v0.3 application reference {field!r} violates its bound")
+        if not UUID_PATTERN.fullmatch(str(instance.get("capsule_id", ""))):
+            raise CapsuleError("v0.3 capsule_id is not a canonical RFC 4122 UUID")
+        if not UUID_PATTERN.fullmatch(str(instance.get("revision_id", ""))):
+            raise CapsuleError("v0.3 revision_id is not a canonical RFC 4122 UUID")
+        for field, minimum, maximum in (
+            ("title", 1, 512),
+            ("description", 0, 8192),
+            ("document_kind", 1, 128),
+        ):
+            if not _bounded_text(instance.get(field), minimum=minimum, maximum=maximum):
+                raise CapsuleError(f"v0.3 instance field {field!r} violates its bound")
+        if not DOCUMENT_KIND_PATTERN.fullmatch(str(instance.get("document_kind", ""))):
+            raise CapsuleError("v0.3 document_kind has an unsafe shape")
+        tags = instance.get("tags_json")
+        if not (
+            isinstance(tags, list)
+            and len(tags) <= 64
+            and all(_bounded_text(tag, minimum=1, maximum=128) for tag in tags)
+            and len(tags) == len(set(tags))
+        ):
+            raise CapsuleError("v0.3 tags violate their bounded unique-array contract")
+        for field in ("icon_asset_id", "cover_asset_id"):
+            value = instance.get(field)
+            if value is not None and not _bounded_text(value, minimum=1, maximum=256):
+                raise CapsuleError(f"v0.3 instance reference {field!r} violates its bound")
+        for field in ("created_at", "content_updated_at"):
+            if not parse_utc_timestamp(instance.get(field)):
+                raise CapsuleError(f"v0.3 instance timestamp {field!r} is invalid")
+        if not _bounded_text(manifest.get("data_schema_id"), minimum=1, maximum=512):
+            raise CapsuleError("v0.3 data_schema_id violates its bound")
+        if not isinstance(manifest.get("data_schema_version"), int) or manifest[
+            "data_schema_version"
+        ] < 1:
+            raise CapsuleError("v0.3 data_schema_version must be a positive integer")
+        return {
+            "format": {"id": manifest["format_id"], "version": manifest["format_version"]},
+            "application": {
+                "app_id": manifest["app_id"],
+                "app_version": manifest["app_version"],
+                **application,
+                "legacy_fallback": False,
+            },
+            "instance": instance,
+            "data_schema": {
+                "id": manifest["data_schema_id"],
+                "version": manifest["data_schema_version"],
+            },
+        }
+
     def permissions(self) -> dict[str, Any]:
         manifest = self.manifest()
         requested = manifest.get("permissions_json")
@@ -675,6 +1111,7 @@ class CapsuleDatabase:
         check_results: list[dict[str, Any]] = []
         user_version: int | None = None
         format_profile: Mapping[str, str] | None = None
+        format_contract: FormatContract | None = None
 
         try:
             application_id = int(self._connection.execute("PRAGMA application_id").fetchone()[0])
@@ -688,9 +1125,10 @@ class CapsuleDatabase:
         try:
             user_version = int(self._connection.execute("PRAGMA user_version").fetchone()[0])
             format_profile = SUPPORTED_FORMAT_PROFILES.get(user_version)
-            if format_profile is None:
+            format_contract = FORMAT_CONTRACTS.get(user_version)
+            if format_profile is None or format_contract is None:
                 errors.append(
-                    f"Unsupported user_version {user_version}; expected {USER_VERSION}"
+                    f"Unsupported user_version {user_version}; expected one of {sorted(FORMAT_CONTRACTS)}"
                 )
         except sqlite3.DatabaseError as exc:
             errors.append(f"Could not read user_version: {exc}")
@@ -714,13 +1152,29 @@ class CapsuleDatabase:
 
         tables = self._objects("table")
         views = self._objects("view")
-        required_tables = set(REQUIRED_TABLES)
+        required_table_columns = (
+            format_contract.required_table_columns if format_contract else {}
+        )
+        required_tables = set(required_table_columns)
         missing_tables = sorted(required_tables - tables)
         missing_views = sorted(REQUIRED_VIEWS - views)
         if missing_tables:
             errors.append(f"Missing platform tables: {', '.join(missing_tables)}")
         if missing_views:
             errors.append(f"Missing platform views: {', '.join(missing_views)}")
+        if user_version == 3:
+            allowed_platform_objects = required_tables | set(OPTIONAL_TABLE_COLUMNS)
+            platform_objects = {
+                str(row["name"])
+                for row in self._connection.execute(
+                    "SELECT name FROM sqlite_schema WHERE name GLOB 'capsule_*'"
+                ).fetchall()
+            }
+            unexpected_platform_objects = sorted(platform_objects - allowed_platform_objects)
+            if unexpected_platform_objects:
+                errors.append(
+                    "Unknown v0.3 platform objects: " + ", ".join(unexpected_platform_objects)
+                )
         triggers = self._objects("trigger")
         if triggers:
             errors.append(
@@ -748,14 +1202,20 @@ class CapsuleDatabase:
                     f"PRAGMA table_xinfo({_quote_sql_identifier(table)})"
                 ).fetchall()
                 actual_columns = {str(row["name"]) for row in column_rows}
-                missing_columns = sorted(REQUIRED_TABLE_COLUMNS[table] - actual_columns)
+                missing_columns = sorted(required_table_columns[table] - actual_columns)
                 if missing_columns:
                     errors.append(
                         f"Platform table {table!r} is missing columns: "
                         + ", ".join(missing_columns)
                     )
+                if user_version == 3 and actual_columns != required_table_columns[table]:
+                    errors.append(f"Platform table {table!r} has non-contract columns")
                 rows_by_name = {str(row["name"]): row for row in column_rows}
-                for column, expected_type in REQUIRED_COLUMN_TYPES[table].items():
+                required_column_types = (
+                    format_contract.required_column_types if format_contract else {}
+                )
+                nullable_columns = format_contract.nullable_columns if format_contract else set()
+                for column, expected_type in required_column_types[table].items():
                     column_row = rows_by_name.get(column)
                     if column_row is None:
                         continue
@@ -767,7 +1227,7 @@ class CapsuleDatabase:
                         )
                     integer_primary_key = expected_type == "INTEGER" and int(column_row["pk"]) > 0
                     if (
-                        (table, column) not in NULLABLE_COLUMNS
+                        (table, column) not in nullable_columns
                         and not integer_primary_key
                         and not bool(column_row["notnull"])
                     ):
@@ -777,12 +1237,19 @@ class CapsuleDatabase:
                     for row in sorted(column_rows, key=lambda item: int(item["pk"]) or 1_000_000)
                     if int(row["pk"])
                 )
-                if actual_primary_key != REQUIRED_PRIMARY_KEYS[table]:
+                required_primary_keys = (
+                    format_contract.required_primary_keys if format_contract else {}
+                )
+                if actual_primary_key != required_primary_keys[table]:
                     errors.append(
                         f"Platform table {table!r} has incompatible primary key: "
                         + ", ".join(actual_primary_key)
                     )
-                required_foreign_keys = REQUIRED_FOREIGN_KEYS.get(table, set())
+                required_foreign_keys = (
+                    format_contract.required_foreign_keys.get(table, set())
+                    if format_contract
+                    else set()
+                )
                 if required_foreign_keys:
                     foreign_key_rows = self._connection.execute(
                         f"PRAGMA foreign_key_list({_quote_sql_identifier(table)})"
@@ -808,6 +1275,8 @@ class CapsuleDatabase:
                     f"PRAGMA table_xinfo({_quote_sql_identifier(table)})"
                 ).fetchall()
                 actual_columns = {str(row["name"]): row for row in column_rows}
+                if user_version == 3 and set(actual_columns) != set(expected_types):
+                    errors.append(f"Optional platform table {table!r} has non-contract columns")
                 for column, expected_type in expected_types.items():
                     row = actual_columns.get(column)
                     if row is None:
@@ -815,7 +1284,8 @@ class CapsuleDatabase:
                         continue
                     if str(row["type"]).upper() != expected_type:
                         errors.append(f"Optional platform column {table}.{column} has an incompatible type")
-                    if not bool(row["notnull"]) and column != "granted_at":
+                    integer_primary_key = expected_type == "INTEGER" and int(row["pk"]) > 0
+                    if not bool(row["notnull"]) and not integer_primary_key:
                         errors.append(f"Optional platform column {table}.{column} must be NOT NULL")
                 actual_primary_key = tuple(
                     str(row["name"])
@@ -827,7 +1297,10 @@ class CapsuleDatabase:
             except sqlite3.DatabaseError as exc:
                 errors.append(f"Could not inspect optional platform table {table!r}: {exc}")
 
-        for table, purpose in REQUIRED_CONTENT_TABLES.items():
+        required_content_tables = (
+            format_contract.required_content_tables if format_contract else {}
+        )
+        for table, purpose in required_content_tables.items():
             if table not in tables:
                 continue
             try:
@@ -938,23 +1411,86 @@ class CapsuleDatabase:
                             errors.append(
                                 "The bootstrap host requires permissions_json network.value to be 'none'"
                             )
-                    for field in (
-                        "capsule_id",
-                        "title",
-                        "summary",
-                        "app_id",
-                        "app_version",
-                        "entry_asset",
-                    ):
+                    common_fields = ("app_id", "app_version", "entry_asset")
+                    legacy_fields = ("capsule_id", "title", "summary") if user_version == 2 else ()
+                    for field in common_fields + legacy_fields:
                         if not isinstance(manifest.get(field), str) or not manifest[field].strip():
                             errors.append(f"Manifest field {field!r} must be a non-empty string")
-                    for field in ("created_at", "updated_at"):
+                    timestamp_fields = (
+                        ("created_at", "updated_at")
+                        if user_version == 2
+                        else ("released_at",)
+                    )
+                    for field in timestamp_fields:
                         if not parse_utc_timestamp(manifest.get(field)):
                             errors.append(
-                                f"Manifest field {field!r} must be an ISO-8601 UTC timestamp"
+                                f"Manifest field {field!r} must be an exact UTC-seconds timestamp"
                             )
+                    if user_version == 3:
+                        if not _bounded_text(manifest.get("app_id"), minimum=1, maximum=512):
+                            errors.append("Manifest app_id is invalid or exceeds 512 UTF-8 bytes")
+                        app_version = manifest.get("app_version")
+                        if not (
+                            _bounded_text(app_version, minimum=1, maximum=128)
+                            and re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.+_-]*", str(app_version))
+                        ):
+                            errors.append("Manifest app_version violates its bounded version shape")
+                        if manifest.get("minimum_host_profile") != "org.sqlite-capsule.host-profile/0.3":
+                            errors.append("Manifest has an unsupported minimum_host_profile")
+                        if not isinstance(manifest.get("data_schema_version"), int) or manifest["data_schema_version"] < 1:
+                            errors.append("Manifest data_schema_version must be a positive integer")
+                        if not _bounded_text(manifest.get("data_schema_id"), minimum=1, maximum=512):
+                            errors.append("Manifest data_schema_id is invalid or exceeds 512 UTF-8 bytes")
             except (sqlite3.DatabaseError, CapsuleError, KeyError) as exc:
                 errors.append(f"Invalid manifest: {exc}")
+
+        overview: dict[str, Any] | None = None
+        if user_version == 3 and {"capsule_application", "capsule_instance"} <= tables:
+            try:
+                overview = self.overview()
+                application = overview["application"]
+                instance = overview["instance"]
+                for field, minimum, maximum in (
+                    ("name", 1, 256), ("description", 0, 4096), ("category", 1, 128),
+                ):
+                    if not _bounded_text(application.get(field), minimum=minimum, maximum=maximum):
+                        errors.append(f"Application field {field!r} violates its metadata bound")
+                for field in ("icon_asset", "release_notes_doc"):
+                    value = application.get(field)
+                    if value is not None and not _bounded_text(
+                        value,
+                        minimum=1 if field == "icon_asset" else 0,
+                        maximum=1024,
+                    ):
+                        errors.append(f"Application field {field!r} violates its reference bound")
+                if not UUID_PATTERN.fullmatch(str(instance.get("capsule_id", ""))):
+                    errors.append("Instance capsule_id is not a canonical RFC 4122 UUID")
+                if not UUID_PATTERN.fullmatch(str(instance.get("revision_id", ""))):
+                    errors.append("Instance revision_id is not a canonical RFC 4122 UUID")
+                for field, minimum, maximum in (
+                    ("title", 1, 512), ("description", 0, 8192), ("document_kind", 1, 128),
+                ):
+                    if not _bounded_text(instance.get(field), minimum=minimum, maximum=maximum):
+                        errors.append(f"Instance field {field!r} violates its metadata bound")
+                for field in ("icon_asset_id", "cover_asset_id"):
+                    value = instance.get(field)
+                    if value is not None and not _bounded_text(value, minimum=1, maximum=256):
+                        errors.append(f"Instance field {field!r} violates its reference bound")
+                if not DOCUMENT_KIND_PATTERN.fullmatch(str(instance.get("document_kind", ""))):
+                    errors.append("Instance document_kind has an unsafe shape")
+                tags = instance.get("tags_json")
+                if not (
+                    isinstance(tags, list)
+                    and len(tags) <= 64
+                    and len(tags) == len(set(tags))
+                    and all(_bounded_text(tag, minimum=1, maximum=128) for tag in tags)
+                ):
+                    errors.append("Instance tags_json must contain at most 64 unique bounded strings")
+                for field in ("created_at", "content_updated_at"):
+                    if not parse_utc_timestamp(instance.get(field)):
+                        errors.append(f"Instance field {field!r} must be an exact UTC-seconds timestamp")
+            except (CapsuleError, KeyError, TypeError, ValueError, sqlite3.DatabaseError) as exc:
+                errors.append(f"Invalid v0.3 identity metadata: {exc}")
 
         if "capsule_asset" in tables:
             seen_casefold: dict[str, str] = {}
@@ -988,12 +1524,49 @@ class CapsuleDatabase:
                     str(row["path"]) for row in rows
                 }:
                     errors.append(f"Entry asset missing: {manifest.get('entry_asset')}")
+                if user_version == 3 and overview:
+                    icon_asset = overview["application"].get("icon_asset")
+                    if icon_asset is not None:
+                        icon_row = next(
+                            (row for row in rows if str(row["path"]) == icon_asset),
+                            None,
+                        )
+                        if icon_row is None:
+                            errors.append("Application icon_asset does not resolve to capsule_asset")
+                        elif (
+                            str(icon_row["media_type"]) not in {"image/png", "image/webp"}
+                            or len(bytes(icon_row["content"])) > 524_288
+                        ):
+                            errors.append("Application icon must be bounded PNG or WebP content")
                 if "bootstrap/capsule_host.py" not in {
                     str(row["path"]) for row in rows
                 }:
                     warnings.append("No embedded standalone host asset")
             except sqlite3.DatabaseError as exc:
                 errors.append(f"Could not verify assets: {exc}")
+
+        if user_version == 3 and "capsule_instance_asset" in tables:
+            try:
+                instance_assets = self._connection.execute(
+                    "SELECT id, media_type, content, sha256, width, height "
+                    "FROM capsule_instance_asset ORDER BY id"
+                ).fetchall()
+                for row in instance_assets:
+                    content = bytes(row["content"])
+                    if (
+                        row["media_type"] not in {"image/png", "image/webp"}
+                        or len(content) > 524_288
+                        or not isinstance(row["width"], int)
+                        or not 1 <= row["width"] <= 1024
+                        or not isinstance(row["height"], int)
+                        or not 1 <= row["height"] <= 1024
+                        or row["sha256"] != hashlib.sha256(content).hexdigest()
+                    ):
+                        errors.append(
+                            f"Instance asset {row['id']!r} violates bounded media policy"
+                        )
+            except sqlite3.DatabaseError as exc:
+                errors.append(f"Could not verify instance assets: {exc}")
 
         if "capsule_endpoint" in tables:
             try:
@@ -1127,6 +1700,9 @@ class CapsuleDatabase:
             "ok": not errors,
             "capsule": str(self.path),
             "manifest": manifest,
+            "overview": overview if user_version == 3 else (
+                self.overview() if manifest is not None and user_version == 2 else None
+            ),
             "errors": errors,
             "warnings": warnings,
             "checks": check_results,
@@ -1277,6 +1853,7 @@ class CapsuleDatabase:
                 "VALUES (?, ?, ?, ?)",
                 (endpoint["name"], _json_dump(dict(bound)), changed_rows, utc_now()),
             )
+            self._advance_v03_revision_if_needed()
             self._connection.commit()
             if isinstance(result, dict) and endpoint["result_mode"] == "changes":
                 result["changes"] = changed_rows
@@ -1325,6 +1902,7 @@ class CapsuleDatabase:
                 "VALUES (?, ?, ?, ?)",
                 (endpoint["name"], _json_dump(dict(bound)), total_changes, utc_now()),
             )
+            self._advance_v03_revision_if_needed()
             self._connection.commit()
             return {
                 "changes": total_changes,
@@ -1341,6 +1919,17 @@ class CapsuleDatabase:
         finally:
             self._connection.set_authorizer(None)
             self._connection.set_progress_handler(None, 0)
+
+    def _advance_v03_revision_if_needed(self) -> None:
+        user_version = int(self._connection.execute("PRAGMA user_version").fetchone()[0])
+        if user_version != 3:
+            return
+        self._connection.execute(
+            "UPDATE capsule_instance SET revision_id = ?, content_updated_at = ? WHERE id = 1",
+            (str(uuid.uuid4()), utc_now()),
+        )
+        if int(self._connection.execute("SELECT changes()").fetchone()[0]) != 1:
+            raise EndpointError("v0.3 instance revision row is missing")
 
 
 def _validate_parameter_spec(spec: Any) -> None:
@@ -1671,11 +2260,12 @@ class CapsuleRequestHandler(BaseHTTPRequestHandler):
         if path == "/__capsule/health":
             try:
                 manifest = self.server.capsule.manifest()
+                overview = self.server.capsule.overview()
                 self._send_json(
                     HTTPStatus.OK,
                     {
                         "ok": True,
-                        "capsule_id": manifest["capsule_id"],
+                        "capsule_id": overview["instance"]["capsule_id"],
                         "app_id": manifest["app_id"],
                         "runtime_protocol": manifest["runtime_protocol"],
                     },
@@ -2043,7 +2633,7 @@ def start_detached(capsule_path: Path, *, host: str, port: int, open_browser: bo
     if host not in {"127.0.0.1", "localhost"}:
         raise CapsuleError("Bootstrap host may bind only to loopback")
     verification = verify_or_raise(capsule_path)
-    expected_capsule_id = str(verification["manifest"]["capsule_id"])
+    expected_capsule_id = str(verification["overview"]["instance"]["capsule_id"])
     expected_runtime_protocol = str(verification["manifest"]["runtime_protocol"])
     existing = read_state(capsule_path)
     existing_health = (
@@ -2188,8 +2778,8 @@ def stop_detached(capsule_path: Path) -> dict[str, Any]:
 
 
 def print_instructions(capsule: CapsuleDatabase, audience: str) -> None:
-    manifest = capsule.manifest()
-    print(f"# {manifest['title']}\n")
+    overview = capsule.overview()
+    print(f"# {overview['instance']['title']}\n")
     for row in capsule.runbooks(audience):
         print(f"## {row['sequence']:02d}. {row['title']}\n")
         print(row["body_md"].rstrip())
@@ -2282,6 +2872,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             with CapsuleDatabase(capsule_path, read_only=True) as capsule:
                 value = {
                     "manifest": capsule.manifest(),
+                    "overview": capsule.overview(),
                     "assets": capsule.list_assets(),
                     "prompts": capsule.prompts(),
                     "commands": capsule.commands(),

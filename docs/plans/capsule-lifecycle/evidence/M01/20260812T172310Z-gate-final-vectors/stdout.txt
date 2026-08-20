@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "profiles": [
+    {
+      "fixtures": [
+        {
+          "application_digest_sha256": "2e8878b8550021003c27b0878f3802ef37ec9fd743e5a95c028ca93767ae9b06",
+          "canonical_stream_bytes": 1062207,
+          "data": "compatibility/signed-app-v0.2/fixture-v0.2.sql",
+          "name": "format-v0.2",
+          "schema": "format/capsule-v0.2.sql"
+        }
+      ],
+      "profile": "org.sqlite-capsule.signed-app/0.2"
+    },
+    {
+      "fixtures": [
+        {
+          "application_digest_sha256": "72fc34df29a902010766c9b2af647fa6f12dfa499572bd0a064d77a91351e57f",
+          "canonical_stream_bytes": 1077830,
+          "data": "compatibility/signed-app-v0.3/fixture-v0.3.sql",
+          "key_id": "ed25519:sha256:b600306cfa76723fdec395e53a9b3d9fdb78b1e2d7a23c32fcbcd2dc6d0c4092",
+          "name": "format-v0.3",
+          "public_key_hex": "197f6b23e16c8532c6abc838facd5ea789be0c76b2920334039bfa8b3d368d61",
+          "schema": "format/capsule-v0.3.sql",
+          "signature_hex": "b79b4012181049f398c4433e3e2d4016bd57d34bbd60e09b02439e7f34d727d29b5880f098893eed4931f57502e75c1c3352e1ce14b72d411c66074f7bf9f40f",
+          "signed_at": "2026-08-08T12:34:56Z"
+        }
+      ],
+      "profile": "org.sqlite-capsule.signed-app/0.3"
+    }
+  ]
+}

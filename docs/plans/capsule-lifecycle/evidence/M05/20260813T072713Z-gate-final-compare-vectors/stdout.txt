@@ -1,0 +1,1 @@
+ok: 3 compare rows and 4 hostile values

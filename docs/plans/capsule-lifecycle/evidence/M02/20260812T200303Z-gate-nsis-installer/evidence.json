@@ -1,0 +1,37 @@
+{
+  "command": [
+    "python",
+    "native/tools/build_installers.py",
+    "--bundles",
+    "nsis"
+  ],
+  "completed_at": "2026-08-12T20:04:12Z",
+  "cwd": ".",
+  "duration_ms": 69081,
+  "exit_code": 0,
+  "milestone": "M02",
+  "name": "gate-nsis-installer",
+  "profile": "org.sqlite-capsule.command-evidence/1",
+  "repository": {
+    "commit": "",
+    "status_porcelain": []
+  },
+  "result": "pass",
+  "started_at": "2026-08-12T20:03:03Z",
+  "stderr": {
+    "captured_bytes": 2018,
+    "original_bytes": 2018,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200303Z-gate-nsis-installer/stderr.txt",
+    "sha256_captured": "242bed7da7bde29451e05ca59f4afa52b6bb9112fb402be2cb9d157cb9985185",
+    "truncated": false
+  },
+  "stdout": {
+    "captured_bytes": 767,
+    "original_bytes": 767,
+    "path": "docs/plans/capsule-lifecycle/evidence/M02/20260812T200303Z-gate-nsis-installer/stdout.txt",
+    "sha256_captured": "3c6694d1c49103b68fa0a73210a30a02d3219939a2cb15f0d512d7457df62039",
+    "truncated": false
+  },
+  "timed_out": false,
+  "timeout_seconds": 3600
+}

@@ -1,0 +1,124 @@
+{
+  "profile": "org.sqlite-capsule.data-contract/0.3",
+  "app_id": "org.sqlite-capsule.diagram-studio",
+  "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+  "data_schema_version": 1,
+  "datasets": [
+    {
+      "id": "diagram-content",
+      "role": "user-content",
+      "description": "User-created diagrams, visual objects, grouping and ordered presentation scenes.",
+      "sensitivity": "normal",
+      "required": true,
+      "fork": "copy",
+      "compare": "field",
+      "reconcile": "three-way",
+      "upgrade": "copy",
+      "dependencies": [],
+      "tables": [
+        {
+          "name": "diagram_document",
+          "sequence": 0,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id"]
+        },
+        {
+          "name": "diagram_layer",
+          "sequence": 1,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id"]
+        },
+        {
+          "name": "diagram_node",
+          "sequence": 2,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id"]
+        },
+        {
+          "name": "diagram_edge",
+          "sequence": 3,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id"]
+        },
+        {
+          "name": "diagram_group",
+          "sequence": 4,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id"]
+        },
+        {
+          "name": "diagram_group_member",
+          "sequence": 5,
+          "primary_key": ["group_id", "node_id"],
+          "ignored_columns": [],
+          "immutable_columns": ["group_id", "node_id"]
+        },
+        {
+          "name": "diagram_scene",
+          "sequence": 6,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id"]
+        },
+        {
+          "name": "diagram_scene_override",
+          "sequence": 7,
+          "primary_key": ["scene_id", "node_id"],
+          "ignored_columns": [],
+          "immutable_columns": ["scene_id", "node_id"]
+        }
+      ]
+    },
+    {
+      "id": "edit-history",
+      "role": "history",
+      "description": "Semantic undo and redo state; summaries are sensitive by default.",
+      "sensitivity": "sensitive",
+      "required": false,
+      "fork": "prompt",
+      "compare": "summary",
+      "reconcile": "manual",
+      "upgrade": "copy",
+      "dependencies": [{
+        "dataset_id": "diagram-content",
+        "reason": "Semantic history commands refer to diagram content."
+      }],
+      "tables": [
+        {
+          "name": "diagram_operation",
+          "sequence": 1,
+          "primary_key": ["id"],
+          "ignored_columns": ["updated_at"],
+          "immutable_columns": ["id", "diagram_id", "sequence"]
+        }
+      ]
+    },
+    {
+      "id": "history-state",
+      "role": "derived",
+      "description": "Rebuildable cursor and tip projection over the semantic history sequence.",
+      "sensitivity": "sensitive",
+      "required": false,
+      "fork": "omit",
+      "compare": "summary",
+      "reconcile": "ignore",
+      "upgrade": "rebuild",
+      "dependencies": [{
+        "dataset_id": "edit-history",
+        "reason": "The cursor and tip projection summarizes semantic history."
+      }],
+      "tables": [{
+        "name": "diagram_history",
+        "sequence": 0,
+        "primary_key": ["diagram_id"],
+        "ignored_columns": ["updated_at"],
+        "immutable_columns": ["diagram_id"]
+      }]
+    }
+  ]
+}

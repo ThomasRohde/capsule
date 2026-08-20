@@ -16,11 +16,15 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 pub const PROFILE: &str = "org.sqlite-capsule.signed-app/0.2";
+pub const PROFILE_V03: &str = "org.sqlite-capsule.signed-app/0.3";
 pub const ALGORITHM: &str = "ed25519";
 pub const MAX_CANONICAL_STREAM_BYTES: usize = 512 * 1024 * 1024;
 pub const MAX_CANONICAL_JSON_BYTES: usize = 1024 * 1024;
+pub const MAX_SIGNATURES: usize = 32;
 const STREAM_CONTEXT: &[u8] = b"SQLite Capsule signed-app canonical stream v1\0";
 const SIGNATURE_CONTEXT: &[u8] = b"SQLite Capsule signed-app signature v1\0";
+const STREAM_CONTEXT_V03: &[u8] = b"SQLite Capsule signed-app canonical stream v2\0";
+const SIGNATURE_CONTEXT_V03: &[u8] = b"SQLite Capsule signed-app signature v2\0";
 
 const SIGNED_TABLES: &[&str] = &[
     "capsule_manifest",
@@ -34,6 +38,51 @@ const SIGNED_TABLES: &[&str] = &[
     "capsule_prompt",
     "capsule_publisher",
 ];
+
+const SIGNED_TABLES_V03: &[&str] = &[
+    "capsule_manifest",
+    "capsule_application",
+    "capsule_asset",
+    "capsule_command",
+    "capsule_runbook",
+    "capsule_doc",
+    "capsule_endpoint",
+    "capsule_endpoint_step",
+    "capsule_check",
+    "capsule_prompt",
+    "capsule_dataset",
+    "capsule_dataset_table",
+    "capsule_dataset_dependency",
+    "capsule_migration",
+    "capsule_migration_step",
+    "capsule_migration_check",
+    "capsule_publisher",
+];
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SignedAppProfile {
+    pub user_version: i64,
+    pub profile: &'static str,
+    stream_context: &'static [u8],
+    signature_context: &'static [u8],
+    signed_tables: &'static [&'static str],
+}
+
+const PROFILE_02: SignedAppProfile = SignedAppProfile {
+    user_version: 2,
+    profile: PROFILE,
+    stream_context: STREAM_CONTEXT,
+    signature_context: SIGNATURE_CONTEXT,
+    signed_tables: SIGNED_TABLES,
+};
+
+const PROFILE_03: SignedAppProfile = SignedAppProfile {
+    user_version: 3,
+    profile: PROFILE_V03,
+    stream_context: STREAM_CONTEXT_V03,
+    signature_context: SIGNATURE_CONTEXT_V03,
+    signed_tables: SIGNED_TABLES_V03,
+};
 
 #[derive(Debug, Error)]
 pub enum CryptoError {
@@ -88,8 +137,38 @@ pub struct SignatureVerification {
     pub signed_at: String,
 }
 
+pub fn signed_app_profile(connection: &Connection) -> Result<SignedAppProfile, CryptoError> {
+    let application_id: i64 =
+        connection.pragma_query_value(None, "application_id", |row| row.get(0))?;
+    let user_version: i64 =
+        connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
+    let profile = match user_version {
+        2 => PROFILE_02,
+        3 => PROFILE_03,
+        _ => return Err(CryptoError::UnsupportedFormat),
+    };
+    let manifest: Option<(String, String, String)> = connection
+        .query_row(
+            "SELECT format_id, format_version, runtime_protocol FROM capsule_manifest WHERE id = 1",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )
+        .optional()?;
+    let expected_version = if user_version == 2 { "0.2" } else { "0.3" };
+    if application_id != 1_129_337_676
+        || !matches!(manifest, Some((ref format_id, ref format_version, ref runtime_protocol))
+            if format_id == "org.sqlite-capsule"
+                && format_version == expected_version
+                && runtime_protocol == "capsule-http/0.2")
+    {
+        return Err(CryptoError::UnsupportedFormat);
+    }
+    Ok(profile)
+}
+
 pub fn publisher_identity(connection: &Connection) -> Result<PublisherIdentity, CryptoError> {
     ensure_extension_schema(connection)?;
+    let expected_profile = signed_app_profile(connection)?.profile;
     let row = connection
         .query_row(
             "SELECT profile, publisher_id, publisher_name FROM capsule_publisher WHERE id = 1",
@@ -110,7 +189,7 @@ pub fn publisher_identity(connection: &Connection) -> Result<PublisherIdentity, 
         row.get(0)
     })?;
     if count != 1
-        || profile != PROFILE
+        || profile != expected_profile
         || publisher_id.is_empty()
         || publisher_id.len() > 512
         || publisher_name.is_empty()
@@ -125,22 +204,32 @@ pub fn publisher_identity(connection: &Connection) -> Result<PublisherIdentity, 
 }
 
 pub fn canonical_stream(connection: &Connection) -> Result<Vec<u8>, CryptoError> {
-    publisher_identity(connection)?;
-    ensure_signature_table(connection)?;
-    let signed_tables = signed_tables(connection)?;
-    reject_unknown_platform_tables(connection, signed_tables)?;
-
     let mut writer = CanonicalWriter::new();
-    writer.raw(STREAM_CONTEXT)?;
-    write_schema_records(connection, &mut writer)?;
-    for table in signed_tables {
-        write_table_rows(connection, table, &mut writer)?;
-    }
+    write_canonical_stream(connection, &mut writer)?;
     Ok(writer.finish())
 }
 
+fn write_canonical_stream(
+    connection: &Connection,
+    writer: &mut CanonicalWriter,
+) -> Result<(), CryptoError> {
+    let profile = signed_app_profile(connection)?;
+    publisher_identity(connection)?;
+    ensure_signature_table(connection)?;
+    reject_unknown_platform_objects(connection, profile)?;
+
+    writer.raw(profile.stream_context)?;
+    write_schema_records(connection, writer)?;
+    for table in profile.signed_tables {
+        write_table_rows(connection, table, writer)?;
+    }
+    Ok(())
+}
+
 pub fn application_digest(connection: &Connection) -> Result<[u8; 32], CryptoError> {
-    Ok(Sha256::digest(canonical_stream(connection)?).into())
+    let mut writer = CanonicalWriter::digest();
+    write_canonical_stream(connection, &mut writer)?;
+    Ok(writer.finish_digest())
 }
 
 pub fn key_id(public_key: &[u8; 32]) -> String {
@@ -152,9 +241,18 @@ pub fn sign_digest(
     application_digest: [u8; 32],
     signed_at: &str,
 ) -> Result<SignatureEnvelope, CryptoError> {
+    sign_digest_for_profile(signing_key, application_digest, signed_at, PROFILE)
+}
+
+pub fn sign_digest_for_profile(
+    signing_key: &SigningKey,
+    application_digest: [u8; 32],
+    signed_at: &str,
+    profile: &str,
+) -> Result<SignatureEnvelope, CryptoError> {
     validate_signed_at(signed_at)?;
     let public_key = signing_key.verifying_key().to_bytes();
-    let message = signature_message(&application_digest, signed_at)?;
+    let message = signature_message_for_profile(&application_digest, signed_at, profile)?;
     let signature = signing_key.sign(&message).to_bytes();
     Ok(SignatureEnvelope {
         key_id: key_id(&public_key),
@@ -166,6 +264,13 @@ pub fn sign_digest(
 }
 
 pub fn verify_envelope(envelope: &SignatureEnvelope) -> Result<(), CryptoError> {
+    verify_envelope_for_profile(envelope, PROFILE)
+}
+
+pub fn verify_envelope_for_profile(
+    envelope: &SignatureEnvelope,
+    profile: &str,
+) -> Result<(), CryptoError> {
     if envelope.key_id != key_id(&envelope.public_key) {
         return Err(CryptoError::KeyId);
     }
@@ -173,7 +278,8 @@ pub fn verify_envelope(envelope: &SignatureEnvelope) -> Result<(), CryptoError> 
     let verifying_key =
         VerifyingKey::from_bytes(&envelope.public_key).map_err(|_| CryptoError::Ed25519)?;
     let signature = Signature::from_bytes(&envelope.signature);
-    let message = signature_message(&envelope.application_digest, &envelope.signed_at)?;
+    let message =
+        signature_message_for_profile(&envelope.application_digest, &envelope.signed_at, profile)?;
     verifying_key
         .verify_strict(&message, &signature)
         .map_err(|_| CryptoError::Signature)
@@ -183,7 +289,7 @@ pub fn signature_inventory(connection: &Connection) -> Result<Vec<SignatureEnvel
     ensure_signature_table(connection)?;
     let mut statement = connection.prepare(
         "SELECT key_id, algorithm, public_key, application_digest, signature, signed_at \
-         FROM capsule_signature ORDER BY key_id COLLATE BINARY",
+         FROM capsule_signature ORDER BY key_id COLLATE BINARY LIMIT 33",
     )?;
     let rows = statement.query_map([], |row| {
         Ok((
@@ -209,6 +315,9 @@ pub fn signature_inventory(connection: &Connection) -> Result<Vec<SignatureEnvel
             signature: signature.try_into().map_err(|_| CryptoError::Extension)?,
             signed_at,
         });
+        if envelopes.len() > MAX_SIGNATURES {
+            return Err(CryptoError::Extension);
+        }
     }
     Ok(envelopes)
 }
@@ -216,12 +325,13 @@ pub fn signature_inventory(connection: &Connection) -> Result<Vec<SignatureEnvel
 pub fn verify_signatures(
     connection: &Connection,
 ) -> Result<Vec<SignatureVerification>, CryptoError> {
+    let profile = signed_app_profile(connection)?.profile;
     let digest = application_digest(connection)?;
     Ok(signature_inventory(connection)?
         .into_iter()
         .map(|envelope| SignatureVerification {
             key_id: envelope.key_id.clone(),
-            cryptographically_valid: verify_envelope(&envelope).is_ok(),
+            cryptographically_valid: verify_envelope_for_profile(&envelope, profile).is_ok(),
             digest_matches: envelope.application_digest == digest,
             signed_at: envelope.signed_at,
         })
@@ -356,25 +466,31 @@ fn ensure_table_columns(
     Ok(())
 }
 
-fn signed_tables(connection: &Connection) -> Result<&'static [&'static str], CryptoError> {
-    let user_version: i64 =
-        connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
-    (user_version == 2)
-        .then_some(SIGNED_TABLES)
-        .ok_or(CryptoError::UnsupportedFormat)
-}
-
-fn reject_unknown_platform_tables(
+fn reject_unknown_platform_objects(
     connection: &Connection,
-    signed_tables: &[&str],
+    profile: SignedAppProfile,
 ) -> Result<(), CryptoError> {
-    let mut allowed: BTreeSet<&str> = signed_tables.iter().copied().collect();
-    allowed.extend(["capsule_grant", "capsule_change_log", "capsule_signature"]);
-    let mut statement = connection.prepare(
-        "SELECT name FROM sqlite_schema \
-         WHERE type = 'table' AND name GLOB 'capsule_*' \
-         ORDER BY name COLLATE BINARY",
-    )?;
+    let mut allowed: BTreeSet<&str> = profile.signed_tables.iter().copied().collect();
+    if profile.user_version == 2 {
+        allowed.extend(["capsule_grant", "capsule_change_log", "capsule_signature"]);
+    } else {
+        allowed.extend([
+            "capsule_instance",
+            "capsule_instance_asset",
+            "capsule_lineage_event",
+            "capsule_lineage_parent",
+            "capsule_grant",
+            "capsule_change_log",
+            "capsule_signature",
+        ]);
+    }
+    let sql = if profile.user_version == 2 {
+        "SELECT name FROM sqlite_schema WHERE type = 'table' AND name GLOB 'capsule_*' \
+         ORDER BY name COLLATE BINARY"
+    } else {
+        "SELECT name FROM sqlite_schema WHERE name GLOB 'capsule_*' ORDER BY name COLLATE BINARY"
+    };
+    let mut statement = connection.prepare(sql)?;
     let names = statement.query_map([], |row| row.get::<_, String>(0))?;
     for name in names {
         let name = name?;
@@ -489,6 +605,11 @@ fn is_json_column(table: &str, column: &str) -> bool {
             | ("capsule_command", "argv_json")
             | ("capsule_endpoint", "parameters_json")
             | ("capsule_check", "expected_json")
+            | ("capsule_dataset_table", "primary_key_json")
+            | ("capsule_dataset_table", "ignored_columns_json")
+            | ("capsule_dataset_table", "immutable_columns_json")
+            | ("capsule_migration_step", "definition_json")
+            | ("capsule_migration_check", "definition_json")
     )
 }
 
@@ -627,23 +748,53 @@ enum CanonicalValue<'a> {
 }
 
 struct CanonicalWriter {
-    bytes: Vec<u8>,
+    output: CanonicalOutput,
+    length: usize,
+}
+
+enum CanonicalOutput {
+    Bytes(Vec<u8>),
+    Digest(Sha256),
 }
 
 impl CanonicalWriter {
     fn new() -> Self {
-        Self { bytes: Vec::new() }
+        Self {
+            output: CanonicalOutput::Bytes(Vec::new()),
+            length: 0,
+        }
+    }
+
+    fn digest() -> Self {
+        Self {
+            output: CanonicalOutput::Digest(Sha256::new()),
+            length: 0,
+        }
     }
 
     fn finish(self) -> Vec<u8> {
-        self.bytes
+        match self.output {
+            CanonicalOutput::Bytes(bytes) => bytes,
+            CanonicalOutput::Digest(_) => unreachable!("digest writer has no byte buffer"),
+        }
+    }
+
+    fn finish_digest(self) -> [u8; 32] {
+        match self.output {
+            CanonicalOutput::Digest(digest) => digest.finalize().into(),
+            CanonicalOutput::Bytes(_) => unreachable!("byte writer has no digest"),
+        }
     }
 
     fn raw(&mut self, value: &[u8]) -> Result<(), CryptoError> {
-        if self.bytes.len().saturating_add(value.len()) > MAX_CANONICAL_STREAM_BYTES {
+        if self.length.saturating_add(value.len()) > MAX_CANONICAL_STREAM_BYTES {
             return Err(CryptoError::StreamTooLarge);
         }
-        self.bytes.extend_from_slice(value);
+        self.length += value.len();
+        match &mut self.output {
+            CanonicalOutput::Bytes(bytes) => bytes.extend_from_slice(value),
+            CanonicalOutput::Digest(digest) => digest.update(value),
+        }
         Ok(())
     }
 
@@ -725,10 +876,19 @@ impl CanonicalValue<'_> {
     }
 }
 
-fn signature_message(digest: &[u8; 32], signed_at: &str) -> Result<Vec<u8>, CryptoError> {
+fn signature_message_for_profile(
+    digest: &[u8; 32],
+    signed_at: &str,
+    profile: &str,
+) -> Result<Vec<u8>, CryptoError> {
     validate_signed_at(signed_at)?;
-    let mut message = Vec::with_capacity(SIGNATURE_CONTEXT.len() + 32 + 8 + signed_at.len());
-    message.extend_from_slice(SIGNATURE_CONTEXT);
+    let context = match profile {
+        PROFILE => SIGNATURE_CONTEXT,
+        PROFILE_V03 => SIGNATURE_CONTEXT_V03,
+        _ => return Err(CryptoError::UnsupportedFormat),
+    };
+    let mut message = Vec::with_capacity(context.len() + 32 + 8 + signed_at.len());
+    message.extend_from_slice(context);
     message.extend_from_slice(digest);
     message.extend_from_slice(&(signed_at.len() as u64).to_be_bytes());
     message.extend_from_slice(signed_at.as_bytes());
@@ -825,6 +985,12 @@ mod tests {
         include_str!("../../../../compatibility/signed-app-v0.2/fixture-v0.2.sql");
     const GOLDEN_VECTORS: &str =
         include_str!("../../../../compatibility/signed-app-v0.2/vectors.json");
+    const V03_SCHEMA: &str = include_str!("../../../../format/capsule-v0.3.sql");
+    const SIGNED_SCHEMA_V03: &str = include_str!("../../../../format/capsule-signed-app-v0.3.sql");
+    const GOLDEN_V03_DATA: &str =
+        include_str!("../../../../compatibility/signed-app-v0.3/fixture-v0.3.sql");
+    const GOLDEN_V03_VECTORS: &str =
+        include_str!("../../../../compatibility/signed-app-v0.3/vectors.json");
 
     fn fixture() -> Connection {
         let connection = Connection::open_in_memory().expect("memory database");
@@ -856,11 +1022,11 @@ mod tests {
         connection
     }
 
-    fn golden_fixture(schema: &str, data: &str) -> Connection {
+    fn golden_fixture(schema: &str, signed_schema: &str, data: &str) -> Connection {
         let connection = Connection::open_in_memory().expect("memory database");
         connection.execute_batch(schema).expect("format schema");
         connection
-            .execute_batch(SIGNED_SCHEMA)
+            .execute_batch(signed_schema)
             .expect("signed extension schema");
         connection.execute_batch(data).expect("golden fixture data");
         connection
@@ -871,7 +1037,7 @@ mod tests {
         let declared: Value = serde_json::from_str(GOLDEN_VECTORS).expect("golden vector JSON");
         let fixtures = declared["fixtures"].as_array().expect("fixture array");
         for (index, (schema, data)) in [(V02_SCHEMA, GOLDEN_V02_DATA)].into_iter().enumerate() {
-            let connection = golden_fixture(schema, data);
+            let connection = golden_fixture(schema, SIGNED_SCHEMA, data);
             let stream = canonical_stream(&connection).expect("canonical stream");
             let digest = Sha256::digest(&stream);
             assert_eq!(
@@ -887,6 +1053,68 @@ mod tests {
                     .expect("declared stream size")
             );
         }
+    }
+
+    #[test]
+    fn rust_matches_the_independent_v03_golden_vector_and_context() {
+        let declared: Value =
+            serde_json::from_str(GOLDEN_V03_VECTORS).expect("v0.3 golden vector JSON");
+        let expected = &declared["fixtures"][0];
+        let connection = golden_fixture(V03_SCHEMA, SIGNED_SCHEMA_V03, GOLDEN_V03_DATA);
+        let stream = canonical_stream(&connection).expect("v0.3 canonical stream");
+        assert_eq!(
+            lower_hex(&Sha256::digest(&stream)),
+            expected["application_digest_sha256"]
+                .as_str()
+                .expect("declared digest")
+        );
+        assert_eq!(
+            stream.len() as u64,
+            expected["canonical_stream_bytes"]
+                .as_u64()
+                .expect("declared stream size")
+        );
+
+        let digest = application_digest(&connection).expect("v0.3 digest");
+        let reports = verify_signatures(&connection).expect("stored v0.3 envelope");
+        assert_eq!(reports.len(), 1);
+        assert!(reports[0].cryptographically_valid);
+        assert!(reports[0].digest_matches);
+        let stored = signature_inventory(&connection).expect("stored envelope row");
+        assert_eq!(stored[0].key_id, expected["key_id"].as_str().unwrap());
+        assert_eq!(lower_hex(&stored[0].public_key), expected["public_key_hex"]);
+        assert_eq!(lower_hex(&stored[0].signature), expected["signature_hex"]);
+
+        let signing_key = SigningKey::from_bytes(&[11_u8; 32]);
+        let envelope =
+            sign_digest_for_profile(&signing_key, digest, "2026-08-08T12:34:56Z", PROFILE_V03)
+                .expect("v0.3 envelope");
+        verify_envelope_for_profile(&envelope, PROFILE_V03).expect("v0.3 context verifies");
+        assert!(verify_envelope_for_profile(&envelope, PROFILE).is_err());
+
+        connection
+            .execute(
+                "UPDATE capsule_instance SET title = title || '!' WHERE id = 1",
+                [],
+            )
+            .expect("excluded instance mutation");
+        assert!(verify_signatures(&connection).unwrap()[0].digest_matches);
+        connection
+            .execute(
+                "UPDATE vector_domain SET note = note || '!' WHERE id = 'domain'",
+                [],
+            )
+            .expect("excluded domain mutation");
+        assert!(verify_signatures(&connection).unwrap()[0].digest_matches);
+        connection
+            .execute(
+                "UPDATE capsule_application SET description = description || '!' WHERE id = 1",
+                [],
+            )
+            .expect("signed application mutation");
+        let invalidated = verify_signatures(&connection).unwrap();
+        assert!(invalidated[0].cryptographically_valid);
+        assert!(!invalidated[0].digest_matches);
     }
 
     #[test]
