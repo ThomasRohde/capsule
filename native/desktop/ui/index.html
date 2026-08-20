@@ -195,7 +195,7 @@
                 <button type="button" data-route="copy"><strong>Create copy</strong><span>Exact, compact, fork, template, and selective profiles are reviewed separately.</span></button>
                 <button type="button" data-route="copy"><strong>Fork</strong><span>Signed data-contract policy controls every dataset and new lineage output.</span></button>
                 <button type="button" data-route="compare"><strong>Compare</strong><span>Inspect identity, application, schema, and policy-controlled data without executing either Capsule.</span></button>
-                <button type="button" disabled><strong>Upgrade</strong><span>Requires same-publisher release and migration policy in M07–M08.</span></button>
+                <button type="button" data-route="versions"><strong>Upgrade</strong><span>Install a newer same-schema release into a verified new copy. Data migration remains unavailable.</span></button>
               </div>
             </section>
 
@@ -403,12 +403,57 @@
           </section>
 
           <section class="page-panel" data-page-panel="versions" aria-labelledby="versions-preview-page-title" hidden>
-            <div class="section-card milestone-empty-state">
-              <span class="boundary-kicker">Create-new upgrades only</span>
-              <h2 id="versions-preview-page-title">Application versions</h2>
-              <p>Signed application release upgrades arrive in M07 and declarative data migration in M08. This milestone never rewrites the selected Capsule.</p>
-              <button type="button" disabled title="Application upgrade is delivered in M07–M08.">Upgrade application…</button>
+            <div class="status-card">
+              <span class="status-icon" aria-hidden="true">↑</span>
+              <div>
+                <h2 id="versions-preview-page-title" tabindex="-1">Upgrade the application in a new copy</h2>
+                <p id="upgrade-status" role="status" aria-live="polite">Choose a clean, signed release of the same application, schema and accepted publisher key. Neither input will be modified.</p>
+              </div>
+              <span class="badge" id="upgrade-badge">No release</span>
             </div>
+
+            <section class="section-card" aria-labelledby="upgrade-inputs-title">
+              <div class="card-heading"><div><h2 id="upgrade-inputs-title">Retained inputs</h2><p>Paths, SQLite handles, signature inventories and publisher authority remain in Rust.</p></div><span class="boundary-kicker">Read only</span></div>
+              <div class="action-list">
+                <div class="action-row"><div><strong>Signed application release</strong><p id="upgrade-release-status">No release selected. The target must carry an authenticated clean-template proof.</p></div><button type="button" id="upgrade-release-button">Choose release…</button></div>
+                <div class="action-row"><div><strong>Create-new destination</strong><p id="upgrade-destination-status">Choose a release first. Existing files are never overwritten.</p></div><button type="button" id="upgrade-destination-button" disabled>Choose destination…</button></div>
+              </div>
+              <dl id="upgrade-candidate-details" class="technical-list" hidden></dl>
+              <div class="page-actions page-actions-end"><button type="button" class="primary" id="upgrade-prepare-button" disabled>Prepare bound upgrade review</button></div>
+            </section>
+
+            <section class="section-card" id="upgrade-review" hidden aria-labelledby="upgrade-review-title">
+              <div class="card-heading"><div><h2 id="upgrade-review-title" tabindex="-1">Same-schema upgrade review</h2><p>Evidence is display-only. The executable plan and one-use authority never enter this page.</p></div><span class="badge warn">One use</span></div>
+              <dl id="upgrade-review-details" class="technical-list"></dl>
+              <section class="reconcile-subsection" aria-labelledby="upgrade-capabilities-title">
+                <h2 id="upgrade-capabilities-title">Capability delta</h2>
+                <div id="upgrade-capabilities" class="copy-dataset-review"></div>
+              </section>
+              <section class="reconcile-subsection" aria-labelledby="upgrade-datasets-title">
+                <h2 id="upgrade-datasets-title">Exhaustive dataset actions</h2>
+                <div id="upgrade-datasets" class="copy-dataset-review"></div>
+              </section>
+              <section class="reconcile-subsection" aria-labelledby="upgrade-checks-title">
+                <h2 id="upgrade-checks-title">Execution checks</h2>
+                <ul id="upgrade-checks" class="check-list"></ul>
+              </section>
+              <div class="signing-consent">
+                <label><input type="checkbox" id="upgrade-publisher-confirmation"><span>I confirmed the exact accepted publisher-key fingerprint and both signed input digests above.</span></label>
+                <label id="upgrade-capability-confirmation-wrap" hidden><input type="checkbox" id="upgrade-capability-confirmation"><span>I explicitly accept the added or changed application capabilities shown above.</span></label>
+                <div class="page-actions">
+                  <button type="button" class="primary" id="upgrade-execute-button" disabled>Create and verify upgraded copy</button>
+                  <button type="button" id="upgrade-cancel-button" disabled>Cancel operation</button>
+                </div>
+              </div>
+            </section>
+            <p id="upgrade-action-status" class="lifecycle-action-status" role="status" aria-live="polite"></p>
+
+            <div id="upgrade-result" class="admin-output-wrap" hidden>
+              <div><strong>Application upgrade result</strong><span>New copy · working Capsule and release unchanged</span></div>
+              <pre id="upgrade-result-output" tabindex="0" aria-live="polite" aria-label="Verified application upgrade result"></pre>
+            </div>
+
+            <p class="boundary-note">M07 accepts only a strictly newer SemVer release with the same data-schema ID and version. Releases that require migration are rejected until M08.</p>
           </section>
 
           <section class="page-panel" data-page-panel="security" aria-labelledby="security-page-title" hidden>

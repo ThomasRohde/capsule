@@ -475,6 +475,10 @@ impl PlanLimits {
         self.max_output_bytes
     }
 
+    pub(crate) fn max_rows_written(&self) -> u64 {
+        self.max_rows_written
+    }
+
     pub(crate) fn row_budgets_within_duplicate_profile(&self) -> bool {
         self.max_rows_inspected <= 100_000 && self.max_rows_written <= 100_000
     }

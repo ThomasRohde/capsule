@@ -105,6 +105,23 @@ lineage, then verifies and publishes create-new. Progress is sequenced and
 targeted only to `main`; cancellation is allowed only before publication. The
 raw Wry renderer has no reconcile handler, progress listener or capability.
 
+M07 upgrade commands are registered only for `main`. A release picker retains
+the target path and returns an opaque candidate token; a destination picker
+returns a separate opaque create-new token. Rust reopens no renderer-supplied
+path. Preparation returns a bounded, path-free candidate/review projection and
+a one-use nonce bound to the current Overview selection, exact working/target
+digests, accepted publisher key, capability delta and destination. Capability
+additions or changes require their own closed confirmation. Switching or
+closing the selection invalidates pending authority.
+
+The core executes the retained same-schema review in the background through
+prepared, staging, validated and published typestates. It starts from the clean
+target release, preserves target application/signatures and source mutable
+identity/data according to the target-signed policy, emits sequenced bounded
+progress only to `main`, and allows cancellation only before publication.
+Terminal results expose identities and digests, never paths or data values. The
+raw Wry renderer has no upgrade handler, progress listener, token or capability.
+
 Create-new publication walks the destination parent component-by-component
 without following reparse points or symbolic links, retains its stable parent
 handle, creates owner-only staging on the same filesystem, and binds the held

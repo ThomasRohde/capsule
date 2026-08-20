@@ -81,6 +81,12 @@
       "safe_detail": "The target release requests changed capabilities that require review."
     },
     {
+      "code": "version_not_newer",
+      "category": "compatibility",
+      "retryable": false,
+      "safe_detail": "The target application version is not strictly newer under SemVer precedence."
+    },
+    {
       "code": "migration_path_missing",
       "category": "migration",
       "retryable": false,

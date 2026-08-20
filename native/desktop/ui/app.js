@@ -95,6 +95,28 @@ const reconcileExecuteButton = document.querySelector("#reconcile-execute-button
 const reconcileCancelButton = document.querySelector("#reconcile-cancel-button");
 const reconcileResult = document.querySelector("#reconcile-result");
 const reconcileResultOutput = document.querySelector("#reconcile-result-output");
+const upgradeStatus = document.querySelector("#upgrade-status");
+const upgradeBadge = document.querySelector("#upgrade-badge");
+const upgradeReleaseStatus = document.querySelector("#upgrade-release-status");
+const upgradeReleaseButton = document.querySelector("#upgrade-release-button");
+const upgradeDestinationStatus = document.querySelector("#upgrade-destination-status");
+const upgradeDestinationButton = document.querySelector("#upgrade-destination-button");
+const upgradeCandidateDetails = document.querySelector("#upgrade-candidate-details");
+const upgradePrepareButton = document.querySelector("#upgrade-prepare-button");
+const upgradeReview = document.querySelector("#upgrade-review");
+const upgradeReviewTitle = document.querySelector("#upgrade-review-title");
+const upgradeReviewDetails = document.querySelector("#upgrade-review-details");
+const upgradeCapabilities = document.querySelector("#upgrade-capabilities");
+const upgradeDatasets = document.querySelector("#upgrade-datasets");
+const upgradeChecks = document.querySelector("#upgrade-checks");
+const upgradePublisherConfirmation = document.querySelector("#upgrade-publisher-confirmation");
+const upgradeCapabilityConfirmationWrap = document.querySelector("#upgrade-capability-confirmation-wrap");
+const upgradeCapabilityConfirmation = document.querySelector("#upgrade-capability-confirmation");
+const upgradeExecuteButton = document.querySelector("#upgrade-execute-button");
+const upgradeCancelButton = document.querySelector("#upgrade-cancel-button");
+const upgradeActionStatus = document.querySelector("#upgrade-action-status");
+const upgradeResult = document.querySelector("#upgrade-result");
+const upgradeResultOutput = document.querySelector("#upgrade-result-output");
 const reviewCapabilitiesButton = document.querySelector("#review-capabilities-button");
 const overviewTitle = document.querySelector("#overview-title");
 const overviewDescription = document.querySelector("#overview-description");
@@ -157,6 +179,11 @@ let reconcileThreeWay = null;
 const reconcileFinalizations = new Map();
 let preparedReconcile = null;
 let activeReconcileOperationToken = null;
+let upgradeCandidate = null;
+let upgradeDestination = null;
+let preparedUpgrade = null;
+let activeUpgradeOperationToken = null;
+const upgradeFinalizations = new Map();
 let currentReport = null;
 let selectedTheme = "dark";
 
@@ -166,7 +193,7 @@ const pageCopy = {
   copy: ["Create copy", "Review one create-new operation. Paths, retained sources, plans, and publication authority remain in Rust."],
   lineage: ["Lineage", "Mutable provenance is visibly separate from publisher authentication."],
   compare: ["Compare", "Read-only compatibility, identity, lineage, application, schema, and signed-policy data comparison."],
-  versions: ["Versions", "Application upgrade and migration remain create-new, signed-release workflows."],
+  versions: ["Versions", "Install a strictly newer same-schema signed application release into a verified new copy."],
   security: ["Security", "Trust, capabilities, publisher tools, local trust, and the application boundary."],
   capabilities: ["Capabilities", "Host-owned prompt. Capabilities come from the verified manifest."],
   protection: ["Data protection", "Session mode, verified backups, and recovery for the open capsule."],
@@ -567,6 +594,14 @@ function renderReport(report) {
     } else {
       reconcileStatus.textContent = "The Cabinet selection changed. The host cancelled the prior reconciliation if publication was still cancellable.";
       reconcileStatus.className = "lifecycle-action-status error";
+    }
+  }
+  if (priorSelectionId && priorSelectionId !== nextSelectionId) {
+    if (!activeUpgradeOperationToken) {
+      resetUpgradeView("The selected Capsule changed. Choose a fresh signed application release.");
+    } else {
+      upgradeStatus.textContent = "The Cabinet selection changed. The host cancelled the prior upgrade if publication was still cancellable.";
+      upgradeStatus.className = "lifecycle-action-status error";
     }
   }
   const focusKey = focusKeyFor(report);
@@ -1867,6 +1902,355 @@ async function finishCopyOperation(operationId) {
   }
 }
 
+function resetUpgradeView(message = "Choose a clean, signed release of the same application and schema.") {
+  if (activeUpgradeOperationToken) return false;
+  upgradeCandidate = null;
+  upgradeDestination = null;
+  preparedUpgrade = null;
+  upgradeCandidateDetails.hidden = true;
+  upgradeCandidateDetails.replaceChildren();
+  upgradeReview.hidden = true;
+  upgradeReviewDetails.replaceChildren();
+  upgradeCapabilities.replaceChildren();
+  upgradeDatasets.replaceChildren();
+  upgradeChecks.replaceChildren();
+  upgradePublisherConfirmation.checked = false;
+  upgradeCapabilityConfirmation.checked = false;
+  upgradeCapabilityConfirmationWrap.hidden = true;
+  upgradeDestinationButton.disabled = true;
+  upgradePrepareButton.disabled = true;
+  upgradeExecuteButton.disabled = true;
+  upgradeCancelButton.disabled = true;
+  upgradeResult.hidden = true;
+  upgradeReleaseStatus.textContent = message;
+  upgradeDestinationStatus.textContent = "Choose a release first. Existing files are never overwritten.";
+  upgradeStatus.textContent = "Both retained inputs remain pinned read-only. The upgraded Capsule is always a verified new file.";
+  upgradeStatus.className = "";
+  upgradeActionStatus.textContent = "";
+  upgradeActionStatus.className = "lifecycle-action-status";
+  upgradeBadge.textContent = "No release";
+  upgradeBadge.className = "badge";
+  return true;
+}
+
+function upgradeArticle(titleText, detailText) {
+  const article = document.createElement("article");
+  const title = document.createElement("strong");
+  const detail = document.createElement("span");
+  title.textContent = titleText;
+  detail.textContent = detailText;
+  article.append(title, detail);
+  return article;
+}
+
+function renderUpgradeCandidate(candidate) {
+  upgradeCandidate = candidate;
+  upgradeDestination = null;
+  preparedUpgrade = null;
+  upgradeReview.hidden = true;
+  upgradeResult.hidden = true;
+  upgradeCandidateDetails.hidden = false;
+  setRows(upgradeCandidateDetails, [
+    ["Application", candidate.app_id],
+    ["Version change", `${candidate.source_version} → ${candidate.target_version}`],
+    ["Data schema", `${candidate.data_schema_id} v${candidate.data_schema_version}`],
+    ["Accepted publisher key", candidate.publisher_key_id],
+    ["Release file", candidate.release_file_display],
+    ["Selection expires", candidate.expires_at],
+  ]);
+  upgradeReleaseStatus.textContent = `${candidate.release_file_display} · ${candidate.source_version} → ${candidate.target_version}`;
+  upgradeDestinationStatus.textContent = "Release screened. Choose a filename that does not exist.";
+  upgradeDestinationButton.disabled = false;
+  upgradePrepareButton.disabled = true;
+  upgradeBadge.textContent = "Release screened";
+  upgradeBadge.className = "badge warn";
+  upgradeStatus.textContent = "The target signature inventory, retained publisher key and clean-template proof passed initial screening. Same-application, schema and newer-version admission runs when preparing the exact review.";
+}
+
+function renderPreparedUpgrade(prepared) {
+  preparedUpgrade = prepared;
+  const review = prepared.review;
+  upgradeReview.hidden = false;
+  upgradePublisherConfirmation.checked = false;
+  upgradeCapabilityConfirmation.checked = false;
+  upgradeCapabilityConfirmationWrap.hidden = !review.capability_delta.requires_review;
+  upgradeExecuteButton.disabled = true;
+  upgradeBadge.textContent = "Review ready";
+  upgradeBadge.className = "badge warn";
+  setRows(upgradeReviewDetails, [
+    ["Operation", "Same-schema application upgrade"],
+    ["Source release", `${review.source.app_version} · ${shortDigest(review.source.application_digest)}`],
+    ["Source file SHA-256", review.source.file_sha256],
+    ["Target release", `${review.target_release.app_version} · ${shortDigest(review.target_release.application_digest)}`],
+    ["Target file SHA-256", review.target_release.file_sha256],
+    ["Accepted publisher key", review.publisher_continuity.accepted_key_id],
+    ["Publisher continuity", review.publisher_continuity.state],
+    ["Data schema", `${review.output.data_schema_id} v${review.output.data_schema_version}`],
+    ["New Capsule identity", review.output.capsule_id],
+    ["New revision", review.output.revision_id],
+    ["Output application", `${review.output.app_id} ${review.output.app_version}`],
+    ["Target clean-state proof", review.target_template_state_sha256],
+    ["Upgrade review digest", review.review_digest],
+    ["Lifecycle plan digest", prepared.plan_digest],
+    ["Lineage", `${review.lineage.working_relation} + ${review.lineage.release_relation}`],
+    ["Destination", `${prepared.output.parent_display} · ${prepared.output.leaf_display}`],
+    ["Limits", `${review.limits.max_rows_written.toLocaleString()} rows · ${review.limits.max_output_bytes.toLocaleString()} bytes · ${review.limits.deadline_ms.toLocaleString()} ms`],
+    ["Expires", prepared.expires_at],
+  ]);
+  const delta = review.capability_delta;
+  const capabilityGroups = [
+    ["Added", delta.added],
+    ["Changed", delta.changed],
+    ["Removed", delta.removed],
+  ];
+  upgradeCapabilities.replaceChildren(...capabilityGroups.map(([label, values]) => upgradeArticle(
+    label,
+    values.length ? values.join(" · ") : "None",
+  )));
+  upgradeDatasets.replaceChildren(...review.dataset_actions.map((dataset) => upgradeArticle(
+    dataset.dataset_id,
+    `${compareLabel(dataset.action)} · signed ${dataset.policy} policy · source ${dataset.source.row_count.toLocaleString()} rows → expected ${dataset.expected.row_count.toLocaleString()} rows · ${shortDigest(dataset.expected.state_sha256)}`,
+  )));
+  upgradeChecks.replaceChildren(...prepared.checks.map((check) => {
+    const item = document.createElement("li");
+    item.textContent = check;
+    return item;
+  }));
+  upgradeActionStatus.textContent = review.capability_delta.requires_review
+    ? "Added or changed capabilities require a separate explicit confirmation before execution."
+    : "No capability increase was detected. Confirm the exact publisher key and bound inputs before execution.";
+  upgradeActionStatus.className = "lifecycle-action-status";
+  upgradeReviewTitle.focus();
+}
+
+function refreshUpgradeExecuteButton() {
+  const capabilityAccepted = upgradeCapabilityConfirmationWrap.hidden || upgradeCapabilityConfirmation.checked;
+  upgradeExecuteButton.disabled = !preparedUpgrade || !upgradePublisherConfirmation.checked || !capabilityAccepted;
+}
+
+upgradeReleaseButton.addEventListener("click", async () => {
+  const selectionId = currentSelectionId();
+  if (!selectionId || activeUpgradeOperationToken) {
+    upgradeActionStatus.textContent = activeUpgradeOperationToken
+      ? "An upgrade is already running."
+      : "Select and inspect a working Capsule before choosing an application release.";
+    upgradeActionStatus.className = "lifecycle-action-status error";
+    return;
+  }
+  resetUpgradeView("Choose one clean, signed target release. Application code will not run.");
+  upgradeReleaseButton.disabled = true;
+  upgradeActionStatus.textContent = "Inspecting the target release signature inventory and clean-template proof…";
+  try {
+    const candidate = await invokeHost("choose_upgrade_release", {
+      request: { selection_id: selectionId },
+    });
+    if (!candidate) {
+      upgradeActionStatus.textContent = "Release selection cancelled. No authority was retained by this page.";
+      return;
+    }
+    if (candidate.profile !== "org.sqlite-capsule.tauri-upgrade-candidate/1") {
+      throw new Error("The host returned an unsupported upgrade-candidate profile.");
+    }
+    renderUpgradeCandidate(candidate);
+    upgradeActionStatus.textContent = "Signed release screened. The host retains its exact read-only path behind an opaque token until full admission at Prepare.";
+  } catch (error) {
+    resetUpgradeView("Target release screening failed closed. Choose a different signed release.");
+    upgradeActionStatus.textContent = hostError(error);
+    upgradeActionStatus.className = "lifecycle-action-status error";
+    upgradeBadge.textContent = "Release rejected";
+    upgradeBadge.className = "badge fail";
+  } finally {
+    upgradeReleaseButton.disabled = false;
+  }
+});
+
+upgradeDestinationButton.addEventListener("click", async () => {
+  if (!upgradeCandidate || activeUpgradeOperationToken) return;
+  upgradeDestinationButton.disabled = true;
+  upgradeActionStatus.textContent = "Choose a new local Capsule filename. Existing outputs and either input path are refused.";
+  upgradeActionStatus.className = "lifecycle-action-status";
+  try {
+    const destination = await invokeHost("choose_upgrade_destination", {
+      request: { candidate_token: upgradeCandidate.candidate_token },
+    });
+    if (!destination) {
+      upgradeActionStatus.textContent = "Destination selection cancelled. Nothing was created.";
+      return;
+    }
+    upgradeDestination = destination;
+    preparedUpgrade = null;
+    upgradeReview.hidden = true;
+    upgradeDestinationStatus.textContent = `${destination.parent_display} · ${destination.leaf_display} · expires ${destination.expires_at}`;
+    upgradePrepareButton.disabled = false;
+    upgradeActionStatus.textContent = "Opaque create-new destination retained. Prepare an exact two-input review.";
+  } catch (error) {
+    upgradeDestination = null;
+    upgradePrepareButton.disabled = true;
+    upgradeDestinationStatus.textContent = "Destination selection failed closed. Choose another new filename.";
+    upgradeActionStatus.textContent = hostError(error);
+    upgradeActionStatus.className = "lifecycle-action-status error";
+  } finally {
+    upgradeDestinationButton.disabled = !upgradeCandidate;
+  }
+});
+
+upgradePrepareButton.addEventListener("click", async () => {
+  const selectionId = currentSelectionId();
+  if (!selectionId || !upgradeCandidate || !upgradeDestination) return;
+  upgradePrepareButton.disabled = true;
+  upgradeActionStatus.textContent = "Rebinding both exact files and deriving the exhaustive same-schema upgrade plan…";
+  upgradeActionStatus.className = "lifecycle-action-status";
+  try {
+    const prepared = await invokeHost("prepare_upgrade", {
+      request: {
+        selection_id: selectionId,
+        candidate_token: upgradeCandidate.candidate_token,
+        destination_token: upgradeDestination.destination_token,
+      },
+    });
+    if (prepared.profile !== "org.sqlite-capsule.tauri-upgrade-review/1") {
+      throw new Error("The host returned an unsupported upgrade-review profile.");
+    }
+    renderPreparedUpgrade(prepared);
+  } catch (error) {
+    upgradeCandidate = null;
+    upgradeDestination = null;
+    preparedUpgrade = null;
+    upgradeDestinationButton.disabled = true;
+    upgradeReview.hidden = true;
+    upgradeActionStatus.textContent = hostError(error);
+    upgradeActionStatus.className = "lifecycle-action-status error";
+    upgradeBadge.textContent = "Review rejected";
+    upgradeBadge.className = "badge fail";
+  }
+});
+
+[upgradePublisherConfirmation, upgradeCapabilityConfirmation].forEach((input) => {
+  input.addEventListener("change", refreshUpgradeExecuteButton);
+});
+
+async function finishUpgradeOperation(operationToken) {
+  return oncePerUpgradeOperation(operationToken, async () => {
+    try {
+      const status = await invokeHost("get_upgrade_operation", {
+        request: { operation_token: operationToken },
+      });
+      if (status.operation_token !== operationToken) return;
+      const succeeded = status.phase === "succeeded";
+      upgradeResult.hidden = false;
+      upgradeResultOutput.textContent = succeeded
+        ? `${status.output_leaf}\n${Number(status.output_bytes || 0).toLocaleString()} bytes\nStrictly newer same-schema application release\nBoth retained inputs unchanged`
+        : `${compareLabel(status.phase)}\n${hostError(status.error || "The operation failed closed.")}`;
+      upgradeBadge.textContent = succeeded ? "Verified" : status.phase === "cancelled" ? "Cancelled" : "Failed closed";
+      upgradeBadge.className = `badge ${succeeded ? "ok" : status.phase === "cancelled" ? "warn" : "fail"}`;
+      upgradeStatus.textContent = succeeded
+        ? "The new Capsule was reopened and exhaustively verified with target application bytes and preserved instance data."
+        : `Upgrade ${compareLabel(status.phase)}. No unverified output is accepted.`;
+      upgradeStatus.className = succeeded ? "" : "error";
+      upgradeActionStatus.textContent = succeeded
+        ? "Publication completed without modifying the working Capsule or target release."
+        : hostError(status.error || "The upgrade did not report success.");
+      upgradeActionStatus.className = succeeded ? "lifecycle-action-status" : "lifecycle-action-status error";
+      await invokeHost("acknowledge_upgrade_result", {
+        request: { operation_token: operationToken },
+      });
+      if (activeUpgradeOperationToken === operationToken) activeUpgradeOperationToken = null;
+      upgradeCancelButton.disabled = true;
+      upgradeExecuteButton.disabled = true;
+      upgradeReleaseButton.disabled = false;
+      upgradeDestinationButton.disabled = true;
+    } catch (error) {
+      upgradeActionStatus.textContent = `Could not read the terminal upgrade result: ${hostError(error)}`;
+      upgradeActionStatus.className = "lifecycle-action-status error";
+    }
+  });
+}
+
+function oncePerUpgradeOperation(operationToken, finalizer) {
+  const existing = upgradeFinalizations.get(operationToken);
+  if (existing) return existing;
+  const finalization = Promise.resolve().then(finalizer);
+  if (upgradeFinalizations.size >= 64) {
+    upgradeFinalizations.delete(upgradeFinalizations.keys().next().value);
+  }
+  upgradeFinalizations.set(operationToken, finalization);
+  return finalization;
+}
+
+async function pollUpgradeOperation(operationToken) {
+  const inFlight = upgradeFinalizations.get(operationToken);
+  if (inFlight) return inFlight;
+  let status;
+  try {
+    status = await invokeHost("get_upgrade_operation", {
+      request: { operation_token: operationToken },
+    });
+  } catch (error) {
+    const terminal = upgradeFinalizations.get(operationToken);
+    if (terminal) return terminal;
+    throw error;
+  }
+  if (status.operation_token !== operationToken) return;
+  if (["succeeded", "failed", "cancelled"].includes(status.phase)) {
+    await finishUpgradeOperation(operationToken);
+    return;
+  }
+  if (activeUpgradeOperationToken === operationToken) {
+    globalThis.setTimeout(() => {
+      if (activeUpgradeOperationToken === operationToken) {
+        void pollUpgradeOperation(operationToken).catch((error) => {
+          upgradeActionStatus.textContent = `Could not poll upgrade status: ${hostError(error)}`;
+          upgradeActionStatus.className = "lifecycle-action-status error";
+        });
+      }
+    }, 250);
+  }
+}
+
+upgradeExecuteButton.addEventListener("click", async () => {
+  if (!preparedUpgrade || upgradeExecuteButton.disabled) return;
+  const request = {
+    plan_id: preparedUpgrade.plan_id,
+    confirmation_nonce: preparedUpgrade.confirmation_nonce,
+    publisher_key_confirmed: upgradePublisherConfirmation.checked,
+    capability_changes_confirmed: upgradeCapabilityConfirmation.checked,
+  };
+  upgradeExecuteButton.disabled = true;
+  upgradeReleaseButton.disabled = true;
+  upgradeDestinationButton.disabled = true;
+  upgradePrepareButton.disabled = true;
+  upgradeActionStatus.textContent = "Consuming the one-use authority and re-verifying both retained inputs…";
+  try {
+    const status = await invokeHost("execute_upgrade", { request });
+    activeUpgradeOperationToken = status.operation_token;
+    preparedUpgrade = null;
+    upgradeCancelButton.disabled = !status.cancellable;
+    upgradeBadge.textContent = compareLabel(status.phase);
+    upgradeBadge.className = "badge warn";
+    await pollUpgradeOperation(status.operation_token);
+  } catch (error) {
+    upgradeReleaseButton.disabled = false;
+    upgradeActionStatus.textContent = hostError(error);
+    upgradeActionStatus.className = "lifecycle-action-status error";
+    upgradeBadge.textContent = "Execution rejected";
+    upgradeBadge.className = "badge fail";
+  }
+});
+
+upgradeCancelButton.addEventListener("click", async () => {
+  if (!activeUpgradeOperationToken) return;
+  upgradeCancelButton.disabled = true;
+  try {
+    await invokeHost("cancel_upgrade_operation", {
+      request: { operation_token: activeUpgradeOperationToken },
+    });
+    upgradeActionStatus.textContent = "Cancellation requested. The held create-new publication becomes non-cancellable at the no-replace boundary.";
+  } catch (error) {
+    upgradeActionStatus.textContent = hostError(error);
+    upgradeActionStatus.className = "lifecycle-action-status error";
+  }
+});
+
 async function startSigningPicker(command, message) {
   signingActionStatus.textContent = message;
   signingActionStatus.className = "lifecycle-action-status";
@@ -2197,6 +2581,22 @@ if (typeof listen === "function") {
   }).catch((error) => {
     reconcileStatus.textContent = `Reconciliation progress channel unavailable: ${hostError(error)}`;
     reconcileStatus.className = "lifecycle-action-status error";
+  });
+  listen("capsule-upgrade-progress-v1", (event) => {
+    const progress = event.payload;
+    if (progress?.profile !== "org.sqlite-capsule.upgrade-progress/1"
+      || progress.operation_token !== activeUpgradeOperationToken) return;
+    const phaseLabel = compareLabel(progress.phase);
+    upgradeBadge.textContent = phaseLabel;
+    upgradeBadge.className = `badge ${progress.phase === "succeeded" ? "ok" : progress.phase === "failed" ? "fail" : "warn"}`;
+    upgradeStatus.textContent = `Create-new application upgrade · ${phaseLabel} · both inputs remain pinned read-only`;
+    upgradeCancelButton.disabled = !progress.cancellable;
+    if (["succeeded", "failed", "cancelled"].includes(progress.phase)) {
+      void finishUpgradeOperation(progress.operation_token);
+    }
+  }).catch((error) => {
+    upgradeActionStatus.textContent = `Upgrade progress channel unavailable: ${hostError(error)}`;
+    upgradeActionStatus.className = "lifecycle-action-status error";
   });
 }
 

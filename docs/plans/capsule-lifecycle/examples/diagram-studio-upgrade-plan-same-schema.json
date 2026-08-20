@@ -1,6 +1,5 @@
 {
   "profile": "org.sqlite-capsule.upgrade-plan/1",
-  "plan_id": "c5f44498-1a23-4c15-a384-e8a4782d0984",
   "source": {
     "file_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
@@ -9,85 +8,79 @@
     "app_version": "0.4.0",
     "application_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "publisher_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "signature_inventory_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+    "signature_count": 1,
     "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
     "data_schema_version": 1
   },
   "target_release": {
     "file_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-    "capsule_id": null,
-    "revision_id": null,
+    "capsule_id": "62287819-d084-4eb6-8e67-995385199dd2",
+    "revision_id": "4095f09e-da9a-43d0-a4fb-8efcaee77067",
     "app_id": "org.sqlite-capsule.diagram-studio",
     "app_version": "0.5.0",
     "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
     "publisher_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "signature_inventory_sha256": "3434343434343434343434343434343434343434343434343434343434343434",
+    "signature_count": 1,
     "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
     "data_schema_version": 1
   },
   "output": {
-    "path": "Payments architecture sketch-upgraded.capsule.sqlite",
-    "preserve_capsule_id": true,
-    "new_revision_id": "a742f286-1c77-4f92-a14d-25a49585ab1d",
-    "must_not_exist": true
+    "capsule_id": "c7e6586e-d489-48d0-b1a0-e98499fb542a",
+    "revision_id": "a742f286-1c77-4f92-a14d-25a49585ab1d",
+    "app_id": "org.sqlite-capsule.diagram-studio",
+    "app_version": "0.5.0",
+    "application_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "data_schema_id": "org.sqlite-capsule.diagram-studio-data",
+    "data_schema_version": 1,
+    "publish_mode": "create-new-no-replace"
   },
   "publisher_continuity": {
-    "state": "same-key",
-    "source_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
-    "target_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
-    "delegation_digest": null
+    "state": "same-accepted-key",
+    "accepted_key_id": "ed25519:sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "source_inventory_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+    "target_inventory_sha256": "3434343434343434343434343434343434343434343434343434343434343434"
   },
   "capability_delta": {
     "added": [],
-    "removed": [],
+    "removed": ["ui:legacy-toolbar"],
     "changed": [],
+    "source_permissions_sha256": "5656565656565656565656565656565656565656565656565656565656565656",
+    "target_permissions_sha256": "7878787878787878787878787878787878787878787878787878787878787878",
     "requires_review": false
   },
-  "migration_path": [],
+  "target_template_state_sha256": "9090909090909090909090909090909090909090909090909090909090909090",
   "dataset_actions": [
     {
       "dataset_id": "diagram-content",
       "policy": "copy",
       "action": "copy",
-      "reason": "The data schema is unchanged and the dataset is user-owned content."
+      "source": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 12, "state_sha256": "1111111111111111111111111111111111111111111111111111111111111111" },
+      "target": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 0, "state_sha256": "2222222222222222222222222222222222222222222222222222222222222222" },
+      "expected": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 12, "state_sha256": "1111111111111111111111111111111111111111111111111111111111111111" }
     },
     {
-      "dataset_id": "edit-history",
-      "policy": "copy",
-      "action": "copy",
-      "reason": "The user selected preservation of sensitive edit history."
+      "dataset_id": "release-index",
+      "policy": "target",
+      "action": "take-target",
+      "source": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 1, "state_sha256": "3333333333333333333333333333333333333333333333333333333333333333" },
+      "target": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 2, "state_sha256": "4444444444444444444444444444444444444444444444444444444444444444" },
+      "expected": { "profile": "org.sqlite-capsule.dataset-state/1", "row_count": 2, "state_sha256": "4444444444444444444444444444444444444444444444444444444444444444" }
     }
   ],
-  "checks": [
-    {
-      "stage": "source",
-      "check_id": "integrity",
-      "severity": "error"
-    },
-    {
-      "stage": "target-release",
-      "check_id": "signed-application",
-      "severity": "error"
-    },
-    {
-      "stage": "pre-publish",
-      "check_id": "foreign-keys",
-      "severity": "error"
-    },
-    {
-      "stage": "pre-publish",
-      "check_id": "target-application-digest",
-      "severity": "error"
-    },
-    {
-      "stage": "post-publish",
-      "check_id": "reopen-and-verify",
-      "severity": "error"
-    }
-  ],
+  "lineage": {
+    "event_id": "7685f06a-7dc6-4352-be91-bdb6e0e05081",
+    "operation": "application-upgrade",
+    "occurred_at": "2026-08-20T07:30:00Z",
+    "working_relation": "upgraded-from",
+    "release_relation": "application-release"
+  },
   "limits": {
     "max_input_bytes": 67108864,
     "max_output_bytes": 67108864,
-    "max_rows_written": 10000000,
-    "deadline_ms": 300000
+    "max_rows_written": 100000,
+    "deadline_ms": 30000
   },
-  "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  "review_digest": "abababababababababababababababababababababababababababababababab"
 }

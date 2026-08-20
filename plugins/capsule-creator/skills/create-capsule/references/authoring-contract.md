@@ -187,6 +187,34 @@ Cascades, `SET NULL`, `SET DEFAULT`, self-references and cycles remain valid
 SQLite schema choices but are an explicit `unsupported_operation` limitation
 for this reconcile profile.
 
+### Native same-schema application upgrade truth table
+
+M07 consumes two separately verified signed v0.3 files: the working source and
+an intentionally clean signed target release. They must have the same
+application ID, data-schema ID/version, exact physical schema and signed
+dataset/table/key/dependency structure. The target `app_version` must have
+strictly greater SemVer 2.0.0 precedence. One exact Ed25519 key ID must be
+explicitly accepted and valid in
+both complete signature inventories; publisher names, key labels and mutable
+lineage never select authority. The target's signed template-state proof must
+reproduce before any working rows are applied.
+
+| `upgrade_policy` | M07 same-schema action |
+| --- | --- |
+| `copy` | Replace the clean target dataset with the working source state. |
+| `target` | Keep the authenticated clean target state. |
+| `rebuild` | Keep the authenticated clean target state for application rebuild. |
+| `omit` | Require and retain an empty target dataset. |
+| `migrate` | Reject; restricted data-schema migration starts in M08. |
+| `forbid` | Reject the entire upgrade. |
+
+The host begins from a private target copy, preserves the target application,
+assets and exact signature inventory, preserves the working capsule/instance
+identity and profile, clears grants/change history/old lineage, and publishes a
+new revision with `upgraded-from` and `application-release` parents. The
+standalone plugin authors and verifies eligible releases but has no upgrade
+executor, Tauri surface or publisher-trust store.
+
 ## Domain model
 
 Use ordinary SQLite tables, indexes, and views. Every table must declare an

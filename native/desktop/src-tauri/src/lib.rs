@@ -4,6 +4,7 @@ mod copy_flow;
 pub mod overview;
 mod reconcile_flow;
 mod safe_image;
+mod upgrade_flow;
 
 use cabinet::{CabinetObservation, CabinetRecentCache, CabinetRecentSnapshot, LastObservedBadge};
 use compare_flow::{
@@ -28,6 +29,12 @@ use reconcile_flow::{
     ReconcileState, ReconcileThreeWayView, StartReconcileRequest, orient_handoff,
 };
 use safe_image::{SafeImageDerivative, SafeImageSelection, project_safe_image};
+use upgrade_flow::{
+    ChooseUpgradeDestinationRequest, ChooseUpgradeReleaseRequest, ExecuteUpgradeRequest,
+    PrepareUpgradeRequest, PreparedUpgradeView, UPGRADE_PROGRESS_EVENT, UpgradeCandidateView,
+    UpgradeDestinationView, UpgradeOperationPhase, UpgradeOperationRequest, UpgradeOperationStatus,
+    UpgradeProgressEvent, UpgradeState, accepted_common_publisher_key,
+};
 
 use std::{
     borrow::Cow,
@@ -1790,6 +1797,34 @@ fn native_e2e_reconcile_ancestor_path_from_process() -> Option<PathBuf> {
     )
 }
 
+#[cfg(debug_assertions)]
+fn native_e2e_upgrade_release_path_from_process() -> Option<PathBuf> {
+    native_e2e_compare_path(
+        cdp_e2e_debug_ports_from_process().is_some(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_UPGRADE_RELEASE_PATH"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn native_e2e_upgrade_release_path_from_process() -> Option<PathBuf> {
+    None
+}
+
+#[cfg(debug_assertions)]
+fn native_e2e_upgrade_output_path_from_process() -> Option<PathBuf> {
+    native_e2e_reconcile_path(
+        cdp_e2e_debug_ports_from_process().is_some(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_UPGRADE_OUTPUT_PATH"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn native_e2e_upgrade_output_path_from_process() -> Option<PathBuf> {
+    None
+}
+
 #[cfg(not(debug_assertions))]
 fn native_e2e_reconcile_ancestor_path_from_process() -> Option<PathBuf> {
     None
@@ -2150,6 +2185,11 @@ fn invalidate_copy_selection(app: &AppHandle, selection_id: Option<&str>) {
     }
     if let Some(reconcile) = app.try_state::<ReconcileState>()
         && let Ok(mut controller) = reconcile.0.lock()
+    {
+        controller.invalidate_selection(selection_id);
+    }
+    if let Some(upgrade) = app.try_state::<UpgradeState>()
+        && let Ok(mut controller) = upgrade.0.lock()
     {
         controller.invalidate_selection(selection_id);
     }
@@ -3409,6 +3449,288 @@ fn acknowledge_copy_result(
 }
 
 #[tauri::command]
+async fn choose_upgrade_release(
+    request: ChooseUpgradeReleaseRequest,
+    host: State<'_, Mutex<HostState>>,
+    upgrade: State<'_, UpgradeState>,
+    app: AppHandle,
+) -> Result<Option<UpgradeCandidateView>, WorkspaceError> {
+    let (source_path, source_identity, source_sha256) = {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        selected_copy_binding(&host, &request.selection_id)?
+    };
+    let target_path = if let Some(path) = native_e2e_upgrade_release_path_from_process() {
+        path
+    } else {
+        let picker_app = app.clone();
+        let selected = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+                .blocking_pick_file()
+        })
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let Some(selected) = selected else {
+            return Ok(None);
+        };
+        selected
+            .into_path()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?
+    };
+    let limits = WorkspaceLimits::default();
+    let cancellation = CancellationToken::new();
+    let source = VerifiedWorkspaceSource::open_with_control(&source_path, &limits, &cancellation)?;
+    source.assert_source_binding(&source_identity, &source_sha256)?;
+    let target = VerifiedWorkspaceSource::open_with_control(&target_path, &limits, &cancellation)?;
+    if source.source_identity() == target.source_identity() {
+        return Err(WorkspaceError::new(
+            WorkspaceErrorCode::DestinationAliasesInput,
+        ));
+    }
+    verify_template_state(&target, &TemplateStateLimits::default(), &cancellation)?;
+    let publisher_key_id = accepted_common_publisher_key(&source, &target)?;
+    let schema = target
+        .identity()
+        .overview
+        .data_schema
+        .as_ref()
+        .ok_or_else(|| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?;
+    let candidate_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + Duration::from_secs(5 * 60))
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let view = upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_candidate(
+            &request.selection_id,
+            target_path,
+            candidate_token,
+            publisher_key_id,
+            source.identity().app_version.clone(),
+            target.identity().app_version.clone(),
+            target.identity().app_id.clone(),
+            schema.data_schema_id.clone(),
+            schema.data_schema_version,
+            expires_at,
+        )?;
+    Ok(Some(view))
+}
+
+#[tauri::command]
+async fn choose_upgrade_destination(
+    request: ChooseUpgradeDestinationRequest,
+    upgrade: State<'_, UpgradeState>,
+    app: AppHandle,
+) -> Result<Option<UpgradeDestinationView>, WorkspaceError> {
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .candidate_target_path(&request.candidate_token)?;
+    let path = if let Some(path) = native_e2e_upgrade_output_path_from_process() {
+        path
+    } else {
+        let picker_app = app.clone();
+        let selected = tauri::async_runtime::spawn_blocking(move || {
+            picker_app
+                .dialog()
+                .file()
+                .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
+                .set_file_name("capsule-upgraded.sqlitecapsule")
+                .blocking_save_file()
+        })
+        .await
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let Some(selected) = selected else {
+            return Ok(None);
+        };
+        selected
+            .into_path()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InvalidContract))?
+    };
+    let destination_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + Duration::from_secs(5 * 60))
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .retain_destination(
+            &request.candidate_token,
+            destination_token,
+            path,
+            expires_at,
+        )
+        .map(Some)
+}
+
+#[tauri::command]
+fn prepare_upgrade(
+    request: PrepareUpgradeRequest,
+    host: State<'_, Mutex<HostState>>,
+    upgrade: State<'_, UpgradeState>,
+) -> Result<PreparedUpgradeView, WorkspaceError> {
+    let (source_path, source_identity, source_sha256) = {
+        let host = host
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        selected_copy_binding(&host, &request.selection_id)?
+    };
+    let plan_id = generate_uuid_v4()?;
+    let created_at = current_utc_seconds()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let expires_at = utc_seconds_at(SystemTime::now() + upgrade_flow::EXECUTION_LIFETIME)
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let nonce = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .prepare(
+            &request,
+            &source_path,
+            &source_identity,
+            &source_sha256,
+            &plan_id,
+            &created_at,
+            &expires_at,
+            &nonce,
+        )
+}
+
+fn emit_upgrade_progress(
+    app: &AppHandle,
+    operation_token: &str,
+    sequence: u64,
+    phase: UpgradeOperationPhase,
+    cancellable: bool,
+) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit(
+            UPGRADE_PROGRESS_EVENT,
+            UpgradeProgressEvent {
+                profile: "org.sqlite-capsule.upgrade-progress/1",
+                operation_token: operation_token.to_owned(),
+                sequence,
+                phase,
+                cancellable,
+            },
+        );
+    }
+}
+
+#[tauri::command]
+fn execute_upgrade(
+    request: ExecuteUpgradeRequest,
+    upgrade: State<'_, UpgradeState>,
+    app: AppHandle,
+) -> Result<UpgradeOperationStatus, WorkspaceError> {
+    let operation_token = generate_session_token()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+    let shared = upgrade.0.clone();
+    let (started, status) = {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let started = controller.start(&request, operation_token.clone())?;
+        let status = controller.status(&operation_token)?;
+        emit_upgrade_progress(
+            &app,
+            &operation_token,
+            0,
+            UpgradeOperationPhase::Queued,
+            true,
+        );
+        (started, status)
+    };
+    let worker_app = app.clone();
+    let worker_operation = operation_token.clone();
+    let worker_state = shared.clone();
+    let spawn = std::thread::Builder::new()
+        .name("sqlite-capsule-upgrade-operation".to_owned())
+        .stack_size(RUNTIME_WORKER_STACK_BYTES)
+        .spawn(move || {
+            let mut sequence = 0_u64;
+            let result = started.execute(|phase, cancellable| {
+                sequence = sequence.saturating_add(1);
+                if let Ok(mut controller) = worker_state.lock() {
+                    let _ = controller.update_phase(&worker_operation, phase, cancellable);
+                }
+                emit_upgrade_progress(&worker_app, &worker_operation, sequence, phase, cancellable);
+            });
+            let terminal = worker_state
+                .lock()
+                .ok()
+                .and_then(|mut controller| controller.finish(&worker_operation, result).ok());
+            if let Some(terminal) = terminal {
+                sequence = sequence.saturating_add(1);
+                emit_upgrade_progress(
+                    &worker_app,
+                    &worker_operation,
+                    sequence,
+                    terminal.phase,
+                    false,
+                );
+            }
+        });
+    if spawn.is_err() {
+        let mut controller = shared
+            .lock()
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        let _ = controller.finish(
+            &operation_token,
+            Err(WorkspaceError::new(WorkspaceErrorCode::InternalError)),
+        );
+        return Err(WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    }
+    Ok(status)
+}
+
+#[tauri::command]
+fn get_upgrade_operation(
+    request: UpgradeOperationRequest,
+    upgrade: State<'_, UpgradeState>,
+) -> Result<UpgradeOperationStatus, WorkspaceError> {
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .status(&request.operation_token)
+}
+
+#[tauri::command]
+fn cancel_upgrade_operation(
+    request: UpgradeOperationRequest,
+    upgrade: State<'_, UpgradeState>,
+) -> Result<(), WorkspaceError> {
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .cancel(&request.operation_token)
+}
+
+#[tauri::command]
+fn acknowledge_upgrade_result(
+    request: UpgradeOperationRequest,
+    upgrade: State<'_, UpgradeState>,
+) -> Result<(), WorkspaceError> {
+    upgrade
+        .0
+        .lock()
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?
+        .acknowledge(&request.operation_token)
+}
+
+#[tauri::command]
 fn lifecycle_status(
     state: State<'_, Mutex<HostState>>,
     app: AppHandle,
@@ -3469,6 +3791,22 @@ fn checkpoint_for_close_on_worker(bridge: Arc<Mutex<RuntimeBridge>>) -> Result<(
 }
 
 fn handle_close_request(app: &AppHandle, api: &tauri::CloseRequestApi) {
+    if let Some(upgrade) = app.try_state::<UpgradeState>() {
+        let can_close = upgrade
+            .0
+            .lock()
+            .map(|mut controller| controller.prepare_for_close())
+            .unwrap_or(false);
+        if !can_close {
+            api.prevent_close();
+            emit_host_message(
+                app,
+                "upgrade-close-pending",
+                "The application upgrade is being cancelled or finishing its create-new publication. Close again after the operation reaches a terminal state.",
+            );
+            return;
+        }
+    }
     if let Some(reconcile) = app.try_state::<ReconcileState>() {
         let can_close = reconcile
             .0
@@ -6211,6 +6549,7 @@ pub fn run() {
             app.manage(CopyState::default());
             app.manage(CompareState::default());
             app.manage(ReconcileState::default());
+            app.manage(UpgradeState::default());
             app.manage(UpdateCheckGate(AtomicBool::new(false)));
             app.manage(Mutex::new(HostUpdateFlow::default()));
             let window = app
@@ -6308,6 +6647,13 @@ pub fn run() {
             get_copy_operation,
             cancel_copy_operation,
             acknowledge_copy_result,
+            choose_upgrade_release,
+            choose_upgrade_destination,
+            prepare_upgrade,
+            execute_upgrade,
+            get_upgrade_operation,
+            cancel_upgrade_operation,
+            acknowledge_upgrade_result,
             lifecycle_status,
             update_status,
             check_host_update,

@@ -395,6 +395,27 @@ staleness, destination races and crashes remove or quarantine only private
 output state. Reconciliation commands and progress remain denied to the raw
 renderer.
 
+Same-schema application upgrade also has no input write or in-place mode. The
+host independently pins and exhaustively verifies the working source and clean
+target release, requires exact application/schema/data-contract compatibility
+and strictly increasing SemVer precedence, and reproduces the target's signed
+template-state proof. Publisher continuity is one exact accepted Ed25519 key ID
+with a valid matching signature in both complete inventories; publisher display
+metadata, key labels, lineage and host trust styling cannot substitute for that
+cryptographic fact. Capability additions or changes require a separate explicit
+confirmation bound into the prepared review.
+
+The serialized upgrade report is path-free, value-free and non-authoritative.
+The retained review and every durable typestate rebind both inputs, the chosen
+publisher key, exhaustive source/target/expected dataset-state vectors,
+target-signed policy actions, resource limits and create-new destination.
+Transformation begins with the clean target, preserves its signed application
+and signatures, applies only declared source-owned mutable state, retains the
+working instance/profile, clears grants/change history/old lineage, compacts and
+reopens the result, then publishes no-replace. `migrate` and `forbid` fail
+closed in M07. Upgrade commands and progress events are available only to the
+trusted `main` shell; the raw Wry renderer has no handler, listener or authority.
+
 The native CLI and trusted desktop shell share the product-independent
 `sqlite-capsule-signing` file workflow. The desktop accepts bounded raw-seed,
 hex-seed, and Ed25519 PKCS#8 PEM/DER files through a Rust-owned picker. It keeps

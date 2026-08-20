@@ -202,13 +202,18 @@
       "depends_on": [
         "M06"
       ],
-      "state": "pending",
-      "started_at": null,
-      "completed_at": null,
+      "state": "complete",
+      "started_at": "2026-08-20T07:05:16Z",
+      "completed_at": "2026-08-20T10:15:17Z",
       "result_path": "milestones/M07-application-upgrade-same-schema/RESULT.md",
-      "evidence_paths": [],
-      "last_test_summary": null,
-      "handoff": null
+      "evidence_paths": [
+        "docs/plans/capsule-lifecycle/evidence/M07/final-gates.json",
+        "docs/plans/capsule-lifecycle/evidence/M07/consolidated-review.md",
+        "docs/plans/capsule-lifecycle/evidence/M07/ui/native-m07-upgrade-evidence.json",
+        "docs/plans/capsule-lifecycle/evidence/M07/20260820T101304Z-final-nsis-installer/release-evidence.json"
+      ],
+      "last_test_summary": "Same-schema target-derived application upgrade, strict publisher/SemVer/schema admission, signed dataset policies, opaque trusted-shell authority and create-new verified publication delivered; 202 Python, 388 Rust, 63 browser, trusted/raw Windows E2E, contracts, generated artefacts, supply-chain and NSIS gates pass.",
+      "handoff": "Start M08 by freezing a signed value-free migration-plan contract for one explicit forward data-schema transition, binding exact source/target schemas, retained input/application hashes, declared operations, dataset state proofs, limits and expected output before implementing an executor."
     },
     {
       "id": "M08",

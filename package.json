@@ -16,7 +16,8 @@
     "test:native:window": "node tests/native/standalone-window.e2e.mjs",
     "test:native:raw": "node tests/native/raw-child.e2e.mjs",
     "test:native:reconcile": "node tests/native/reconcile.e2e.mjs",
-    "test:native:reconcile-finalization": "node tests/native/reconcile-finalization.test.mjs"
+    "test:native:reconcile-finalization": "node tests/native/reconcile-finalization.test.mjs",
+    "test:native:upgrade": "node tests/native/upgrade.e2e.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

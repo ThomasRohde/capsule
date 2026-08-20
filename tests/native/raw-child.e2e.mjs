@@ -431,6 +431,13 @@ try {
         "get_copy_operation",
         "cancel_copy_operation",
         "acknowledge_copy_result",
+        "choose_upgrade_release",
+        "choose_upgrade_destination",
+        "prepare_upgrade",
+        "execute_upgrade",
+        "get_upgrade_operation",
+        "cancel_upgrade_operation",
+        "acknowledge_upgrade_result",
       ];
       const results = {};
       for (const method of methods) {
@@ -468,6 +475,13 @@ try {
       "get_copy_operation",
       "cancel_copy_operation",
       "acknowledge_copy_result",
+      "choose_upgrade_release",
+      "choose_upgrade_destination",
+      "prepare_upgrade",
+      "execute_upgrade",
+      "get_upgrade_operation",
+      "cancel_upgrade_operation",
+      "acknowledge_upgrade_result",
     ].map((method) => [method, "rejected"])),
     "raw named bridge accepted a trusted-shell lifecycle method",
   );
@@ -527,7 +541,9 @@ try {
         "get_reconcile_options", "start_reconcile_review", "choose_reconcile_destination", "choose_reconcile_ancestor",
         "prepare_reconcile", "execute_reconcile", "get_reconcile_operation",
         "cancel_reconcile_operation", "acknowledge_reconcile_result",
-        "prepare_copy",
+        "prepare_copy", "choose_upgrade_release", "choose_upgrade_destination",
+        "prepare_upgrade", "execute_upgrade", "get_upgrade_operation",
+        "cancel_upgrade_operation", "acknowledge_upgrade_result",
       ];
       const results = {};
       for (const method of methods) {
@@ -546,7 +562,9 @@ try {
       "get_reconcile_options", "start_reconcile_review", "choose_reconcile_destination", "choose_reconcile_ancestor",
       "prepare_reconcile", "execute_reconcile", "get_reconcile_operation",
       "cancel_reconcile_operation", "acknowledge_reconcile_result",
-      "prepare_copy",
+      "prepare_copy", "choose_upgrade_release", "choose_upgrade_destination",
+      "prepare_upgrade", "execute_upgrade", "get_upgrade_operation",
+      "cancel_upgrade_operation", "acknowledge_upgrade_result",
     ].map((method) => [method, "rejected"])),
     "authorized raw renderer accepted a trusted-shell lifecycle method",
   );

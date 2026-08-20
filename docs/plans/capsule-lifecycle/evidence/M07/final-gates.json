@@ -1,0 +1,124 @@
+{
+  "profile": "org.sqlite-capsule.milestone-gate-summary/1",
+  "milestone": "M07",
+  "completed_at": "2026-08-20T10:15:17Z",
+  "repository": {
+    "branch": "codex/m07-same-schema-upgrade",
+    "base_commit": "28765f1029ec16a95d5e0ed14ed7428649449d1d",
+    "programme_start_commit": "e5b1170b410f310dafd5726cf7697dea58223081",
+    "protocol_commit": "4fbe04a",
+    "source_dirty_during_qualification": true
+  },
+  "environment": {
+    "os": "Windows",
+    "target": "x86_64-pc-windows-msvc",
+    "installer_profile": "debug",
+    "installer_signing": "development-unsigned"
+  },
+  "gates": [
+    {
+      "command": "python -m unittest discover -s tests -v",
+      "result": "pass",
+      "summary": "202 passed; 1 optional Python jsonschema test skipped after regenerating the stale example/export artifacts identified by the first full run"
+    },
+    {
+      "command": "C:\\Python312\\python.exe docs/plans/capsule-lifecycle/tools/codex_lifecycle/validate_lifecycle_specs.py --require-jsonschema",
+      "result": "pass",
+      "summary": "228 checks/records after final evidence/status; 20 examples schema-valid"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "cargo check --offline --workspace --all-targets",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "cargo test --offline --workspace --all-targets -- --test-threads=1",
+      "cwd": "native",
+      "result": "pass",
+      "summary": "388 passed after correcting lifecycle error-catalogue ordering exposed by the first full run and rerunning the affected test"
+    },
+    {
+      "command": "cargo clippy --offline --workspace --all-targets -- -D warnings",
+      "cwd": "native",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:browser",
+      "result": "pass",
+      "summary": "4 passed with real pixel comparisons"
+    },
+    {
+      "command": "npm run test:browser:html",
+      "result": "pass",
+      "summary": "59 passed; 13 explicit project/platform-conditional skips"
+    },
+    {
+      "command": "npm run test:native",
+      "result": "pass",
+      "summary": "6 WebDriver trusted-shell checks passed"
+    },
+    {
+      "command": "npm run test:native:upgrade",
+      "result": "pass",
+      "summary": "same-schema upgrade passed with exact application/signature/data/profile/identity/lineage and unchanged-input evidence, including 200 percent layout",
+      "evidence": "ui/native-m07-upgrade-evidence.json"
+    },
+    {
+      "command": "npm run test:native:raw",
+      "result": "pass",
+      "summary": "full raw suite passed; all seven upgrade commands denied in locked and authorized raw Wry states"
+    },
+    {
+      "command": "npm run test:native:reconcile-finalization",
+      "result": "pass"
+    },
+    {
+      "command": "python -m unittest tests.test_native_ui -v",
+      "result": "pass",
+      "summary": "7 passed after the final trusted-shell hidden-state CSS correction"
+    },
+    {
+      "command": "python tools/build_example.py --check",
+      "result": "pass"
+    },
+    {
+      "command": "python tools/build_exports.py --check",
+      "result": "pass"
+    },
+    {
+      "command": "python tools/capsule.py verify capsules/diagram-studio.capsule.sqlite",
+      "result": "pass",
+      "summary": "18 checks"
+    },
+    {
+      "command": "python native/tools/generate_sbom.py --check",
+      "result": "pass"
+    },
+    {
+      "command": "python native/tools/generate_license_report.py --check",
+      "result": "pass"
+    },
+    {
+      "command": "python native/tools/check_rustsec.py --advisory-db C:/Users/thoma/Projects/sqlite-capsule/.tmp/rustsec-advisory-db",
+      "result": "pass",
+      "summary": "no vulnerabilities; 17 exact reviewed warnings"
+    },
+    {
+      "command": "python native/tools/build_installers.py --bundles nsis",
+      "result": "pass",
+      "summary": "one x64 NSIS build/export; no MSI; development-unsigned",
+      "evidence": "20260820T101304Z-final-nsis-installer/release-evidence.json"
+    }
+  ],
+  "notes": [
+    "Focused upgrade tests passed 10/10, desktop upgrade authority tests 4/4, UI/plugin tests 26/26, and both package-scoped checks passed before the source freeze.",
+    "The final Python run first exposed generated-artifact staleness; only the generated capsule/exports were rebuilt and the directly affected freshness test was rerun.",
+    "The final Rust run first exposed ordering drift in the lifecycle error catalogue; the production catalogue was corrected and only the directly affected test was rerun.",
+    "Playwright required the established elevated Windows browser context after sandbox process creation returned EPERM."
+  ]
+}

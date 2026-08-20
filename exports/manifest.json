@@ -3,64 +3,64 @@
   "created_at": "2026-08-08T12:00:00Z",
   "files": [
     {
-      "bytes": 1026814,
+      "bytes": 1029676,
       "capsule_checks": 18,
       "components": {
-        "database_compressed_bytes": 156575,
-        "database_uncompressed_bytes": 913408,
+        "database_compressed_bytes": 158692,
+        "database_uncompressed_bytes": 921600,
         "loader_bytes": 31079,
         "notices_bytes": 13139,
         "sqlite_js_bytes": 578559,
         "sqlite_wasm_bytes": 864752,
         "worker_bytes": 37435
       },
-      "database_sha256": "76c883e39d6d9617919fe0f3c1f1974e63b97c9377fb39d4cb3e1f6031890e2e",
+      "database_sha256": "567b4a6fb1c22d16d47baee46ac2ac60542f044ee65c70942fe1df3b76f10586",
       "path": "diagram-studio-view.html",
       "profile": "view",
       "revision": 1,
-      "sha256": "2b3e1c914d36afbc99d5c513ee6c602ac7e13c99d75a77c926d2ecd2c52ae884",
+      "sha256": "826a709d6bd78c017f2fc414bddf6e580a4248794e7e0954f754f3cf21e947f3",
       "verified": true
     },
     {
-      "bytes": 1026842,
+      "bytes": 1029704,
       "capsule_checks": 18,
       "components": {
-        "database_compressed_bytes": 156575,
-        "database_uncompressed_bytes": 913408,
+        "database_compressed_bytes": 158692,
+        "database_uncompressed_bytes": 921600,
         "loader_bytes": 31079,
         "notices_bytes": 13139,
         "sqlite_js_bytes": 578559,
         "sqlite_wasm_bytes": 864752,
         "worker_bytes": 37435
       },
-      "database_sha256": "76c883e39d6d9617919fe0f3c1f1974e63b97c9377fb39d4cb3e1f6031890e2e",
+      "database_sha256": "567b4a6fb1c22d16d47baee46ac2ac60542f044ee65c70942fe1df3b76f10586",
       "path": "diagram-studio-interactive.html",
       "profile": "interactive",
       "revision": 1,
-      "sha256": "62308a3272ce557650febda659dfcfd7209f4a8c9900521eb7c0378490aa9d3f",
+      "sha256": "1e771333b06be48f9a4bded1c841dcdb8745fe440a667f285456cf94bdd13ede",
       "verified": true
     },
     {
-      "bytes": 1026830,
+      "bytes": 1029692,
       "capsule_checks": 18,
       "components": {
-        "database_compressed_bytes": 156575,
-        "database_uncompressed_bytes": 913408,
+        "database_compressed_bytes": 158692,
+        "database_uncompressed_bytes": 921600,
         "loader_bytes": 31079,
         "notices_bytes": 13139,
         "sqlite_js_bytes": 578559,
         "sqlite_wasm_bytes": 864752,
         "worker_bytes": 37435
       },
-      "database_sha256": "76c883e39d6d9617919fe0f3c1f1974e63b97c9377fb39d4cb3e1f6031890e2e",
+      "database_sha256": "567b4a6fb1c22d16d47baee46ac2ac60542f044ee65c70942fe1df3b76f10586",
       "path": "diagram-studio-editable.html",
       "profile": "editable",
       "revision": 1,
-      "sha256": "d7540f13bf1440bb140a4b97100e303203140701358ac6573a2df2adaa1d1b83",
+      "sha256": "84aa9b2edec2f48f52199bcc437ff12fc57f10f60266e1146e9dc94efe4ce8e6",
       "verified": true
     }
   ],
   "source": "capsules/diagram-studio.capsule.sqlite",
-  "source_sha256": "76c883e39d6d9617919fe0f3c1f1974e63b97c9377fb39d4cb3e1f6031890e2e",
+  "source_sha256": "567b4a6fb1c22d16d47baee46ac2ac60542f044ee65c70942fe1df3b76f10586",
   "sqlite_wasm_version": "3.53.0-build1"
 }

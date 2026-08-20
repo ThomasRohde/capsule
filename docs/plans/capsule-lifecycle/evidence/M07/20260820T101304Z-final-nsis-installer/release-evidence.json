@@ -1,0 +1,37 @@
+{
+  "format": "org.sqlite-capsule.host-build-evidence/0.2",
+  "host": {
+    "identifier": "org.sqlite-capsule.host",
+    "product_name": "SQLite Capsule Host",
+    "version": "0.3.0"
+  },
+  "build": {
+    "platform": "windows",
+    "target": "x86_64-pc-windows-msvc",
+    "source_revision": "28765f1029ec16a95d5e0ed14ed7428649449d1d",
+    "source_dirty": true,
+    "development_unsigned": true,
+    "platform_signing": "not_claimed"
+  },
+  "supply_chain": {
+    "cyclonedx_sbom": {
+      "path": "sbom.cdx.json",
+      "bytes": 803283,
+      "sha256": "55d8a22246b0ed16d836fbeaf4c803a68ac957ce4f655c21ce7dd4cc0c959c22"
+    },
+    "third_party_licenses": {
+      "path": "THIRD_PARTY_LICENSES.md",
+      "bytes": 63594,
+      "sha256": "1fe2d4078ba130c3cb70e37e51e89d88bae15cb3cca0f552e702199c579cb643"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "SQLite Capsule Host_0.3.0_x64-setup.exe",
+      "stable_output": "capsules/sqlite-capsule-host-setup.exe",
+      "kind": "windows-nsis",
+      "bytes": 7946886,
+      "sha256": "823c455159abe2fa6f4eedfc54c8782ea0a2ea6301f9e96e61b9f921f12c2896"
+    }
+  ]
+}

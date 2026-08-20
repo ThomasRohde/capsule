@@ -23,6 +23,7 @@ mod publication;
 mod reconcile;
 mod semantic_copy;
 mod template_state;
+mod upgrade;
 
 use std::{
     path::Path,
@@ -118,6 +119,12 @@ pub use template_state::{
     DATASET_STATE_PROFILE, TEMPLATE_PLATFORM_RESET_PROFILE, TEMPLATE_STATE_DOC_SLUG,
     TEMPLATE_STATE_PROFILE, TemplateDatasetDisposition, TemplateDatasetProof, TemplateStateLimits,
     TemplateStateProof, verify_template_state,
+};
+pub use upgrade::{
+    APPLICATION_UPGRADE_REVIEW_PROFILE, CapabilityDelta, PreparedUpgrade, PublishedUpgrade,
+    UpgradeApproval, UpgradeDatasetAction, UpgradeDatasetDecision, UpgradeInputRef,
+    UpgradePlanRequest, UpgradePublisherContinuity, UpgradeReview, UpgradeReviewReport,
+    UpgradeStaging, ValidatedUpgrade, parse_upgrade_plan, prepare_upgrade_review,
 };
 
 const HARD_MAX_DEADLINE: Duration = Duration::from_secs(30);
@@ -479,6 +486,17 @@ impl VerifiedWorkspaceSource {
                 .signature_reports
                 .iter()
                 .all(|report| report.cryptographically_valid && report.digest_matches)
+    }
+
+    /// Bounded cryptographic key identifiers from the retained verified
+    /// snapshot. These are evidence for a separate host-policy trust decision;
+    /// they do not confer trust by themselves.
+    pub fn valid_signature_key_ids(&self) -> Vec<String> {
+        self.signature_reports
+            .iter()
+            .filter(|report| report.cryptographically_valid && report.digest_matches)
+            .map(|report| report.key_id.clone())
+            .collect()
     }
 
     pub fn data_contract(&self) -> &DataContract {
