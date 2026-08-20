@@ -2864,6 +2864,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="strict")
     parser = build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
     capsule_path = args.capsule.expanduser().resolve()

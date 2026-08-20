@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-lifecycle"
-version = "0.4.0"
+version = "0.4.1"
 description = "Pinned source identity and one-writer coordination for SQLite Capsules"
 edition.workspace = true
 license.workspace = true

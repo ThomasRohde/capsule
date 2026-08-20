@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-core"
-version = "0.4.0"
+version = "0.4.1"
 description = "Product-independent native inspection and runtime core for SQLite Capsules"
 edition.workspace = true
 license.workspace = true
