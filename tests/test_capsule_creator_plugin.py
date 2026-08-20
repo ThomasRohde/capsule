@@ -1379,6 +1379,11 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
             "three-way immutable-field conflict permits keep-target only",
             "has no reconcile",
             "executor or Tauri dependency",
+            "Native same-schema application upgrade truth table",
+            "SemVer 2.0.0",
+            "never select authority",
+            "`migrate` | Reject; restricted data-schema migration starts in M08",
+            "has no upgrade",
         ):
             self.assertIn(marker, contract)
         self.assertIn("re-derives signed dataset actions", runtime)
@@ -1386,12 +1391,18 @@ class CapsuleCreatorPluginTests(unittest.TestCase):
         self.assertIn("Reconciliation is also host-only", runtime)
         self.assertIn("value-free canonical plan", runtime)
         self.assertIn("publishes only a new", runtime)
+        self.assertIn("Same-schema application upgrade is likewise host-only", runtime)
+        self.assertIn("review is not authority", runtime)
+        self.assertIn("rejects `migrate` and `forbid`", runtime)
         self.assertIn("does not execute lifecycle copies", skill_text)
         self.assertIn("signed disclosure ceiling", skill_text)
         self.assertIn("Application expansion is value-free", skill_text)
         self.assertIn("signed transformation authority", skill_text)
         self.assertIn("never applies a", skill_text)
         self.assertIn("reconciliation", skill_text)
+        self.assertIn("same-schema application-upgrade target", skill_text)
+        self.assertIn("strictly newer SemVer version", skill_text)
+        self.assertIn("executes an upgrade", skill_text)
 
 
 if __name__ == "__main__":

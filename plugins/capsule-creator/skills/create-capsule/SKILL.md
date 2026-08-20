@@ -55,6 +55,15 @@ exact ancestor. Three-way requires row/field comparison. Keep timestamps and
 non-semantic noise ignored, and mark identity/ownership columns immutable;
 immutable conflicts can only keep the target. The plugin never applies a
 reconciliation or accepts lineage as ancestor proof.
+For a same-schema application-upgrade target, author an intentionally clean
+signed v0.3 `--template` release with the same application, exact schema and
+dataset/table/key/dependency structure, a strictly newer SemVer version, and an
+Ed25519 key accepted for the working release. Review every signed
+`upgrade_policy`: `copy` carries working state, `target`/`rebuild` retain
+authenticated target state, `omit` stays empty, and `migrate`/`forbid` make M07
+fail closed. The plugin never executes an upgrade or treats publisher names or
+mutable lineage as key
+authority.
 
 ## Workflow
 

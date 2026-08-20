@@ -29,7 +29,7 @@ signature contracts.
 | `reconcile-plan-v1.schema.json` | Value-free reconcile payload bound by a generic lifecycle plan |
 | `tauri-reconcile-v1.schema.json` | Strict token-only trusted-shell reconcile requests, two-/three-way review, progress and status projections |
 | `cli-reconcile-v1.schema.json` | Bounded value-free CLI reconciliation candidate, conflict, review and verified-result projections |
-| `upgrade-plan-v1.schema.json` | Application rebase plan |
+| `upgrade-plan-v1.schema.json` | Path/value-free same-schema application-upgrade review bound to a generic lifecycle plan |
 | `capsule-migration-v0.3.schema.json` | Restricted declarative migration |
 | `copy-preview-v1.schema.json` | Non-authoritative bounded copy review projection |
 | `exact-copy-preview-v1.schema.json` | Path-free byte-exact duplicate review projection |
@@ -54,3 +54,6 @@ signature contracts.
   it binds exactly one canonical `reconcile-payload/1` digest. The payload has
   no paths, raw keys, raw values, SQL or output capability and cannot be
   executed independently.
+- Same-schema upgrade uses the same separation: the serialised
+  `upgrade-plan/1` is non-authoritative review evidence, while retained verified
+  inputs, accepted publisher key and destination capability remain host-owned.

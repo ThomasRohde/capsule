@@ -14,6 +14,7 @@ HOST_PERMISSION = (
 )
 NATIVE_SHELL = ROOT / "native" / "desktop" / "src-tauri" / "src" / "lib.rs"
 RECONCILE_FLOW = ROOT / "native" / "desktop" / "src-tauri" / "src" / "reconcile_flow.rs"
+UPGRADE_FLOW = ROOT / "native" / "desktop" / "src-tauri" / "src" / "upgrade_flow.rs"
 NATIVE_ENTRYPOINT = ROOT / "native" / "desktop" / "src-tauri" / "src" / "main.rs"
 HOST_CAPABILITY = (
     ROOT / "native" / "desktop" / "src-tauri" / "capabilities" / "host-shell.json"
@@ -103,6 +104,11 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("Output identity preview", html)
         self.assertIn("Conflicts and resolutions", html)
         self.assertIn("Evidence and postconditions", html)
+        self.assertIn("Upgrade the application in a new copy", html)
+        self.assertIn("Exhaustive dataset actions", html)
+        self.assertIn("Same-schema upgrades accept only a strictly newer SemVer release", html)
+        for milestone in ("M04", "M05", "M07", "M08"):
+            self.assertNotIn(milestone, html, "programme milestone IDs must not appear in product copy")
         self.assertIn("Existing files and the source path are never replaced", html)
         self.assertIn("Separate application window · hidden until authorised", html)
         self.assertIn("opens maximized in its own native window", html)
@@ -219,6 +225,16 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("reconcileFinalizations.get(operationToken)", script)
         self.assertIn("terminalEventFinalization", script)
         self.assertIn("globalThis.setTimeout(() =>", script)
+        self.assertIn('invokeHost("choose_upgrade_release"', script)
+        self.assertIn('invokeHost("choose_upgrade_destination"', script)
+        self.assertIn('invokeHost("prepare_upgrade"', script)
+        self.assertIn('invokeHost("execute_upgrade"', script)
+        self.assertIn('listen("capsule-upgrade-progress-v1"', script)
+        self.assertIn('invokeHost("get_upgrade_operation"', script)
+        self.assertIn('invokeHost("cancel_upgrade_operation"', script)
+        self.assertIn('invokeHost("acknowledge_upgrade_result"', script)
+        self.assertIn("oncePerUpgradeOperation(operationToken", script)
+        self.assertIn("upgradeFinalizations.get(operationToken)", script)
         self.assertIn("Sensitive values remain unavailable until the explicit reveal", script)
         self.assertIn('document.createElement("bdi")', script)
         self.assertIn('invokeHost("choose_copy_destination"', script)
@@ -285,6 +301,13 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn('"get_copy_operation"', permission)
         self.assertIn('"cancel_copy_operation"', permission)
         self.assertIn('"acknowledge_copy_result"', permission)
+        self.assertIn('"choose_upgrade_release"', permission)
+        self.assertIn('"choose_upgrade_destination"', permission)
+        self.assertIn('"prepare_upgrade"', permission)
+        self.assertIn('"execute_upgrade"', permission)
+        self.assertIn('"get_upgrade_operation"', permission)
+        self.assertIn('"cancel_upgrade_operation"', permission)
+        self.assertIn('"acknowledge_upgrade_result"', permission)
         self.assertIn('"open_recent_capsule"', permission)
         self.assertIn('"open_selected_capsule"', permission)
         self.assertIn('"recover_selected_capsule"', permission)
@@ -368,6 +391,33 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertIn("prepare_signing_copy(", native_shell)
         self.assertIn("prepared.sign(key)", native_shell)
 
+    def test_upgrade_renderer_contract_is_opaque_and_main_only(self) -> None:
+        source = UPGRADE_FLOW.read_text(encoding="utf-8")
+        self.assertIn("pub(crate) struct PrepareUpgradeRequest", source)
+        self.assertIn("pub selection_id: String", source)
+        self.assertIn("pub candidate_token: String", source)
+        self.assertIn("pub destination_token: String", source)
+        request_block = source.split("pub(crate) struct PrepareUpgradeRequest", 1)[1].split("}", 1)[0]
+        for forbidden in (
+            "PathBuf",
+            "LifecyclePlan",
+            "publisher_key_id",
+            "file_sha256",
+            "application_digest",
+            "sql",
+        ):
+            self.assertNotIn(forbidden, request_block)
+        execute_block = source.split("pub(crate) struct ExecuteUpgradeRequest", 1)[1].split("}", 1)[0]
+        self.assertIn("publisher_key_confirmed: bool", execute_block)
+        self.assertIn("capability_changes_confirmed: bool", execute_block)
+        self.assertNotIn("accepted_publisher_key_id", execute_block)
+        self.assertIn("EXECUTION_LIFETIME: Duration = Duration::from_secs(30)", source)
+        capability = json.loads(HOST_CAPABILITY.read_text(encoding="utf-8"))
+        self.assertEqual(capability["webviews"], ["main"])
+        native_shell = NATIVE_SHELL.read_text(encoding="utf-8")
+        self.assertIn("app.manage(UpgradeState::default())", native_shell)
+        self.assertIn("controller.prepare_for_close()", native_shell)
+
     def test_native_webdriver_gate_adds_no_application_ipc_surface(self) -> None:
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         self.assertEqual(
@@ -389,6 +439,10 @@ class NativeTrustedUiAccessibilityTests(unittest.TestCase):
         self.assertEqual(
             package["scripts"]["test:native:reconcile-finalization"],
             "node tests/native/reconcile-finalization.test.mjs",
+        )
+        self.assertEqual(
+            package["scripts"]["test:native:upgrade"],
+            "node tests/native/upgrade.e2e.mjs",
         )
         for dependency in (
             "@wdio/cli",

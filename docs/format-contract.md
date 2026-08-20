@@ -242,6 +242,35 @@ ordinary domain rows. Interoperability vectors and the mutation matrix live in
 `compatibility/signed-app-v0.3/`. The v0.2 stream, contexts, table order, and
 golden bytes remain unchanged.
 
+### Same-schema application upgrade
+
+The versioned M07 operation profile is
+`application-upgrade-same-schema-v1`. An eligible pair is signed format v0.3,
+has the same `app_id`, data-schema ID/version, exact structural schema and
+signed dataset/table/key/dependency structure, and names a target `app_version`
+with strictly greater SemVer 2.0.0 precedence. One host-selected accepted
+Ed25519 key ID must have a
+valid, digest-matching signature in both complete inventories. Publisher names,
+publisher IDs and mutable lineage are review metadata, not key authority.
+
+The target must reproduce its authenticated clean-template state before any
+working rows are applied. Its signed dataset `upgrade_policy` is exhaustive:
+`copy` replaces clean target rows with the working source state, `target` keeps
+the clean target state, `rebuild` also keeps the authenticated clean target
+state for a later application rebuild, and `omit` leaves the dataset empty.
+`migrate` and `forbid` fail closed in this same-schema profile. Required
+datasets, declared dependencies and restrictive foreign keys remain enforced.
+
+The bounded `org.sqlite-capsule.upgrade-plan/1` JSON object is review evidence,
+not execution authority. It contains no SQL, raw values, private keys or
+filesystem capability. A successful create-new output preserves the source
+capsule and mutable instance identity, uses the target application/profile,
+assets and exact signature inventory, creates a fresh revision, clears grants
+and change history, and replaces old lineage with one `application-upgrade`
+event whose ordered parents are `upgraded-from` and `application-release`.
+The normative serialised shape is
+[`plans/capsule-lifecycle/contracts/upgrade-plan-v1.schema.json`](plans/capsule-lifecycle/contracts/upgrade-plan-v1.schema.json).
+
 ### Authenticated clean-template state
 
 Format 0.3 may designate an intentionally clean seed release with one reserved

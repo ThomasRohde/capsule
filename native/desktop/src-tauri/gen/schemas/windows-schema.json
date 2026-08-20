@@ -177,10 +177,10 @@
       "description": "Permission identifier",
       "oneOf": [
         {
-          "description": "Allows only the trusted bundled main host shell to open a user-selected capsule, read sanitized launch, lifecycle, comparison, reconciliation, signing, and host-update reports, use host-owned pickers, create and verify new copies under one-use authority, record an explicit first-open decision, restore a verified copy, export a redacted support bundle, and administer local trust with bounded actions. Raw application WebViews receive none of these commands.",
+          "description": "Allows only the trusted bundled main host shell to open a user-selected capsule, read sanitized launch, lifecycle, comparison, reconciliation, application-upgrade, signing, and host-update reports, use host-owned pickers, create and verify new copies under one-use authority, record an explicit first-open decision, restore a verified copy, export a redacted support bundle, and administer local trust with bounded actions. Raw application WebViews receive none of these commands.",
           "type": "string",
           "const": "allow-host-first-open",
-          "markdownDescription": "Allows only the trusted bundled main host shell to open a user-selected capsule, read sanitized launch, lifecycle, comparison, reconciliation, signing, and host-update reports, use host-owned pickers, create and verify new copies under one-use authority, record an explicit first-open decision, restore a verified copy, export a redacted support bundle, and administer local trust with bounded actions. Raw application WebViews receive none of these commands."
+          "markdownDescription": "Allows only the trusted bundled main host shell to open a user-selected capsule, read sanitized launch, lifecycle, comparison, reconciliation, application-upgrade, signing, and host-update reports, use host-owned pickers, create and verify new copies under one-use authority, record an explicit first-open decision, restore a verified copy, export a redacted support bundle, and administer local trust with bounded actions. Raw application WebViews receive none of these commands."
         },
         {
           "description": "Enables the startup_report command without any pre-configured scope.",

@@ -86,6 +86,10 @@ error_catalogue! {
         "capability_review_required", "trust", true,
         "The target release requests changed capabilities that require review."
     ),
+    VersionNotNewer => (
+        "version_not_newer", "compatibility", false,
+        "The target application version is not strictly newer under SemVer precedence."
+    ),
     MigrationPathMissing => (
         "migration_path_missing", "migration", false,
         "No verified migration path exists between the data schema versions."

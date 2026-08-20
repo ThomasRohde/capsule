@@ -72,6 +72,20 @@ Dependencies must reflect every cross-dataset reference. The creator plugin
 authors and verifies this signed authority but never reconciles files itself;
 the native host always creates a new target-derived copy.
 
+For an application release intended as an M07 upgrade target, build a clean
+v0.3 `--template` project with the same `app_id`, data-schema ID/version, exact
+domain schema and dataset/table/key/dependency structure as the working
+release. Set `app_version` to a strictly newer SemVer 2.0.0 version, classify
+every clean dataset in the template-state proof, and sign the finished
+application compartment with an Ed25519 key also accepted for the working
+release. Choose each signed
+`upgrade_policy` deliberately: `copy` carries working rows, `target` and
+`rebuild` keep authenticated target rows, and `omit` keeps the dataset empty.
+`migrate` and `forbid` make the release ineligible for M07; schema changes and
+restricted migration declarations belong to M08. The authoring plugin creates
+and verifies release inputs but does not execute upgrades or infer publisher
+trust.
+
 The generated source separates stable identity, domain SQL, seed rows, offline
 browser assets, named endpoints, application checks, prompts, documents, and
 runbooks. The builder embeds its bundled generic Python host and browser client,

@@ -94,6 +94,18 @@ cycles are valid SQLite authoring choices but make reconciliation unavailable
 with `unsupported_operation`; this is a host capability limit, not permission
 for the plugin to weaken the declared schema.
 
+Same-schema application upgrade is likewise host-only. Its bounded serialized
+review is not authority: Rust retains both verified inputs, the exact accepted
+publisher key and create-new destination. Eligibility requires matching signed
+v0.3 application/schema and dataset/table/key/dependency identity, a strictly
+newer SemVer target,
+and reproduced authenticated clean-template state. The host re-derives every
+target-signed `upgrade_policy`, rejects `migrate` and `forbid`, starts from the
+target release, preserves its signed application/signatures, and carries only
+declared working mutable state. Capability additions or changes need a separate
+explicit confirmation. The browser app and standalone plugin receive no
+upgrade path, token, data values or execution capability.
+
 ## Platform objects
 
 | Object | Contract |

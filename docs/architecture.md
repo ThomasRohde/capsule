@@ -181,6 +181,27 @@ mints only a new revision and publishes create-new after exhaustive validation.
 The trusted shell projects only opaque orientation, selection, ancestor,
 conflict, resolution, destination, confirmation and operation tokens.
 
+M07 same-schema application upgrade is a two-input clean-release rebase. The
+working source and clean target release are independently pinned and fully
+verified; the target must have the same application, exact physical schema and
+dataset/table/key/dependency structure, a strictly newer SemVer application
+version, an authenticated clean template-state proof, and one explicitly
+accepted Ed25519 key that is valid in
+both complete signature inventories. Display publisher metadata and mutable
+lineage do not choose that authority. The non-authoritative upgrade report
+exhaustively binds source/target dataset states, target-signed `upgrade_policy`
+actions, capability deltas, limits, lineage and the canonical lifecycle plan,
+while the prepared typestate retains the snapshots and create-new destination.
+
+Execution starts from an owner-private copy of the target release, copies only
+source-owned mutable application data according to the signed policy, preserves
+the source capsule/instance/profile and the target application/assets/signature
+compartments, clears grants and change history, and creates a fresh revision
+with `upgraded-from` and `application-release` parents. `migrate` and `forbid`
+reject M07; schema migration remains M08. The trusted shell projects opaque
+candidate, destination, confirmation and operation tokens. The raw renderer
+receives no upgrade command, report, path, token or event.
+
 ## 3. Capsule anatomy
 
 A capsule uses ordinary SQLite tables divided conceptually into two namespaces.

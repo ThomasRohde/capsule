@@ -14,12 +14,13 @@ use sqlite_capsule_workspace::{
     ReconcileReview, ReconcileReviewLimits, ReconcileSelection, SemanticChoiceDisposition,
     SemanticCopyMode, SemanticCopyPlanRequest, SemanticDatasetChoice, Sensitivity,
     ThreeWayConflictKind, ThreeWayConflictResolution, ThreeWayConflictReview, ThreeWayDeletedSide,
-    ThreeWayResolutionChoice, VerifiedCompactSource, VerifiedCopySource, VerifiedWorkspaceSource,
-    WorkspaceError, WorkspaceErrorCode, WorkspaceLimits, classify_three_way_reconcile,
-    compare_sources, comparison_detail_page, generate_compact_copy_plan, generate_duplicate_plan,
+    ThreeWayResolutionChoice, UpgradeApproval, UpgradePlanRequest, UpgradeReviewReport,
+    VerifiedCompactSource, VerifiedCopySource, VerifiedWorkspaceSource, WorkspaceError,
+    WorkspaceErrorCode, WorkspaceLimits, classify_three_way_reconcile, compare_sources,
+    comparison_detail_page, generate_compact_copy_plan, generate_duplicate_plan,
     generate_exact_copy_plan, generate_semantic_copy_plan, open_semantic_copy_source,
-    parse_compact_copy_plan, parse_exact_copy_plan, parse_semantic_copy_plan,
-    prepare_reconcile_review,
+    parse_compact_copy_plan, parse_exact_copy_plan, parse_semantic_copy_plan, parse_upgrade_plan,
+    prepare_reconcile_review, prepare_upgrade_review,
 };
 
 const RESULT_PROFILE: &str = "org.sqlite-capsule.workspace-copy-result/1";
@@ -28,6 +29,8 @@ const THREE_WAY_CANDIDATES_PROFILE: &str =
     "org.sqlite-capsule.reconcile-cli-three-way-candidates/1";
 const RECONCILE_REVIEW_PROFILE: &str = "org.sqlite-capsule.reconcile-cli-review/1";
 const RECONCILE_RESULT_PROFILE: &str = "org.sqlite-capsule.reconcile-cli-result/1";
+const UPGRADE_REVIEW_PROFILE: &str = "org.sqlite-capsule.upgrade-cli-review/1";
+const UPGRADE_RESULT_PROFILE: &str = "org.sqlite-capsule.upgrade-cli-result/1";
 const RECONCILE_DEADLINE: Duration = Duration::from_secs(30);
 const RECONCILE_EXPIRY: Duration = Duration::from_secs(5 * 60);
 const MAX_CLI_SELECTIONS: usize = 10_000;
@@ -140,6 +143,32 @@ struct ReconcileCliResult {
     verified_reopened: bool,
 }
 
+#[derive(Serialize)]
+struct UpgradeCliReview {
+    profile: &'static str,
+    review: UpgradeReviewReport,
+    plan: Value,
+    executable_authority: bool,
+    note: &'static str,
+}
+
+#[derive(Serialize)]
+struct UpgradeCliResult {
+    profile: &'static str,
+    plan_digest: String,
+    review_digest: String,
+    output_leaf: String,
+    output_bytes: u64,
+    capsule_id: String,
+    revision_id: String,
+    app_id: String,
+    app_version: String,
+    application_digest: String,
+    accepted_publisher_key_id: String,
+    verified_reopened: bool,
+    inputs_unchanged: bool,
+}
+
 fn main() -> ExitCode {
     match run(std::env::args_os().skip(1).collect()) {
         Ok(bytes) => match std::io::stdout().write_all(&bytes) {
@@ -164,6 +193,8 @@ fn run(arguments: Vec<OsString>) -> Result<Vec<u8>, WorkspaceError> {
         "reconcile" => reconcile_command(&arguments, true),
         "plan-reconcile-three-way" => three_way_reconcile_command(&arguments, false),
         "reconcile-three-way" => three_way_reconcile_command(&arguments, true),
+        "plan-upgrade" => upgrade_command(&arguments, false),
+        "upgrade" => upgrade_command(&arguments, true),
         "copy-exact" => execute_copy(&arguments, CopyCommand::Exact),
         "copy-compact" => execute_copy(&arguments, CopyCommand::Compact),
         "copy-fork" => execute_copy(&arguments, CopyCommand::Semantic(SemanticCopyMode::Fork)),
@@ -177,6 +208,116 @@ fn run(arguments: Vec<OsString>) -> Result<Vec<u8>, WorkspaceError> {
         ),
         _ => Err(invalid_contract()),
     }
+}
+
+fn upgrade_command(arguments: &[OsString], execute: bool) -> Result<Vec<u8>, WorkspaceError> {
+    let valid_length = if execute {
+        matches!(arguments.len(), 6 | 7)
+    } else {
+        arguments.len() == 5
+    };
+    if !valid_length {
+        return Err(invalid_contract());
+    }
+    let source_path = PathBuf::from(&arguments[1]);
+    let target_path = PathBuf::from(&arguments[2]);
+    let output_path = PathBuf::from(&arguments[3]);
+    let accepted_key_id = utf8_argument(&arguments[4])?.to_owned();
+    if accepted_key_id.is_empty() || accepted_key_id.len() > 1_024 {
+        return Err(invalid_contract());
+    }
+    let capability_changes_accepted = if execute {
+        let expected_confirmation = format!("confirm-publisher-key={accepted_key_id}");
+        if utf8_argument(&arguments[5])? != expected_confirmation {
+            return Err(invalid_contract());
+        }
+        match arguments.get(6).map(utf8_argument).transpose()? {
+            None => false,
+            Some("confirm-capability-changes") => true,
+            Some(_) => return Err(invalid_contract()),
+        }
+    } else {
+        false
+    };
+    let limits = WorkspaceLimits::default();
+    let cancellation = CancellationToken::new();
+    let source = VerifiedWorkspaceSource::open_with_control(&source_path, &limits, &cancellation)?;
+    let target = VerifiedWorkspaceSource::open_with_control(&target_path, &limits, &cancellation)?;
+    let now = SystemTime::now();
+    let plan_id = mint_uuid_v4()?;
+    let created_at = utc_seconds(now)?;
+    let expires_at = utc_seconds(
+        now.checked_add(RECONCILE_EXPIRY)
+            .ok_or_else(invalid_contract)?,
+    )?;
+    let review = prepare_upgrade_review(
+        &source,
+        &target,
+        &UpgradePlanRequest {
+            output_path: &output_path,
+            plan_id: &plan_id,
+            created_at: &created_at,
+            expires_at: &expires_at,
+            accepted_publisher_key_id: &accepted_key_id,
+            max_output_bytes: limits.max_capsule_bytes,
+            max_rows: 100_000,
+            max_stream_bytes: 512 * 1024 * 1024,
+            deadline: RECONCILE_DEADLINE,
+        },
+        &cancellation,
+    )?;
+    if !execute {
+        let plan = serde_json::from_slice(&review.plan().canonical_bytes()?)
+            .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))?;
+        return serde_json::to_vec(&UpgradeCliReview {
+            profile: UPGRADE_REVIEW_PROFILE,
+            review: review.report().clone(),
+            plan,
+            executable_authority: false,
+            note: "The report and canonical plan are review evidence only. Execution requires retained in-process inputs plus explicit publisher-key and capability-change confirmation.",
+        })
+        .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError));
+    }
+    let approved_plan = parse_upgrade_plan(&review.plan().canonical_bytes()?)?;
+    let plan_digest = approved_plan.plan_digest().to_owned();
+    let published = review
+        .prepare(
+            approved_plan,
+            &UpgradeApproval {
+                accepted_publisher_key_id: accepted_key_id.clone(),
+                capability_changes_accepted,
+            },
+            source,
+            target,
+            &limits,
+            &cancellation,
+        )?
+        .stage()?
+        .transform_and_validate()?
+        .publish()?;
+    let report = published.report();
+    let output_leaf = published
+        .path()
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(invalid_contract)?
+        .to_owned();
+    serde_json::to_vec(&UpgradeCliResult {
+        profile: UPGRADE_RESULT_PROFILE,
+        plan_digest,
+        review_digest: report.review_digest.clone(),
+        output_leaf,
+        output_bytes: published.identity().bytes,
+        capsule_id: report.output.capsule_id.clone(),
+        revision_id: report.output.revision_id.clone(),
+        app_id: report.output.app_id.clone(),
+        app_version: report.output.app_version.clone(),
+        application_digest: report.output.application_digest.clone(),
+        accepted_publisher_key_id: report.publisher_continuity.accepted_key_id.clone(),
+        verified_reopened: true,
+        inputs_unchanged: true,
+    })
+    .map_err(|_| WorkspaceError::new(WorkspaceErrorCode::InternalError))
 }
 
 fn three_way_reconcile_candidates(arguments: &[OsString]) -> Result<Vec<u8>, WorkspaceError> {
@@ -1155,6 +1296,39 @@ mod tests {
         assert_eq!(id.len(), 36);
         assert_eq!(&id[14..15], "4");
         assert!(matches!(&id[19..20], "8" | "9" | "a" | "b"));
+    }
+
+    #[test]
+    fn upgrade_cli_requires_exact_closed_confirmations_before_path_access() {
+        let base = [
+            OsString::from("upgrade"),
+            OsString::from("missing-source.sqlitecapsule"),
+            OsString::from("missing-target.sqlitecapsule"),
+            OsString::from("new-output.sqlitecapsule"),
+            OsString::from("ed25519:key-id"),
+        ];
+        assert_eq!(
+            upgrade_command(&base, true).unwrap_err().kind(),
+            WorkspaceErrorCode::InvalidContract
+        );
+        for confirmation in [
+            "confirm-publisher-key=wrong",
+            "confirm-publisher-key=ed25519:key-id:extra",
+        ] {
+            let mut arguments = base.to_vec();
+            arguments.push(OsString::from(confirmation));
+            assert_eq!(
+                upgrade_command(&arguments, true).unwrap_err().kind(),
+                WorkspaceErrorCode::InvalidContract
+            );
+        }
+        let mut arguments = base.to_vec();
+        arguments.push(OsString::from("confirm-publisher-key=ed25519:key-id"));
+        arguments.push(OsString::from("confirm-everything"));
+        assert_eq!(
+            upgrade_command(&arguments, true).unwrap_err().kind(),
+            WorkspaceErrorCode::InvalidContract
+        );
     }
 
     #[test]
