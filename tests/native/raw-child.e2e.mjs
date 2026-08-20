@@ -393,6 +393,7 @@ try {
   assert.equal(existsSync(journal), false, "SQLite did not clear the recovered rollback journal");
   assert.notEqual(sha256File(capsule), dirtyCapsuleHash, "SQLite recovery did not change the spilled capsule bytes");
   assert.match(await parentPage.locator("#identity-details").textContent(), /SQLite recovery attempted/);
+  await rawPage.waitForFunction(() => document.title === "Raw child renderer probe");
   assert.equal(await rawPage.title(), "Raw child renderer probe");
   await rawPage.locator("#decision").waitFor({ state: "visible" });
   await rawPage.waitForFunction(() => document.querySelector("#decision")?.textContent?.startsWith("PASS"));

@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-distribution"
-version = "0.4.1"
+version = "0.4.2"
 description = "Signed native release, updater, and revocation policy for SQLite Capsule"
 edition.workspace = true
 license.workspace = true

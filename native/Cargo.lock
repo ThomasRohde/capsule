@@ -4136,7 +4136,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-cli"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "rusqlite",
  "serde_json",
@@ -4150,7 +4150,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-core"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "rusqlite",
  "serde",
@@ -4161,7 +4161,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-crypto"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "rusqlite",
@@ -4174,7 +4174,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-desktop"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
@@ -4210,7 +4210,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-distribution"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "serde",
@@ -4224,7 +4224,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-installer"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "serde_json",
@@ -4239,7 +4239,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-launch"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "rusqlite",
  "serde",
@@ -4254,7 +4254,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-lifecycle"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "getrandom 0.4.3",
  "libc",
@@ -4266,7 +4266,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-platform"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "serde",
  "sha2 0.11.0",
@@ -4276,7 +4276,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-policy"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "rusqlite",
@@ -4291,7 +4291,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-runtime"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "getrandom 0.4.3",
  "rusqlite",
@@ -4307,7 +4307,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-signing"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "pkcs8",
@@ -4322,7 +4322,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-sigstore"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "serde",
  "sha2 0.11.0",
@@ -4332,7 +4332,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-update"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "serde",
@@ -4347,7 +4347,7 @@ dependencies = [
 
 [[package]]
 name = "sqlite-capsule-workspace"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "ed25519-dalek",
  "getrandom 0.4.3",
