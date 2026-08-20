@@ -124,15 +124,14 @@ public static class SQLiteCapsuleDialogFocus
     public static bool TryCommitExact(IntPtr button)
     {
         if (button == IntPtr.Zero) return false;
-        SendMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
-        return true;
+        return PostMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
     }
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetDlgItem(IntPtr dialog, int controlId);
 
     [DllImport("user32.dll")]
-    private static extern IntPtr SendMessageW(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    private static extern bool PostMessageW(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
 
     public static bool ForceForeground(IntPtr window)
     {
@@ -198,8 +197,7 @@ public static class SQLiteCapsuleDialogFocus
     {
         IntPtr button = GetDlgItem(dialog, 1);
         if (button == IntPtr.Zero) return false;
-        SendMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
-        return true;
+        return PostMessageW(button, 0x00F5, IntPtr.Zero, IntPtr.Zero);
     }
 }
 '@
@@ -443,34 +441,41 @@ else {
     if ($dialogHandle -eq [IntPtr]::Zero) {
         throw 'The process-owned save dialog has no native window handle.'
     }
-    $foregroundRequested = [SQLiteCapsuleDialogFocus]::ForceForeground($dialogHandle)
-    Start-Sleep -Milliseconds 100
-    # Windows may reject the observable foreground transition for a process-
-    # owned common dialog while still accepting keyboard input after the UIA
-    # SetFocus calls above. Continue and prove success from the create-new output
-    # plus the dialog-owned report instead of treating foreground telemetry as
-    # authority.
-    if ($canonicalDestination.IndexOfAny([char[]] '+^%~()[]{}') -ge 0) {
-        throw 'The isolated acceptance path contains unsupported SendKeys metacharacters.'
+    if ([SQLiteCapsuleDialogFocus]::TrySetFileName($dialogHandle, $leaf) -and
+        [SQLiteCapsuleDialogFocus]::TryCommit($dialogHandle)) {
+        $inputPatternKind = 'NativeDialogEdit'
+        $saveCommitMethod = 'NativeDialogButton'
     }
-    $keyboard = New-Object -ComObject WScript.Shell
-    if (-not $keyboard.AppActivate([int] $HostProcessId)) {
-        throw 'The process-owned save dialog could not be activated for keyboard input.'
+    else {
+        $foregroundRequested = [SQLiteCapsuleDialogFocus]::ForceForeground($dialogHandle)
+        Start-Sleep -Milliseconds 100
+        # Windows may reject the observable foreground transition for a process-
+        # owned common dialog while still accepting keyboard input after the UIA
+        # SetFocus calls above. Continue and prove success from the create-new output
+        # plus the dialog-owned report instead of treating foreground telemetry as
+        # authority.
+        if ($canonicalDestination.IndexOfAny([char[]] '+^%~()[]{}') -ge 0) {
+            throw 'The isolated acceptance path contains unsupported SendKeys metacharacters.'
+        }
+        $keyboard = New-Object -ComObject WScript.Shell
+        if (-not $keyboard.AppActivate([int] $HostProcessId)) {
+            throw 'The process-owned save dialog could not be activated for keyboard input.'
+        }
+        Start-Sleep -Milliseconds 100
+        try {
+            $dialog.SetFocus()
+            $fileNameInput.SetFocus()
+        }
+        catch {
+            # The exact modal dialog is already process-owned and active; the
+            # subsequent create-new output remains the acceptance authority.
+        }
+        $keyboard.SendKeys('^a')
+        $keyboard.SendKeys($canonicalDestination)
+        Start-Sleep -Milliseconds 200
+        $keyboard.SendKeys('{ENTER}')
+        $saveCommitMethod = 'KeyboardEnter'
     }
-    Start-Sleep -Milliseconds 100
-    try {
-        $dialog.SetFocus()
-        $fileNameInput.SetFocus()
-    }
-    catch {
-        # The exact modal dialog is already process-owned and active; the
-        # subsequent create-new output remains the acceptance authority.
-    }
-    $keyboard.SendKeys('^a')
-    $keyboard.SendKeys($canonicalDestination)
-    Start-Sleep -Milliseconds 200
-    $keyboard.SendKeys('{ENTER}')
-    $saveCommitMethod = 'KeyboardEnter'
 }
 
 [pscustomobject]@{

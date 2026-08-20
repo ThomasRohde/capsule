@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-cli"
-version = "0.4.2"
+version = "0.4.3"
 description = "Native inspection and publisher-signature CLI for SQLite Capsules"
 edition.workspace = true
 license.workspace = true

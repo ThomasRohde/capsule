@@ -1710,6 +1710,34 @@ fn native_e2e_restore_path_from_process() -> Option<PathBuf> {
     )
 }
 
+fn native_e2e_restore_picker_directory_from_process() -> Option<PathBuf> {
+    native_e2e_restore_picker_directory(
+        native_e2e_enabled(),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT"),
+        std::env::var_os("SQLITE_CAPSULE_NATIVE_E2E_RESTORE_PICKER_DIRECTORY"),
+    )
+}
+
+fn native_e2e_restore_picker_directory(
+    automation: bool,
+    state_root: Option<OsString>,
+    requested: Option<OsString>,
+) -> Option<PathBuf> {
+    if !automation {
+        return None;
+    }
+    let state_root = PathBuf::from(state_root.filter(|value| !value.is_empty())?);
+    let requested = PathBuf::from(requested.filter(|value| !value.is_empty())?);
+    if !state_root.is_absolute() || !requested.is_absolute() || !requested.is_dir() {
+        return None;
+    }
+    let canonical_root = state_root.canonicalize().ok()?;
+    let canonical_requested = requested.canonicalize().ok()?;
+    canonical_requested
+        .starts_with(&canonical_root)
+        .then_some(canonical_requested)
+}
+
 fn native_e2e_restore_path(
     automation: bool,
     state_root: Option<OsString>,
@@ -5783,10 +5811,15 @@ fn restore_backup_picker(
     if let Some(path) = native_e2e_restore_path_from_process() {
         return restore_backup_to_path(&callback_app, &backup_root, &backup_id, &path).map(|_| ());
     }
-    app.dialog()
+    let mut picker = app
+        .dialog()
         .file()
         .add_filter("SQLite Capsule", &["sqlitecapsule", "sqlite"])
-        .set_file_name("restored.sqlitecapsule")
+        .set_file_name("restored.sqlitecapsule");
+    if let Some(directory) = native_e2e_restore_picker_directory_from_process() {
+        picker = picker.set_directory(directory);
+    }
+    picker
         .save_file(move |selected| match selected {
             Some(selected) => match selected.into_path() {
                 Ok(path) => {
@@ -8056,6 +8089,41 @@ mod tests {
                 true,
                 Some(state_root.into_os_string()),
                 Some(requested.into_os_string()),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn native_e2e_restore_picker_directory_is_existing_and_confined_to_isolated_state() {
+        let directory = TestDirectory::new();
+        let state_root = directory.0.join("native-e2e-state");
+        let restore_root = state_root.join("restored");
+        std::fs::create_dir_all(&restore_root).expect("create restore root");
+        let expected = restore_root
+            .canonicalize()
+            .expect("canonical restore root");
+        assert_eq!(
+            native_e2e_restore_picker_directory(
+                true,
+                Some(state_root.clone().into_os_string()),
+                Some(restore_root.clone().into_os_string()),
+            ),
+            Some(expected)
+        );
+        assert_eq!(
+            native_e2e_restore_picker_directory(
+                false,
+                Some(state_root.clone().into_os_string()),
+                Some(restore_root.into_os_string()),
+            ),
+            None
+        );
+        assert_eq!(
+            native_e2e_restore_picker_directory(
+                true,
+                Some(state_root.into_os_string()),
+                Some(directory.0.clone().into_os_string()),
             ),
             None
         );

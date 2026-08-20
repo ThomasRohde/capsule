@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-launch"
-version = "0.4.2"
+version = "0.4.3"
 description = "Shared structural, signature, and capability evidence for SQLite Capsule hosts"
 edition.workspace = true
 license.workspace = true

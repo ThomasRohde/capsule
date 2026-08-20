@@ -2085,6 +2085,7 @@ async function runRestorePickerScenario() {
         SQLITE_CAPSULE_NATIVE_RAW_E2E_PORT: String(pickerRawPort),
         SQLITE_CAPSULE_NATIVE_E2E_PATH: pickerCapsule,
         SQLITE_CAPSULE_NATIVE_E2E_STATE_ROOT: pickerStateRoot,
+        SQLITE_CAPSULE_NATIVE_E2E_RESTORE_PICKER_DIRECTORY: pickerRestoreRoot,
       },
       stdio: ["ignore", "ignore", "pipe"],
       windowsHide: true,
@@ -2161,6 +2162,7 @@ async function runRestorePickerScenario() {
       pickerRestoredCapsule,
       pickerStateRoot,
     );
+    process.stdout.write(`${JSON.stringify({ savePickerDialog: dialogReport }, null, 2)}\n`);
     assert.equal(dialogReport.ok, true);
     assert.equal(dialogReport.host_process_id, pickerProcess.pid);
     assert.equal(dialogReport.dialog_class, "#32770");
@@ -2175,7 +2177,12 @@ async function runRestorePickerScenario() {
       `unexpected save commit method: ${dialogReport.save_commit_method}`,
     );
     assert.equal(comparableWindowsPath(dialogReport.destination), comparableWindowsPath(pickerRestoredCapsule));
-    await waitForPath(pickerRestoredCapsule, "real save-picker restore output");
+    try {
+      await waitForPath(pickerRestoredCapsule, "real save-picker restore output");
+    } catch (error) {
+      const actionStatus = await pickerParentPage.locator("#lifecycle-action-status").textContent();
+      throw new Error(`${error.message}; lifecycle action status: ${actionStatus}`);
+    }
     await pickerParentPage.waitForFunction(
       () => document.querySelector("#lifecycle-action-status")?.textContent?.includes("Verified copy restored"),
     );

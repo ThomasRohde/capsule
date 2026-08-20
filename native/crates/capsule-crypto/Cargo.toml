@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-crypto"
-version = "0.4.2"
+version = "0.4.3"
 description = "Signed application compartment for SQLite Capsules"
 edition.workspace = true
 license.workspace = true
