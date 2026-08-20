@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-runtime"
-version = "0.4.3"
+version = "0.4.4"
 description = "Generic verified asset and named-endpoint runtime for SQLite Capsules"
 edition.workspace = true
 license.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "sqlite-capsule-signing"
-version = "0.4.3"
+version = "0.4.4"
 description = "Safe publisher-signing workflow for SQLite Capsules"
 edition.workspace = true
 license.workspace = true

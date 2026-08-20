@@ -50,6 +50,9 @@ function Wait-ForPathToDisappear {
 Assert-Condition ($env:OS -eq 'Windows_NT') 'The NSIS installer acceptance gate is Windows-only.'
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$tauriConfigPath = Join-Path $repoRoot 'native\desktop\src-tauri\tauri.conf.json'
+$expectedDisplayVersion = [string](Get-Content -LiteralPath $tauriConfigPath -Raw | ConvertFrom-Json).version
+Assert-Condition (-not [string]::IsNullOrWhiteSpace($expectedDisplayVersion)) 'The authoritative Tauri version is absent.'
 $targetRoot = [IO.Path]::GetFullPath((Join-Path $repoRoot 'native\target')).TrimEnd('\') + '\'
 $candidate = if ([IO.Path]::IsPathRooted($Installer)) {
     $Installer
@@ -144,7 +147,7 @@ function Assert-InstalledState {
 
     $uninstallValues = Get-ItemProperty -LiteralPath $uninstallKey
     Assert-Condition ($uninstallValues.DisplayName -eq 'SQLite Capsule Host') 'The uninstall display name differs.'
-    Assert-Condition ($uninstallValues.DisplayVersion -eq '0.3.0') 'The uninstall display version differs.'
+    Assert-Condition ($uninstallValues.DisplayVersion -eq $expectedDisplayVersion) 'The uninstall display version differs.'
     Assert-Condition ($uninstallValues.Publisher -eq 'sqlite-capsule') 'The uninstall publisher differs.'
     Assert-Condition ($uninstallValues.NoModify -eq 1) 'The package unexpectedly advertises Modify.'
     Assert-Condition ($uninstallValues.NoRepair -eq 1) 'The package unexpectedly advertises Repair.'
