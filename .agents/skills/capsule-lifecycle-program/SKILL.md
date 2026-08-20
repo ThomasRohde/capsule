@@ -18,6 +18,9 @@ lifecycle programme.
 5. Select the lowest-numbered milestone not marked `complete`.
 6. Read that milestone's `EXECPLAN.md`, `ACCEPTANCE.md` and existing
    `RESULT.md`, if present.
+7. Do not preload unrelated milestone plans, ADRs or historical evidence. Open
+   additional material only when the active plan or a concrete finding points
+   to it.
 
 ## Work protocol
 
@@ -36,21 +39,32 @@ lifecycle programme.
   compartment.
 - Use stable, bounded JSON reports for Tauri and CLI integration.
 - Add failure-path tests before or alongside the success path.
-- Run the exact relevant gates listed by the milestone.
+- Run focused gates while the tree is changing. After source freeze, run the
+  exact milestone gates once; rerun only gates affected by later production
+  changes.
 - Update status, evidence and handoff before leaving the milestone.
 
-## Review loop
+## Efficient milestone loop
 
-When subagents are available:
-
-1. Delegate bounded implementation components to builders only when their file
-   ownership does not overlap.
-2. Ask a fresh critic to compare the actual diff and test evidence with
-   `ACCEPTANCE.md`.
-3. Ask a security critic to test raw-renderer isolation, input immutability,
-   TOCTOU resistance, output publication and signature invariants.
-4. Resolve findings and rerun gates.
-5. The main agent remains accountable for integration and final evidence.
+1. Use one Codex task and one final commit for the milestone. Do not begin the
+   next milestone in the same task.
+2. The main agent owns integration and the exclusive Cargo/build lease. Do not
+   overlap Cargo, native builds, installer builds or end-to-end test runs.
+3. Use no implementation subagent by default. If parallel work has a concrete
+   elapsed-time benefit, use at most one implementation subagent at a time with
+   a bounded brief and disjoint file ownership, then stop it after integration.
+4. Freeze the source before independent review. Ask one fresh reviewer for a
+   consolidated `ACCEPTANCE.md` and security audit. Add a second specialist only
+   for a concrete unresolved risk or at the user's request.
+5. Resolve the consolidated findings, rerun affected gates, and permit at most
+   one remediation review. The main agent remains accountable for the final
+   gate rather than starting an open-ended critic loop.
+6. Run full repository qualification, generated-artifact rebuilds and any
+   required NSIS export once after the final freeze.
+7. Report repeated passing evidence compactly by command, count and artifact
+   path. Retain detailed logs only for failures or unique runtime evidence.
+8. Defer sound findings outside the active milestone to the next milestone's
+   backlog instead of expanding scope.
 
 ## Completion
 

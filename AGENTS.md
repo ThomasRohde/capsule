@@ -49,6 +49,34 @@ When asked to run, inspect, modify, or explain a `.capsule.sqlite` file:
 - Verify the generated capsule:
   `python tools/capsule.py verify capsules/diagram-studio.capsule.sqlite`.
 
+## Agent execution efficiency
+
+For lifecycle milestones and other long-running agent work:
+
+- Keep one lifecycle milestone per Codex task and per commit. Finish, qualify,
+  document and commit that milestone before starting the next one.
+- The main agent owns integration and an exclusive Cargo/build lease. Never run
+  overlapping Cargo, native build, installer or end-to-end test processes in a
+  shared checkout.
+- Use focused tests and package-scoped checks while implementation is changing.
+  Freeze the source before review, run the full required qualification once,
+  and rerun only affected gates after any subsequent production change.
+- Use no implementation subagent by default. If delegation materially reduces
+  elapsed time, use at most one implementation subagent at a time, give it a
+  short bounded brief with disjoint file ownership, and stop it when its slice
+  is integrated.
+- Do not review a moving tree continuously. After source freeze, request one
+  consolidated independent acceptance and security review. Add a second
+  specialist only for a concrete unresolved risk, and allow at most one
+  remediation review before the main agent decides the gate.
+- Keep progress updates and retained evidence concise. Preserve full logs for
+  failures or unique runtime evidence; summarize repeated passing gates by
+  command, count and artifact path.
+- Record valid out-of-scope findings in the next milestone's backlog instead of
+  widening the active milestone.
+- Rebuild generated capsules and the NSIS installer only at the existing
+  definition-of-done boundary, after the relevant source has settled.
+
 ## Definition of done
 
 A change is complete only when the relevant documentation is consistent, every
